@@ -1,0 +1,3 @@
+## P∧Q P→R: SOLN: R
+## Step 1: (Simp on 1) --> P
+## Step 2: (MP on 2 and 3) --> R

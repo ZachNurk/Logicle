@@ -1,11 +1,17 @@
-const GivenPanel = ({ givenArray }: { givenArray: string[] }) => {
+import type { ProofNode } from "../../logic/ProofNode";
+import GivenButton from "./GivenButton";
+
+type Props = {
+  givenArray: ProofNode[];
+  toggleSelected: (id: string) => void;
+};
+
+export default function GivenPanel({ givenArray, toggleSelected }: Props) {
   return (
     <div style={styles.container}>
       <div style={styles.topSlots.main}>
-        {givenArray.map((label: string) => (
-          <div key={label} style={styles.topSlots.slot}>
-            {label}
-          </div>
+        {givenArray.map((node: ProofNode) => (
+          <GivenButton onClick={() => toggleSelected(node.id)} Node={node} key={node.id} />
         ))}
       </div>
       <div style={styles.main}>
@@ -13,9 +19,11 @@ const GivenPanel = ({ givenArray }: { givenArray: string[] }) => {
       </div>
     </div>
   );
-};
+}
 
-export default GivenPanel;
+//<div key={label.id} style={styles.topSlots.slot}>
+//            {label.text}
+//          </div>
 
 const styles = {
   resetButton: {

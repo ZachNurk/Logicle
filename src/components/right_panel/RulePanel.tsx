@@ -1,12 +1,11 @@
 
-import Button from "../Button";
+
 
 type RightPanelProps = {
   rules: string[];
-  onUpdate: React.MouseEventHandler<HTMLButtonElement>;
 };
 
-export default function RightPanel({ rules, onUpdate }: RightPanelProps) {
+export default function RightPanel({ rules }: RightPanelProps) {
    return (
     <div style={styles.container}>
       {rules.map((label) => (
@@ -16,7 +15,6 @@ export default function RightPanel({ rules, onUpdate }: RightPanelProps) {
       ))}
       <div style={styles.main}>
         <h1>Right side content...</h1>
-        <Button onClick={onUpdate} />
       </div>
     </div>
   );
