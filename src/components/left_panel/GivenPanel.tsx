@@ -1,5 +1,4 @@
 import type { ProofNode } from "../../logic/ProofNode";
-import GivenButton from "./GivenButton";
 
 type Props = {
   givenArray: ProofNode[];
@@ -10,10 +9,20 @@ export default function GivenPanel({ givenArray, toggleSelected }: Props) {
   return (
     <div style={styles.container}>
       <div style={styles.topSlots.main}>
-        {givenArray.map((node: ProofNode) => (
-          <GivenButton onClick={() => toggleSelected(node.id)} Node={node} key={node.id} />
+        {givenArray.map((node) => (
+          <button
+            key={node.id}
+            onClick={() => toggleSelected(node.id)}
+            style={{
+              ...styles.givenButtonBase,
+              backgroundColor: node.selected ? "#ff4107" : "#07b9ff",
+            }}
+          >
+            {node.text}
+          </button>
         ))}
       </div>
+
       <div style={styles.main}>
         <h1>Left content goes here...</h1>
       </div>
@@ -21,26 +30,13 @@ export default function GivenPanel({ givenArray, toggleSelected }: Props) {
   );
 }
 
-//<div key={label.id} style={styles.topSlots.slot}>
-//            {label.text}
-//          </div>
-
 const styles = {
-  resetButton: {
-    backgroundColor: "#07b9ff",
-    padding: "10px 16px" /* height-ish, width-ish */,
-    fontSize: "14px",
-    width: "140px",
-    height: "44px",
-    borderRadius: "5px",
-  } satisfies React.CSSProperties,
-
   container: {
-    flex: 1, // take up an equal share of the avail space
+    flex: 1,
     border: "5px solid #ccc",
     borderRadius: "20px",
     padding: 16,
-    display: "flex", // make MY children flexbox
+    display: "flex",
     flexDirection: "column",
     gap: 12,
   } satisfies React.CSSProperties,
@@ -49,19 +45,22 @@ const styles = {
     main: {
       display: "flex",
       gap: 10,
-    } satisfies React.CSSProperties,
-    slot: {
-      border: "1px solid #ddd",
-      borderRadius: 8,
-      padding: "8px 10px",
-      fontSize: 12,
-      background: "white",
-      flex: "1 1 140px",
+      flexWrap: "wrap",
     } satisfies React.CSSProperties,
   },
 
+  givenButtonBase: {
+    padding: "10px 16px",
+    fontSize: "14px",
+    width: "140px",
+    height: "44px",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer",
+  } satisfies React.CSSProperties,
+
   main: {
-    flex: 1, // take up equal share of avail space
+    flex: 1,
     border: "1px solid #eee",
     borderRadius: 8,
     padding: 12,
