@@ -19,7 +19,7 @@
  */
 export function sameNode(a?: ProofNode, b?: ProofNode) {
   if (!a || !b) return false;
-  return a.id === b.id;
+  return a.text === b.text;
 }
 
 export type ProofNode = {
@@ -36,13 +36,12 @@ export type ImplicationNode = ProofNode & {
 };
 
 export function createNode(
-  id: string,
   text: string,
   selected: boolean,
   parents?: ProofNode[],
 ): ProofNode {
   return {
-    id: id ?? crypto.randomUUID(),
+    id: crypto.randomUUID(),
     text: text,
     selected: selected,
     parents: parents ?? [],
@@ -50,7 +49,6 @@ export function createNode(
 }
 
 export function createImplicationNode(
-  id: string,
   text: string,
   selected: boolean,
   left: ProofNode,
@@ -58,7 +56,7 @@ export function createImplicationNode(
   parents?: ProofNode[],
 ): ImplicationNode {
   return {
-    id: id,
+    id: crypto.randomUUID(),
     text: text,
     selected: selected,
     parents: parents,

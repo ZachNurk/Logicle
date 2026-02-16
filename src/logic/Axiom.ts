@@ -21,7 +21,6 @@ const ERROR_NODE: ProofNode = {
   selected: false
 };
 
-
 /**
  * Function determines if given node is an If node
  * @param n is the node to check
@@ -31,17 +30,32 @@ function isImplicationNode(node: ProofNode): node is ImplicationNode {
   return (node as any).relationship === "If";
 }
 
-/** Modus Ponens: from P and (P -> Q), infer Q */
+/** 
+ * Modus Ponens: from P and (P -> Q), infer Q
+ * @param a is the first node
+ * @param b is the second node
+ * @return returns the node result. Error Node if operation can't be done
+ * @throws throws an error if either a or b is undefined
+ */
 export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
 
-  if (!a || !b) {
-    return ERROR_NODE;
-  }
+  if (!a) throw new Error("Undefined A!")
+  if (!b) throw new Error("Undefined B!")
 
   let implication: ImplicationNode | undefined;
   let premise: ProofNode | undefined;
 
-  if (isImplicationNode(a)) {
+  if (isImplicationNode(a) && isImplicationNode(b)) {
+    // (P -> Q) and ((P -> Q) -> L))
+    if (sameNode(b.left, a)) {
+      return b.right
+    }
+    // ((P -> Q) -> L)) and (P -> Q)
+    if (sameNode(a.left,b)) {
+      return a.right
+    }
+    return ERROR_NODE;
+   } else if (isImplicationNode(a)) {
     implication = a;
     premise = b;
   } else if (isImplicationNode(b)) {
@@ -53,15 +67,21 @@ export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
   }
 
   if (!implication || !premise) {
+    console.log("Here!2")
     return ERROR_NODE;
   }
 
   // check premise matches implication's antecedent
   if (!sameNode(implication.left, premise)) {
+    
+    console.log(implication.left.text)
+    console.log(premise.text)
+    console.log("Here!3")
     return ERROR_NODE;
   }
 
   if (!implication.right) {
+    console.log("Here!4")
     return ERROR_NODE;
   }
 
