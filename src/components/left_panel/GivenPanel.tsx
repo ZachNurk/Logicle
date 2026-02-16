@@ -1,3 +1,8 @@
+/**
+ * Left side panel of our program. Handles displaying our nodes
+ * @file GivenPanel.tsx
+ */
+
 import type { ProofNode } from "../../logic/ProofNode";
 
 type Props = {
@@ -5,6 +10,9 @@ type Props = {
   toggleSelected: (id: string) => void;
 };
 
+/**
+ * UI element of the left panel
+ */
 export default function GivenPanel({ givenArray, toggleSelected }: Props) {
   return (
     <div style={styles.container}>

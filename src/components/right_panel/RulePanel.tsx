@@ -1,17 +1,35 @@
+/**
+ * The Right side of our program. Panel handles the Axiom selection and submitting axioms
+ * @file RulePanel.tsx
+ */
 
+import type { Axiom } from "../../logic/Axiom";
 
-
-type RightPanelProps = {
-  rules: string[];
+type RulePanelProps = {
+  axioms: Axiom[];
+  toggleSelected: (id: string) => void;
 };
 
-export default function RightPanel({ rules }: RightPanelProps) {
-   return (
+
+//TODO make the panel smaller so its coser to the Left panel
+
+/**
+ * UI element for the right side
+ */
+export default function RulePanel({ axioms, toggleSelected }: RulePanelProps) {
+  return (
     <div style={styles.container}>
-      {rules.map((label) => (
-        <div key={label} style={styles.slot}>
-          {label}
-        </div>
+      {axioms.map((axiom) => (
+        <button
+          key={axiom.id}
+          onClick={() => toggleSelected(axiom.id)}
+          style={{
+            ...styles.axiomButtonBase,
+            backgroundColor: axiom.selected ? "#ff4107" : "#07b9ff",
+          }}
+        >
+          {axiom.text}
+        </button>
       ))}
       <div style={styles.main}>
         <h1>Right side content...</h1>
@@ -21,8 +39,6 @@ export default function RightPanel({ rules }: RightPanelProps) {
 }
 
 const styles = {
-  
-
   container: {
     border: "5px solid #ccc",
     borderRadius: "20px",
@@ -53,5 +69,14 @@ const styles = {
     borderRadius: 8,
     padding: 12,
   } satisfies React.CSSProperties,
-};
 
+  axiomButtonBase: {
+    padding: "10px 16px",
+    fontSize: "14px",
+    width: "140px",
+    height: "44px",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer",
+  } satisfies React.CSSProperties,
+};
