@@ -3,26 +3,26 @@
     {
       "id": "2026-02-14",
       "title": "2-step proof example (Simp -> MP)",
-      "nodes": [
+      "givenNodes": [
         {
           "id": "n1",
           "text": "P ∧ Q",
-          "kind": "given",
+          "selected": false,
           "parents": []
         },
         {
           "id": "n2",
           "text": "P → R",
-          "kind": "given",
+          "selected": false,
           "parents": []
-        },
-        {
-          "id": "n4",
-          "text": "R",
-          "kind": "solution",
-          "parents": ["n2", "n3"]
         }
-      ]
+      ],
+      "solution": {
+        "id": "n4",
+        "text": "R",
+        "selected": false,
+        "parents": ["n2", "n3"]
+      }
     }
   ]
 }

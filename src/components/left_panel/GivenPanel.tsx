@@ -7,13 +7,18 @@ import type { ProofNode } from "../../logic/ProofNode";
 
 type Props = {
   givenArray: ProofNode[];
+  solutionNode: ProofNode;
   toggleSelected: (id: string) => void;
 };
 
 /**
  * UI element of the left panel
  */
-export default function GivenPanel({ givenArray, toggleSelected }: Props) {
+export default function GivenPanel({
+  givenArray,
+  solutionNode,
+  toggleSelected,
+}: Props) {
   return (
     <div style={styles.container}>
       <div style={styles.topSlots.main}>
@@ -33,6 +38,16 @@ export default function GivenPanel({ givenArray, toggleSelected }: Props) {
 
       <div style={styles.main}>
         <h1>Left content goes here...</h1>
+        <button
+          key={solutionNode.id}
+          disabled
+          style={{
+            ...styles.givenButtonBase,
+            ...styles.solutionButton,
+          }}
+        >
+          {solutionNode.text}
+        </button>
       </div>
     </div>
   );
@@ -65,6 +80,12 @@ const styles = {
     borderRadius: "5px",
     border: "none",
     cursor: "pointer",
+  } satisfies React.CSSProperties,
+
+  solutionButton: {
+    cursor: "default",
+    backgroundColor: "#11d663",
+    color: "black"
   } satisfies React.CSSProperties,
 
   main: {

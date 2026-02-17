@@ -4,8 +4,8 @@
  */
 
 import type { ProofNode } from "./ProofNode";
-import { createNode, sameNode } from "./ProofNode";
-import type { ImplicationNode } from "./ProofNode";
+import { createNode, sameNode, isImplicationNode, ERROR_NODE, isNotNode, createNotNode } from "./ProofNode";
+import type { ImplicationNode, NotNode } from "./ProofNode";
 
 export type Axiom = {
   id: string;
@@ -14,21 +14,6 @@ export type Axiom = {
   apply?: (nodeA: ProofNode, nodeB: ProofNode) => ProofNode;
 };
 
-// Node returned if operation isnt possible
-const ERROR_NODE: ProofNode = {
-  id: "ERROR",
-  text: "ERORR",
-  selected: false
-};
-
-/**
- * Function determines if given node is an If node
- * @param n is the node to check
- * @return returns true if its an if node, false if not
- */
-function isImplicationNode(node: ProofNode): node is ImplicationNode {
-  return (node as any).relationship === "If";
-}
 
 /** 
  * Modus Ponens: from P and (P -> Q), infer Q
@@ -41,6 +26,7 @@ export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
 
   if (!a) throw new Error("Undefined A!")
   if (!b) throw new Error("Undefined B!")
+  
 
   let implication: ImplicationNode | undefined;
   let premise: ProofNode | undefined;
@@ -62,12 +48,12 @@ export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
     implication = b;
     premise = a;
   } else {
+    // neither is an implication node
     implication = undefined;
     premise = undefined;
   }
 
   if (!implication || !premise) {
-    console.log("Here!2")
     return ERROR_NODE;
   }
 
@@ -76,18 +62,57 @@ export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
     
     console.log(implication.left.text)
     console.log(premise.text)
-    console.log("Here!3")
     return ERROR_NODE;
   }
 
   if (!implication.right) {
-    console.log("Here!4")
     return ERROR_NODE;
   }
 
   return implication.right;
 }
 
+/** 
+ * Modus Tollens: [¬q AND (p → q) ] → ¬p 
+ * @param a is the first node
+ * @param b is the second node
+ * @return returns the node result. Error Node if operation can't be done
+ * @throws throws an error if either a or b is undefined
+ */
+export function modusTollens(a: ProofNode, b: ProofNode): ProofNode {
+  if (!a) throw new Error("Undefined A!")
+  if (!b) throw new Error("Undefined B!")
+  
+  let premise: NotNode | undefined
+  let implication: ImplicationNode | undefined
+  
+
+  if (isNotNode(a) && isImplicationNode(b)) {
+    
+    premise = a;
+    implication = b;
+    
+  } else if (isNotNode(b) && isImplicationNode(a)) {
+
+    premise = b;
+    implication = a;
+
+  } else {
+    return ERROR_NODE
+  }
+
+  if (!implication || !premise) {
+    return ERROR_NODE;
+  }
+
+  if (sameNode(premise.contains, implication.right)) {
+      const text = `¬${implication.left.text}`
+      return createNotNode(text, false, implication.left)
+  }
+  return ERROR_NODE
+}
+
+// Axioms list
 export const Axioms: Axiom[] = [
   {
     id: "MP",
