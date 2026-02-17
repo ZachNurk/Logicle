@@ -34,6 +34,17 @@ function hasRelationship<R extends Relationship>(
 }
 
 /**
+ * function determines if a node has a relationship field
+ * @param n is the node to check
+ * @return returns true if relationship exists, false if not
+ */
+export function hasAnyRelationship(
+  node: ProofNode,
+): node is ProofNode & { relationship: Relationship } {
+  return (node as any).relationship !== undefined;
+}
+
+/**
  * Function determines if given node is an If node
  * @param n is the node to check
  * @return returns true if its an if node, false if not
@@ -76,6 +87,16 @@ export function isOrNode(node: ProofNode): node is OrNode {
  */
 export function isIffNode(node: ProofNode): node is IffNode {
   return hasRelationship(node, "Iff");
+}
+
+/** True if node has multiple parts (And, Or, If, Iff). Use for "wrap in parens when used as subformula". */
+export function isBinaryNode(node: ProofNode): boolean {
+  return (
+    isAndNode(node) ||
+    isOrNode(node) ||
+    isImplicationNode(node) ||
+    isIffNode(node)
+  );
 }
 
 // Node returned if operation isnt possible
