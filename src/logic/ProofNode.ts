@@ -121,26 +121,18 @@ export type BinaryNode = ProofNode & {
 
 export type ImplicationNode = BinaryNode & {
   relationship: "If";
-  left: ProofNode; // Antecedent
-  right: ProofNode; // Consequent
 };
 
 export type AndNode = BinaryNode & {
   relationship: "And";
-  left: ProofNode;
-  right: ProofNode;
 };
 
 export type OrNode = BinaryNode & {
   relationship: "Or";
-  left: ProofNode;
-  right: ProofNode;
 };
 
 export type IffNode = BinaryNode & {
   relationship: "Iff";
-  left: ProofNode;
-  right: ProofNode;
 };
 
 export type NotNode = ProofNode & {

@@ -1,11 +1,11 @@
 /**
  * Defines the Axiom type, and defines all the axioms to be used in the program
+ * NOTE OUTERMOST LAYER DOESNT HAVE ()
  * @file Axiom.ts
  */
 
 import type { ProofNode } from "./ProofNode";
 import {
-  createNode,
   sameNode,
   isImplicationNode,
   ERROR_NODE,
@@ -13,24 +13,22 @@ import {
   createNotNode,
   createImplicationNode,
   isBinaryNode,
+  isAndNode,
 } from "./ProofNode";
-import type { ImplicationNode, NotNode } from "./ProofNode";
+import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
 export type Axiom = {
   id: string;
-  text: string; // ima use a switch that checks which one is selected
+  text: string;
   selected: boolean;
-  apply?: (nodeA: ProofNode, nodeB: ProofNode) => ProofNode;
+  apply?: (premises: AndNode) => ProofNode;
 };
-/**
- * Helper function checks if nodes are undefined
- * @param a is the first node
- * @param b is the second node
- * @throws Error if either node is undefined
- */
-function checkUndefines(a: ProofNode, b: ProofNode) {
-  if (!a) throw new Error("Undefined A!");
-  if (!b) throw new Error("Undefined B!");
+
+/** Throws if premises is not a valid And node with left and right. */
+function checkPremises(premises: AndNode) {
+  if (!isAndNode(premises) || !premises.left || !premises.right) {
+    throw new Error("Premises must be an And node with left and right.");
+  }
 }
 
 /** Wrap in parens only when node has multiple parts (And, Or, If, Iff). Single (atom, Not) stays unwrapped. */
@@ -40,83 +38,74 @@ export function checkParentheses(n: ProofNode): string {
 
 /**
  * Hypothetical Syllogism [(p → q) ∧ (q → r)] → (p → r)
- * @param a is the first node 
- * @param b is the second node
- * @return returns the node creator, or ERROR_NODE if invalid node combo
- * @throws Error if undefined node
+ * @param premises And node whose left and right are the two implication nodes
  */
-export function hypotheticalSylogism(a: ProofNode, b: ProofNode): ProofNode {
-  checkUndefines(a,b)
+export function hypotheticalSyllogism(premises: AndNode): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
 
   if (!(isImplicationNode(a) && isImplicationNode(b))) {
     return ERROR_NODE;
   }
 
-  // Case 1: Try for A --> B and B --> C === 1 --> 4, where 2 == 3
-  if (sameNode(a.right,b.left)) {
-    const first = checkParentheses(a.left)
-    const fourth = checkParentheses(b.right)
-    const text = `${first} → ${fourth}` 
-    return createImplicationNode(text, false, a.left, b.right, [a,b])
-    
-  } // Case 2: Try for B --> C and A --> B, where 
-  else if (sameNode(a.left,b.right)) {
-    const first = checkParentheses(b.right)
-    const fourth = checkParentheses(a.left)
-    const text = `${first} → ${fourth}` 
-    return createImplicationNode(text, false, b.right, a.left, [a,b])
+  if (sameNode(a.right, b.left)) {
+    const first = checkParentheses(a.left);
+    const fourth = checkParentheses(b.right);
+    const text = `${first} → ${fourth}`;
+    return createImplicationNode(text, false, a.left, b.right, [a, b]);
   }
-  //TODO test me!!!
-  // Else, invalid combo
+  if (sameNode(a.left, b.right)) {
+    const first = checkParentheses(b.left);
+    const fourth = checkParentheses(a.right);
+    const text = `${first} → ${fourth}`;
+    return createImplicationNode(text, false, b.left, a.right, [a, b]);
+  }
   return ERROR_NODE;
 }
 
 /**
- * Modus Ponens: from P and (P -> Q), infer Q
- * @param a is the first node
- * @param b is the second node
- * @return returns the node result. Error Node if operation can't be done
- * @throws throws an error if either a or b is undefined
+ * Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q
+ * 
  */
-export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
-  checkUndefines(a, b);
+
+/**
+ * Modus Ponens: from P and (P -> Q), infer Q
+ * @param premises And node whose left and right are the two premise nodes
+ */
+export function modusPonens(premises: AndNode): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
 
   let implication: ImplicationNode | undefined;
   let premise: ProofNode | undefined;
 
   if (isImplicationNode(a) && isImplicationNode(b)) {
-    // (P -> Q) and ((P -> Q) -> L))
     if (sameNode(b.left, a)) {
       return b.right;
     }
-    // ((P -> Q) -> L)) and (P -> Q)
     if (sameNode(a.left, b)) {
       return a.right;
     }
     return ERROR_NODE;
-  } else if (isImplicationNode(a)) {
+  }
+  if (isImplicationNode(a)) {
     implication = a;
     premise = b;
   } else if (isImplicationNode(b)) {
     implication = b;
     premise = a;
   } else {
-    // neither is an implication node
-    implication = undefined;
-    premise = undefined;
+    return ERROR_NODE;
   }
 
   if (!implication || !premise) {
     return ERROR_NODE;
   }
-
-  // check premise matches implication's antecedent
   if (!sameNode(implication.left, premise)) {
-    console.log(implication.left.text);
-    console.log(premise.text);
     return ERROR_NODE;
   }
-
   if (!implication.right) {
     return ERROR_NODE;
   }
@@ -125,14 +114,13 @@ export function modusPonens(a: ProofNode, b: ProofNode): ProofNode {
 }
 
 /**
- * Modus Tollens: [¬q AND (p → q) ] → ¬p
- * @param a is the first node
- * @param b is the second node
- * @return returns the node result. Error Node if operation can't be done
- * @throws throws an error if either a or b is undefined
+ * Modus Tollens: [¬q ∧ (p → q)] → ¬p
+ * @param premises And node whose left and right are the two premise nodes
  */
-export function modusTollens(a: ProofNode, b: ProofNode): ProofNode {
-  checkUndefines(a, b);
+export function modusTollens(premises: AndNode): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
 
   let premise: NotNode | undefined;
   let implication: ImplicationNode | undefined;
@@ -153,13 +141,19 @@ export function modusTollens(a: ProofNode, b: ProofNode): ProofNode {
 
   if (sameNode(premise.contains, implication.right)) {
     const text = `¬${checkParentheses(implication.left)}`;
-    return createNotNode(text, false, implication.left, [a,b]);
+    return createNotNode(text, false, implication.left, [a, b]);
   }
   return ERROR_NODE;
 }
 
 // Axioms list
 export const Axioms: Axiom[] = [
+  {
+    id: "1",
+    text: "Hypothetical Syllogism",
+    selected: false,
+    apply: hypotheticalSyllogism,
+  },
   {
     id: "3",
     text: "Modus Ponens",
@@ -172,4 +166,5 @@ export const Axioms: Axiom[] = [
     selected: false,
     apply: modusTollens,
   },
+
 ];
