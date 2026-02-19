@@ -17,7 +17,8 @@ import {
   isOrNode,
   isIffNode,
   createResultNode,
-  createOrNode
+  createOrNode,
+  createAndNode
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -29,7 +30,8 @@ export type Axiom = {
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
     | ((premises: AndNode, side: "left" | "right") => ProofNode)
-    | ((original: ProofNode, addition: ProofNode) => ProofNode);
+    | ((original: ProofNode, addition: ProofNode) => ProofNode)
+    | ((premises: AndNode, type: "or" | "and") => ProofNode)
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -186,13 +188,14 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
     return createNotNode(text, false, implication.left, selected);
   }
   return ERROR_NODE;
+
 }
 
 /**
  * Simplification: (p ∧ q) → p
  * @param premises is an and node to simplify
  * @param side is the node to get out
- * @return returns error nod if valid operation, correct node if valid
+ * @return returns error nod if invalid operation, correct node if valid
  */
 export function simplification(premises: AndNode, side: "left" | "right") {
   checkPremises(premises)
@@ -207,6 +210,17 @@ export function simplification(premises: AndNode, side: "left" | "right") {
 }
 
 /**
+ * Constructive Dilemma [(p → q) ∧ (r → s)] → [(p ∨ r) → (q ∨ s)]
+ * @param premises is the two nodes 
+ * @param type is the type of dilemma
+ * @return returns error node if invalid operation, correct node if valid
+ */
+export function constructiveDilemma(premises: AndNode, type: "or" | "and") {
+  
+
+}
+
+/**
  * Addition: p → (p ∨ q)
  * @param original is the original node to add to
  * @param addition is the node we are adding (designed by the UI)
@@ -217,6 +231,19 @@ export function addition(original: ProofNode, addition: ProofNode): ProofNode {
   let text = `${a} ∨ ${b}`
   return createOrNode(text, false, original, addition, [original])
 }
+
+/**
+ * Conjunction: p → (p ∧ q)
+ * @param original is the original node to add to
+ * @param addition is the node we are adding (designed by the UI)
+ */
+export function conjunction(original: ProofNode, addition: ProofNode): ProofNode {
+  let a = checkParentheses(original)
+  let b = checkParentheses(addition)
+  let text = `${a} ∧ ${b}`
+  return createAndNode(text, false, original, addition, [original, addition])
+}
+
 
 
 // Axioms list
@@ -256,5 +283,11 @@ export const Axioms: Axiom[] = [
     text: "Addition",
     selected: false,
     apply: addition
+  },
+  {
+    id: "10",
+    text: "Conjunction",
+    selected: false,
+    apply: conjunction
   }
 ];

@@ -10,13 +10,26 @@
 export type Relationship = "If" | "Not" | "And" | "Or" | "Iff";
 
 /**
- * Function checks if two nodes are the same node
+ * Function checks if two nodes are the same (logically equivalent).
+ * For And and Or, order of left/right does not matter (commutative).
  * @param a is the first node
  * @param b is the second node
  * @return returns true if the same, false if not
  */
-export function sameNode(a?: ProofNode, b?: ProofNode) {
+export function sameNode(a?: ProofNode, b?: ProofNode): boolean {
   if (!a || !b) return false;
+  if (isAndNode(a) && isAndNode(b)) {
+    return (
+      (sameNode(a.left, b.left) && sameNode(a.right, b.right)) ||
+      (sameNode(a.left, b.right) && sameNode(a.right, b.left))
+    );
+  }
+  if (isOrNode(a) && isOrNode(b)) {
+    return (
+      (sameNode(a.left, b.left) && sameNode(a.right, b.right)) ||
+      (sameNode(a.left, b.right) && sameNode(a.right, b.left))
+    );
+  }
   return a.text === b.text;
 }
 

@@ -7,6 +7,7 @@ import {
   disjunctiveSyllogism,
   simplification,
   addition,
+  conjunction
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -551,6 +552,18 @@ describe("Simplification", () => {
 
     const ACTUAL = addition(bigConj, E)
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+})
+
+describe("Conjunction", () => {
+  
+  it("(A ∧ B) ∧ (C ∧ D)", () => {
+    const aConj = createAndNode("A ∧ B",false,A,B,undefined)
+    const cConj = createAndNode("C ∧ D",false,A,B,undefined)
+    const EXPECTED = createAndNode("(A ∧ B) ∧ (C ∧ D)",false,A,B,undefined)
+
+    const ACTUAL = conjunction(aConj, cConj)
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
   })
 })
 
