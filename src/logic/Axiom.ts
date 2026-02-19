@@ -14,6 +14,8 @@ import {
   createImplicationNode,
   isBinaryNode,
   isAndNode,
+  isOrNode,
+  isIffNode,
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -66,8 +68,38 @@ export function hypotheticalSyllogism(premises: AndNode): ProofNode {
 
 /**
  * Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q
- * 
+ * @param premises are the or conjunction and the not
+ * @return returns the desired node or ERROR_NODE if invalid operation
  */
+export function disjunctiveSyllogism(premises: AndNode): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
+
+  let orNode
+  let notNode
+
+  if ((isOrNode(a) && isNotNode(b))) {
+    orNode = a
+    notNode = b
+  }
+  else if ((isNotNode(a) && isOrNode(b))) {
+    notNode = a
+    orNode = b
+  }
+  else {
+    return ERROR_NODE;
+  }
+
+  if ((sameNode(orNode.left, notNode.contains))) {
+    return orNode.right
+  } else if (sameNode(orNode.right, notNode.contains)) {
+    return orNode.left
+  }
+
+
+  return ERROR_NODE;
+}
 
 /**
  * Modus Ponens: from P and (P -> Q), infer Q
@@ -155,6 +187,12 @@ export const Axioms: Axiom[] = [
     apply: hypotheticalSyllogism,
   },
   {
+    id: "2",
+    text: "Disjunctive Syllogism",
+    selected: false,
+    apply: disjunctiveSyllogism
+  },
+  {
     id: "3",
     text: "Modus Ponens",
     selected: false,
@@ -166,5 +204,4 @@ export const Axioms: Axiom[] = [
     selected: false,
     apply: modusTollens,
   },
-
 ];
