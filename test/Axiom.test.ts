@@ -6,6 +6,7 @@ import {
   hypotheticalSyllogism,
   disjunctiveSyllogism,
   simplification,
+  addition,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -525,6 +526,30 @@ describe("Simplification", () => {
     const aConjConjC = createAndNode("(A ∧ B) ∧ C",false,aConj,C,undefined)
     const EXPECTED = C
     const ACTUAL = simplification(aConjConjC, "right");
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+})
+describe("Simplification", () => {
+  it("A → A ∨ B", () => {
+    const EXPECTED = createOrNode("A ∨ B", false, A, B, undefined)
+    const ACTUAL = addition(A, B);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+  it("A ∧ B → (A ∧ B) ∨ C", () => {
+    const aConj = createAndNode("A ∧ B",false,A,B,undefined)
+    const EXPECTED = createOrNode("(A ∧ B) ∨ C",false, aConj, C, undefined)
+    const ACTUAL = addition(aConj, C)
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+  it("(A ∧ B) ∧ (C ∧ D) → ((A ∧ B) ∧ (C ∧ D)) ∨ E", () => {
+    const aConj = createAndNode("A ∧ B",false,A,B,undefined)
+    const cConj = createAndNode("C ∧ D",false,A,B,undefined)
+    const bigConj = createAndNode("(A ∧ B) ∧ (C ∧ D)",false,A,B,undefined)
+
+
+    const EXPECTED = createOrNode("((A ∧ B) ∧ (C ∧ D)) ∨ E",false, bigConj, E, undefined)
+
+    const ACTUAL = addition(bigConj, E)
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   })
 })

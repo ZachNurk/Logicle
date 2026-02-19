@@ -16,7 +16,8 @@ import {
   isAndNode,
   isOrNode,
   isIffNode,
-  createResultNode
+  createResultNode,
+  createOrNode
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -27,7 +28,8 @@ export type Axiom = {
   /** Most axioms take selected nodes; Simplification takes "left" | "right". */
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
-    | ((premises: AndNode, side: "left" | "right") => ProofNode);
+    | ((premises: AndNode, side: "left" | "right") => ProofNode)
+    | ((original: ProofNode, addition: ProofNode) => ProofNode);
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -204,6 +206,19 @@ export function simplification(premises: AndNode, side: "left" | "right") {
   return ERROR_NODE;
 }
 
+/**
+ * Addition: p → (p ∨ q)
+ * @param original is the original node to add to
+ * @param addition is the node we are adding (designed by the UI)
+ */
+export function addition(original: ProofNode, addition: ProofNode): ProofNode {
+  let a = checkParentheses(original)
+  let b = checkParentheses(addition)
+  let text = `${a} ∨ ${b}`
+  return createOrNode(text, false, original, addition, [original])
+}
+
+
 // Axioms list
 export const Axioms: Axiom[] = [
   {
@@ -235,5 +250,11 @@ export const Axioms: Axiom[] = [
     text: "Simplification",
     selected: false,
     apply: simplification,
+  },
+  {
+    id: "9",
+    text: "Addition",
+    selected: false,
+    apply: addition
   }
 ];
