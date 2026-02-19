@@ -5,6 +5,7 @@ import {
   modusTollens,
   hypotheticalSyllogism,
   disjunctiveSyllogism,
+  simplification,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -41,8 +42,7 @@ describe("Modus Ponens", () => {
       P,
       Q,
     );
-
-    expect(sameNode(modusPonens(premises(P, PImpliesQ)), Q)).toBe(true);
+    expect(sameNode(modusPonens(premises(P, PImpliesQ), [P, PImpliesQ]), Q)).toBe(true);
   });
 
   it("Modus Ponens: (P -> Q) and P yields Q", () => {
@@ -55,7 +55,7 @@ describe("Modus Ponens", () => {
       Q,
     );
 
-    expect(sameNode(modusPonens(premises(PImpliesQ, P)), Q)).toBe(true);
+    expect(sameNode(modusPonens(premises(PImpliesQ, P), [P, PImpliesQ]), Q)).toBe(true);
   });
 
   it("Modus Ponens: (P -> Q) and ((P -> Q) -> L) yields L", () => {
@@ -77,10 +77,10 @@ describe("Modus Ponens", () => {
     );
 
     expect(
-      sameNode(modusPonens(premises(PImpliesQ, PImpliesQImpliesL)), L),
+      sameNode(modusPonens(premises(PImpliesQ, PImpliesQImpliesL), [PImpliesQ, PImpliesQImpliesL]), L),
     ).toBe(true);
     expect(
-      sameNode(modusPonens(premises(PImpliesQImpliesL, PImpliesQ)), L),
+      sameNode(modusPonens(premises(PImpliesQImpliesL, PImpliesQ), [PImpliesQImpliesL, PImpliesQ]), L),
     ).toBe(true);
   });
 
@@ -95,7 +95,7 @@ describe("Modus Ponens", () => {
       W,
     );
 
-    expect(sameNode(modusPonens(premises(Q, PImpliesW)), ERROR_NODE)).toBe(
+    expect(sameNode(modusPonens(premises(Q, PImpliesW), [Q, PImpliesW]), ERROR_NODE)).toBe(
       true,
     );
   });
@@ -112,10 +112,10 @@ describe("Modus Ponens", () => {
       R,
     );
 
-    expect(sameNode(modusPonens(premises(P, QImpliesR)), ERROR_NODE)).toBe(
+    expect(sameNode(modusPonens(premises(P, QImpliesR), [P, QImpliesR]), ERROR_NODE)).toBe(
       true,
     );
-    expect(sameNode(modusPonens(premises(QImpliesR, P)), ERROR_NODE)).toBe(
+    expect(sameNode(modusPonens(premises(QImpliesR, P), [QImpliesR, P]), ERROR_NODE)).toBe(
       true,
     );
   });
@@ -138,11 +138,12 @@ describe("Modus Ponens", () => {
       QImpliesR,
     );
 
-    const ACTUAL: ProofNode = modusPonens(premises(P, PImplies_QImpliesR));
+    const ACTUAL: ProofNode = modusPonens(premises(P, PImplies_QImpliesR), [P, PImplies_QImpliesR]);
     expect(sameNode(ACTUAL, QImpliesR)).toBe(true);
 
     const ACTUAL_REVERSE: ProofNode = modusPonens(
       premises(PImplies_QImpliesR, P),
+      [PImplies_QImpliesR, P],
     );
     expect(sameNode(ACTUAL_REVERSE, QImpliesR)).toBe(true);
   });
@@ -159,7 +160,7 @@ describe("Modus Ponens", () => {
       Q,
     );
 
-    expect(sameNode(modusPonens(premises(P2, PImpliesQ)), ERROR_NODE)).toBe(
+    expect(sameNode(modusPonens(premises(P2, PImpliesQ), [P2, PImpliesQ]), ERROR_NODE)).toBe(
       true,
     );
   });
@@ -180,10 +181,10 @@ describe("Modus Tollens", () => {
 
     const EXPECTED: NotNode = createNotNode("¬P", true, P, undefined);
 
-    let ACTUAL: ProofNode = modusTollens(premises(PImpliesQ, NQ));
+    let ACTUAL: ProofNode = modusTollens(premises(PImpliesQ, NQ), [PImpliesQ, NQ]);
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
 
-    ACTUAL = modusTollens(premises(NQ, PImpliesQ));
+    ACTUAL = modusTollens(premises(NQ, PImpliesQ), [NQ, PImpliesQ]);
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   });
 
@@ -215,10 +216,11 @@ describe("Modus Tollens", () => {
 
     let ACTUAL: ProofNode = modusTollens(
       premises(PImplies_CImpliesB, Not_CImpliesB),
+      [PImplies_CImpliesB, Not_CImpliesB],
     );
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
 
-    ACTUAL = modusTollens(premises(Not_CImpliesB, PImplies_CImpliesB));
+    ACTUAL = modusTollens(premises(Not_CImpliesB, PImplies_CImpliesB), [Not_CImpliesB, PImplies_CImpliesB]);
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   });
 
@@ -236,7 +238,7 @@ describe("Modus Tollens", () => {
 
     const EXPECTED: NotNode = createNotNode("¬P", true, P, undefined);
 
-    expect(sameNode(modusTollens(premises(NQ, PImpliesQ)), EXPECTED)).toBe(
+    expect(sameNode(modusTollens(premises(NQ, PImpliesQ), [NQ, PImpliesQ]), EXPECTED)).toBe(
       true,
     );
   });
@@ -253,10 +255,10 @@ describe("Modus Tollens", () => {
       Q,
 
     );
-    expect(sameNode(modusTollens(premises(PImpliesQ, NP)), ERROR_NODE)).toBe(
+    expect(sameNode(modusTollens(premises(PImpliesQ, NP), [PImpliesQ, NP]), ERROR_NODE)).toBe(
       true,
     );
-    expect(sameNode(modusTollens(premises(NP, PImpliesQ)), ERROR_NODE)).toBe(
+    expect(sameNode(modusTollens(premises(NP, PImpliesQ), [NP, PImpliesQ]), ERROR_NODE)).toBe(
       true,
     );
   });
@@ -287,10 +289,10 @@ describe("Modus Tollens", () => {
     );
 
     expect(
-      sameNode(modusTollens(premises(PImpliesQ, Not_QImpliesR)), ERROR_NODE),
+      sameNode(modusTollens(premises(PImpliesQ, Not_QImpliesR), [PImpliesQ, Not_QImpliesR]), ERROR_NODE),
     ).toBe(true);
     expect(
-      sameNode(modusTollens(premises(Not_QImpliesR, PImpliesQ)), ERROR_NODE),
+      sameNode(modusTollens(premises(Not_QImpliesR, PImpliesQ), [Not_QImpliesR, PImpliesQ]), ERROR_NODE),
     ).toBe(true);
   });
 
@@ -322,13 +324,13 @@ describe("Modus Tollens", () => {
 
     expect(
       sameNode(
-        modusTollens(premises(PImplies_AImpliesB, Not_AImpliesB)),
+        modusTollens(premises(PImplies_AImpliesB, Not_AImpliesB), [PImplies_AImpliesB, Not_AImpliesB]),
         EXPECTED,
       ),
     ).toBe(true);
     expect(
       sameNode(
-        modusTollens(premises(Not_AImpliesB, PImplies_AImpliesB)),
+        modusTollens(premises(Not_AImpliesB, PImplies_AImpliesB), [Not_AImpliesB, PImplies_AImpliesB]),
         EXPECTED,
       ),
     ).toBe(true);
@@ -363,15 +365,14 @@ describe("Hypothetical Syllogism", () => {
 
     const ACTUAL: ProofNode = hypotheticalSyllogism(
       premises(PImpliesQ, QImpliesR),
+      [PImpliesQ, QImpliesR],
     );
-    console.log(EXPECTED.text);
-    console.log(ACTUAL.text);
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
 
     const ACTUAL_REVERSE: ProofNode = hypotheticalSyllogism(
       premises(QImpliesR, PImpliesQ),
+      [QImpliesR, PImpliesQ],
     );
-
     expect(sameNode(ACTUAL_REVERSE, EXPECTED)).toBe(true);
   });
 
@@ -409,13 +410,13 @@ describe("Hypothetical Syllogism", () => {
 
     const ACTUAL: ProofNode = hypotheticalSyllogism(
       premises(PImpliesQ, QImplies_RImpliesS),
+      [PImpliesQ, QImplies_RImpliesS],
     );
-    console.log(EXPECTED.text);
-    console.log(ACTUAL.text);
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
 
     const ACTUAL_REVERSE: ProofNode = hypotheticalSyllogism(
       premises(QImplies_RImpliesS, PImpliesQ),
+      [QImplies_RImpliesS, PImpliesQ],
     );
     expect(sameNode(ACTUAL_REVERSE, EXPECTED)).toBe(true);
   });
@@ -441,13 +442,13 @@ describe("Hypothetical Syllogism", () => {
 
     expect(
       sameNode(
-        hypotheticalSyllogism(premises(PImpliesQ, RImpliesS)),
+        hypotheticalSyllogism(premises(PImpliesQ, RImpliesS), [PImpliesQ, RImpliesS]),
         ERROR_NODE,
       ),
     ).toBe(true);
     expect(
       sameNode(
-        hypotheticalSyllogism(premises(RImpliesS, PImpliesQ)),
+        hypotheticalSyllogism(premises(RImpliesS, PImpliesQ), [RImpliesS, PImpliesQ]),
         ERROR_NODE,
       ),
     ).toBe(true);
@@ -461,14 +462,11 @@ describe("Disjunctive Syllogism", () => {
     const NP: NotNode = createNotNode("¬P", true, P, undefined);
     const POQ: OrNode = createOrNode("P ∨ Q", true, P, Q, undefined);
 
-    const EXPECTED = Q
-    let ACTUAL = disjunctiveSyllogism(premises(POQ, NP))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    ACTUAL = disjunctiveSyllogism(premises(NP, POQ))
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    
+    const EXPECTED = Q;
+    let ACTUAL = disjunctiveSyllogism(premises(POQ, NP), [POQ, NP]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+    ACTUAL = disjunctiveSyllogism(premises(NP, POQ), [NP, POQ]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   });
 
   it("[(q ∨ p) ∧ ¬p] → q", () => {
@@ -477,16 +475,11 @@ describe("Disjunctive Syllogism", () => {
     const NP: NotNode = createNotNode("¬P", true, P, undefined);
     const QOP: OrNode = createOrNode("Q ∨ P", true, Q, P, undefined);
 
-    const EXPECTED = Q
-    let ACTUAL = disjunctiveSyllogism(premises(QOP, NP))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    ACTUAL = disjunctiveSyllogism(premises(NP, QOP))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    
+    const EXPECTED = Q;
+    let ACTUAL = disjunctiveSyllogism(premises(QOP, NP), [QOP, NP]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+    ACTUAL = disjunctiveSyllogism(premises(NP, QOP), [NP, QOP]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   });
 
   it("[(C ∨ (A ∧ B)) ∧ ¬( A ^ B )] → C", () => {
@@ -495,36 +488,46 @@ describe("Disjunctive Syllogism", () => {
     const COANBD: OrNode = createOrNode("C ∨ (A ∧ B)", true, C, ANB, undefined)
 
 
-    const EXPECTED = C
-    let ACTUAL = disjunctiveSyllogism(premises(COANBD, NANB))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    ACTUAL = disjunctiveSyllogism(premises(NANB, COANBD))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    
+    const EXPECTED = C;
+    let ACTUAL = disjunctiveSyllogism(premises(COANBD, NANB), [COANBD, NANB]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+    ACTUAL = disjunctiveSyllogism(premises(NANB, COANBD), [NANB, COANBD]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   });
-  
-it("[(C ∨ (A ∧ B)) ∧ ¬C] → (A ∧ B)", () => {
+
+  it("[(C ∨ (A ∧ B)) ∧ ¬C] → (A ∧ B)", () => {
     const ANB: AndNode = createAndNode("A ∧ B", true, A, B, undefined)
     const NC: NotNode = createNotNode("C", true, C, undefined)
     const COANBD: OrNode = createOrNode("C ∨ (A ∧ B)", true, C, ANB, undefined)
 
 
-    const EXPECTED = ANB
-    let ACTUAL = disjunctiveSyllogism(premises(COANBD, NC))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    ACTUAL = disjunctiveSyllogism(premises(NC, COANBD))
-    console.log(EXPECTED.text)
-    console.log(ACTUAL.text)
-    expect((sameNode(ACTUAL,EXPECTED))).toBe(true)
-    
+    const EXPECTED = ANB;
+    let ACTUAL = disjunctiveSyllogism(premises(COANBD, NC), [COANBD, NC]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+    ACTUAL = disjunctiveSyllogism(premises(NC, COANBD), [NC, COANBD]);
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
   });
 });
+
+describe("Simplification", () => {
+  const aConj = createAndNode("A ∧ B",false,A,B,undefined)
+  it("(A ∧ B) → A", () => {
+    const EXPECTED = A
+    const ACTUAL = simplification(aConj, "left");
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+  it("(A ∧ B) → B", () => {
+    const EXPECTED = B
+    const ACTUAL = simplification(aConj, "right");
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+  it("(A ∧ B) ∧ C → C", () => {
+    const aConjConjC = createAndNode("(A ∧ B) ∧ C",false,aConj,C,undefined)
+    const EXPECTED = C
+    const ACTUAL = simplification(aConjConjC, "right");
+    expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
+  })
+})
 
 
 

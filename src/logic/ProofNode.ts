@@ -99,6 +99,19 @@ export function isBinaryNode(node: ProofNode): boolean {
   );
 }
 
+/**
+ * Creates a new node, but with newly defined parents. Used in the result of an axiom operation
+ * @param result is the result of the operation
+ * @param parents is the 2 elm array of parents
+ * @return returns the new node
+ */
+export function createResultNode<N extends ProofNode>(result: N, parents: N[]): N{
+  return {
+    ...result,
+    parents: parents
+  }
+}
+
 // Node returned if operation isnt possible
 export const ERROR_NODE: ProofNode = {
   id: "ERROR",

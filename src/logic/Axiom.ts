@@ -16,6 +16,7 @@ import {
   isAndNode,
   isOrNode,
   isIffNode,
+  createResultNode
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -23,7 +24,10 @@ export type Axiom = {
   id: string;
   text: string;
   selected: boolean;
-  apply?: (premises: AndNode) => ProofNode;
+  /** Most axioms take selected nodes; Simplification takes "left" | "right". */
+  apply?:
+    | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
+    | ((premises: AndNode, side: "left" | "right") => ProofNode);
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -41,8 +45,9 @@ export function checkParentheses(n: ProofNode): string {
 /**
  * Hypothetical Syllogism [(p → q) ∧ (q → r)] → (p → r)
  * @param premises And node whose left and right are the two implication nodes
+ * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
  */
-export function hypotheticalSyllogism(premises: AndNode): ProofNode {
+export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -55,13 +60,13 @@ export function hypotheticalSyllogism(premises: AndNode): ProofNode {
     const first = checkParentheses(a.left);
     const fourth = checkParentheses(b.right);
     const text = `${first} → ${fourth}`;
-    return createImplicationNode(text, false, a.left, b.right, [a, b]);
+    return createImplicationNode(text, false, a.left, b.right, selected);
   }
   if (sameNode(a.left, b.right)) {
     const first = checkParentheses(b.left);
     const fourth = checkParentheses(a.right);
     const text = `${first} → ${fourth}`;
-    return createImplicationNode(text, false, b.left, a.right, [a, b]);
+    return createImplicationNode(text, false, b.left, a.right, selected);
   }
   return ERROR_NODE;
 }
@@ -69,9 +74,10 @@ export function hypotheticalSyllogism(premises: AndNode): ProofNode {
 /**
  * Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q
  * @param premises are the or conjunction and the not
+ * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
  * @return returns the desired node or ERROR_NODE if invalid operation
  */
-export function disjunctiveSyllogism(premises: AndNode): ProofNode {
+export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -92,9 +98,9 @@ export function disjunctiveSyllogism(premises: AndNode): ProofNode {
   }
 
   if ((sameNode(orNode.left, notNode.contains))) {
-    return orNode.right
+    return createResultNode(orNode.right, selected)
   } else if (sameNode(orNode.right, notNode.contains)) {
-    return orNode.left
+    return createResultNode(orNode.left, selected)
   }
 
 
@@ -104,8 +110,9 @@ export function disjunctiveSyllogism(premises: AndNode): ProofNode {
 /**
  * Modus Ponens: from P and (P -> Q), infer Q
  * @param premises And node whose left and right are the two premise nodes
+ * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
  */
-export function modusPonens(premises: AndNode): ProofNode {
+export function modusPonens(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -115,10 +122,10 @@ export function modusPonens(premises: AndNode): ProofNode {
 
   if (isImplicationNode(a) && isImplicationNode(b)) {
     if (sameNode(b.left, a)) {
-      return b.right;
+      return createResultNode(b.right,selected);
     }
     if (sameNode(a.left, b)) {
-      return a.right;
+      return createResultNode(a.right,selected);
     }
     return ERROR_NODE;
   }
@@ -142,14 +149,15 @@ export function modusPonens(premises: AndNode): ProofNode {
     return ERROR_NODE;
   }
 
-  return implication.right;
+  return createResultNode(implication.right,selected);
 }
 
 /**
  * Modus Tollens: [¬q ∧ (p → q)] → ¬p
  * @param premises And node whose left and right are the two premise nodes
+ * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
  */
-export function modusTollens(premises: AndNode): ProofNode {
+export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -173,7 +181,25 @@ export function modusTollens(premises: AndNode): ProofNode {
 
   if (sameNode(premise.contains, implication.right)) {
     const text = `¬${checkParentheses(implication.left)}`;
-    return createNotNode(text, false, implication.left, [a, b]);
+    return createNotNode(text, false, implication.left, selected);
+  }
+  return ERROR_NODE;
+}
+
+/**
+ * Simplification: (p ∧ q) → p
+ * @param premises is an and node to simplify
+ * @param side is the node to get out
+ * @return returns error nod if valid operation, correct node if valid
+ */
+export function simplification(premises: AndNode, side: "left" | "right") {
+  checkPremises(premises)
+
+  if (side === "left") {
+    return createResultNode(premises.left, [premises]);
+  }
+  if (side === "right") {
+    return createResultNode(premises.right, [premises]);
   }
   return ERROR_NODE;
 }
@@ -204,4 +230,10 @@ export const Axioms: Axiom[] = [
     selected: false,
     apply: modusTollens,
   },
+  {
+    id: "6",
+    text: "Simplification",
+    selected: false,
+    apply: simplification,
+  }
 ];
