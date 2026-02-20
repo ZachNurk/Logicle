@@ -6,22 +6,36 @@
 
 import GivenPanel from "./components/left_panel/GivenPanel";
 import RulePanel from "./components/right_panel/RulePanel";
-import { useProofState } from "./hooks/useProofState";
+import { useProofSession } from "./hooks/proof_session/useProofSession";
 
 /**
  * Main App
  * Program is split into two segments, GivenPanel (Left) and RulePanel (Right)
  */
 export default function App() {
-  const { givenNodes, solutionNode, axioms, toggleSelectedProofNode, toggleSelectedAxiom } =
-    useProofState();
+  const {
+    nodes,
+    solutionNode,
+    toggleSelectedProofNode,
+    axioms,
+    toggleSelectedAxiom,
+    applySelectedAxiom,
+    victory
+  } = useProofSession();
 
-  return (
-    <div style={styles.split}>
-      <GivenPanel givenArray={givenNodes} solutionNode={solutionNode} toggleSelected={toggleSelectedProofNode} />
-      <RulePanel axioms={axioms} toggleSelected={toggleSelectedAxiom} />
-    </div>
-  );
+  if (!victory) {
+    return (
+      <div style={styles.split}>
+        <GivenPanel givenArray={nodes} solutionNode={solutionNode} toggleSelected={toggleSelectedProofNode} />
+        <RulePanel
+          axioms={axioms}
+          toggleSelected={toggleSelectedAxiom}
+          onApply={applySelectedAxiom}
+        />
+      </div>
+    );
+  }
+  
 }
 
 const styles = {

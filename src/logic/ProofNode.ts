@@ -121,7 +121,9 @@ export function isBinaryNode(node: ProofNode): boolean {
 export function createResultNode<N extends ProofNode>(result: N, parents: N[]): N {
   return {
     ...result,
+    id: crypto.randomUUID(),
     isStarter: false,
+    context: false,
     parents: parents,
   };
 }
@@ -132,6 +134,7 @@ export const ERROR_NODE: ProofNode = {
   text: "ERORR",
   selected: false,
   isStarter: false,
+  context: false,
 };
 
 export type ProofNode = {
@@ -140,6 +143,8 @@ export type ProofNode = {
   selected: boolean;
   /** True if this node is a given/premise (loaded or added as starter). False for derived nodes. */
   isStarter?: boolean;
+  /** When true, node is context-only (e.g. sub-formula); when false, show in given panel. */
+  context?: boolean;
   parents?: ProofNode[];
   relationship?: Relationship; // Only present on non-atomic nodes
 };
@@ -181,6 +186,7 @@ export function createNode(
     text: text,
     selected: selected,
     isStarter: isStarter ?? false,
+    context: false,
     parents: parents ?? [],
   };
 }
@@ -197,6 +203,7 @@ export function createNotNode(
     text: text,
     selected: selected,
     isStarter: isStarter ?? false,
+    context: false,
     relationship: "Not",
     contains: contains,
     parents: parents ?? [],
@@ -216,6 +223,7 @@ export function createImplicationNode(
     text: text,
     selected: selected,
     isStarter: isStarter ?? false,
+    context: false,
     parents: parents ?? [],
     relationship: "If",
     left: left,
@@ -236,6 +244,7 @@ export function createAndNode(
     text: text,
     selected: selected,
     isStarter: isStarter ?? false,
+    context: false,
     parents: parents ?? [],
     relationship: "And",
     left: left,
@@ -256,6 +265,7 @@ export function createOrNode(
     text: text,
     selected: selected,
     isStarter: isStarter ?? false,
+    context: false,
     parents: parents ?? [],
     relationship: "Or",
     left: left,
@@ -276,6 +286,7 @@ export function createIffNode(
     text: text,
     selected: selected,
     isStarter: isStarter ?? false,
+    context: false,
     parents: parents ?? [],
     relationship: "Iff",
     left: left,
@@ -284,18 +295,37 @@ export function createIffNode(
 }
 
 /**
- * Function converts a DB node into a ProofNode
- * @param dbNode is the node from the database
- * @param isStarter defaults to true for given nodes; pass false for solution/target nodes
- * @return returns a ProofNode with the correct fields
+ * Wraps DB JSON as a ProofNode. If the node is binary (And/Or/If/Iff), defines left/right from dbNode.left and dbNode.right; if Not, defines contains.
  */
+//TODO understand me
 export function nodeFromDb(dbNode: any, isStarter: boolean = true): ProofNode {
-  return {
-    id: String(dbNode.id),
-    text: String(dbNode.text),
-    selected: Boolean(dbNode.selected ?? false),
-    isStarter: dbNode.isStarter !== undefined ? Boolean(dbNode.isStarter) : isStarter,
-    parents: Array.isArray(dbNode.parents) ? dbNode.parents : [],
-    relationship: dbNode.relationship as Relationship | undefined,
+  const rel = dbNode?.relationship as Relationship | undefined;
+  const base = {
+    id: String(dbNode?.id ?? ""),
+    text: String(dbNode?.text ?? ""),
+    selected: Boolean(dbNode?.selected ?? false),
+    isStarter: dbNode?.isStarter ?? isStarter,
+    context: Boolean(dbNode?.context ?? false),
+    parents: undefined as ProofNode[] | undefined,
+    relationship: rel,
   };
+
+  if (rel === "Not" && dbNode?.contains && typeof dbNode.contains === "object" && dbNode.contains.id != null) {
+    return { ...base, relationship: "Not", contains: nodeFromDb(dbNode.contains, isStarter) } as NotNode;
+  }
+
+  const isBinary = rel === "And" || rel === "Or" || rel === "If" || rel === "Iff";
+  const hasLeftRight = dbNode?.left != null && dbNode?.right != null &&
+    typeof dbNode.left === "object" && dbNode.left.id != null &&
+    typeof dbNode.right === "object" && dbNode.right.id != null;
+  if (isBinary && hasLeftRight) {
+    return {
+      ...base,
+      relationship: rel,
+      left: nodeFromDb(dbNode.left, isStarter),
+      right: nodeFromDb(dbNode.right, isStarter),
+    } as ProofNode;
+  }
+
+  return base as ProofNode;
 }

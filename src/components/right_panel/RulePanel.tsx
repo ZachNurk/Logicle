@@ -8,6 +8,7 @@ import type { Axiom } from "../../logic/Axiom";
 type RulePanelProps = {
   axioms: Axiom[];
   toggleSelected: (id: string) => void;
+  onApply?: () => void;
 };
 
 
@@ -16,7 +17,7 @@ type RulePanelProps = {
 /**
  * UI element for the right side
  */
-export default function RulePanel({ axioms, toggleSelected }: RulePanelProps) {
+export default function RulePanel({ axioms, toggleSelected, onApply }: RulePanelProps) {
   return (
     <div style={styles.container}>
       {axioms.map((axiom) => (
@@ -33,6 +34,11 @@ export default function RulePanel({ axioms, toggleSelected }: RulePanelProps) {
         <div style={styles.axiomDescription}>{axiom.description}</div>
         </div>
       ))}
+      {onApply && (
+        <button onClick={onApply} style={styles.applyButton}>
+          Apply selected
+        </button>
+      )}
       <div style={styles.main}>
         <h1>Right side content...</h1>
       </div>
@@ -88,5 +94,14 @@ const styles = {
     borderRadius: "5px",
     border: "none",
     cursor: "pointer",
+  } satisfies React.CSSProperties,
+
+  applyButton: {
+    padding: "10px 20px",
+    fontSize: "14px",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: "#07b9ff",
   } satisfies React.CSSProperties,
 };

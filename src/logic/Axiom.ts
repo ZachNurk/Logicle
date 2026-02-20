@@ -22,12 +22,16 @@ import {
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
+/** Type 1: (premises: AndNode, selected: ProofNode[]) => ProofNode. Type 2: (premises: AndNode, side: "left"|"right") => ProofNode. Type 3: (original: ProofNode, addition: ProofNode) => ProofNode. */
+export type AxiomApplyType = "1" | "2" | "3";
+
 export type Axiom = {
   id: string;
   text: string;
   selected: boolean;
   description: string;
-  /** Most axioms take selected nodes; Simplification takes "left" | "right". */
+  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition. */
+  applyType: AxiomApplyType;
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
     | ((premises: AndNode, side: "left" | "right") => ProofNode)
@@ -207,7 +211,7 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
  */
 export function simplification(premises: AndNode, side: "left" | "right") {
   checkPremises(premises)
-
+  if (!side) throw new Error("no side selected!")
   if (side === "left") {
     return createResultNode(premises.left, [premises]);
   }
@@ -224,7 +228,6 @@ export function simplification(premises: AndNode, side: "left" | "right") {
  * @return returns the node result, ERROR_NODE if unsuccessful
  * @throws Error if premises are undefined
  */
-//TODO TEST ME AND DOCUMENT US
 export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
@@ -295,6 +298,7 @@ export const Axioms: Axiom[] = [
     text: "Hypothetical Syllogism",
     selected: false,
     description: "[(A → B) ∧ (B → C)] → (A → C)",
+    applyType: "1",
     apply: hypotheticalSyllogism,
   },
   {
@@ -302,13 +306,15 @@ export const Axioms: Axiom[] = [
     text: "Disjunctive Syllogism",
     selected: false,
     description: "[(A ∨ B) ∧ ¬(A)] → B",
-    apply: disjunctiveSyllogism
+    applyType: "1",
+    apply: disjunctiveSyllogism,
   },
   {
     id: "3",
     text: "Modus Ponens",
     selected: false,
     description: "[A ∧ (A → B)] → B",
+    applyType: "1",
     apply: modusPonens,
   },
   {
@@ -316,6 +322,7 @@ export const Axioms: Axiom[] = [
     text: "Modus Tollens",
     selected: false,
     description: "[(A → B) ∧ ¬B] → ¬A",
+    applyType: "1",
     apply: modusTollens,
   },
   {
@@ -323,6 +330,7 @@ export const Axioms: Axiom[] = [
     text: "Simplification",
     selected: false,
     description: "(A ∧ B) → A",
+    applyType: "2",
     apply: simplification,
   },
   {
@@ -330,6 +338,7 @@ export const Axioms: Axiom[] = [
     text: "Constructive Dilemma (OR)",
     selected: false,
     description: "[(A → B) ∧ (C → D)] → ((A ∨ B) → (C ∨ D))",
+    applyType: "1",
     apply: constructiveDilemmaOr,
   },
   {
@@ -337,6 +346,7 @@ export const Axioms: Axiom[] = [
     text: "Constructive Dilemma (AND)",
     selected: false,
     description: "[(A → B) ∧ (C → D)] → ((A ∧ B) → (C ∧ D))",
+    applyType: "1",
     apply: constructiveDilemmaAnd,
   },
   {
@@ -344,13 +354,15 @@ export const Axioms: Axiom[] = [
     text: "Addition",
     selected: false,
     description: "A → (A ∨ B)",
-    apply: addition
+    applyType: "3",
+    apply: addition,
   },
   {
     id: "10",
     text: "Conjunction",
     selected: false,
-    description: "[A ∧ B] →(A ∧ B)",
-    apply: conjunction
-  }
+    description: "[A ∧ B] → (A ∧ B)",
+    applyType: "3",
+    apply: conjunction,
+  },
 ];

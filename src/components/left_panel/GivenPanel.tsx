@@ -19,10 +19,11 @@ export default function GivenPanel({
   solutionNode,
   toggleSelected,
 }: Props) {
+  //TODO does this have poor runtime?
   return (
     <div style={styles.container}>
       <div style={styles.topSlots.main}>
-        {givenArray.map((node) => (
+        {(givenArray ?? []).filter((node) => node.isStarter === true && node.context === false).map((node) => (
           <button
             key={node.id}
             onClick={() => toggleSelected(node.id)}
@@ -37,7 +38,20 @@ export default function GivenPanel({
       </div>
 
       <div style={styles.main}>
-        <h1>Left content goes here...</h1>
+        <div style={styles.topSlots.main}>
+          {(givenArray ?? []).filter((node) => node.isStarter !== true).map((node) => (
+            <button
+              key={node.id}
+              onClick={() => toggleSelected(node.id)}
+              style={{
+                ...styles.givenButtonBase,
+                backgroundColor: node.selected ? "#ff4107" : "#07b9ff",
+              }}
+            >
+              {node.text}
+            </button>
+          ))}
+        </div>
         <button
           key={solutionNode.id}
           disabled
