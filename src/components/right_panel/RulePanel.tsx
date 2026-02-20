@@ -20,8 +20,8 @@ export default function RulePanel({ axioms, toggleSelected }: RulePanelProps) {
   return (
     <div style={styles.container}>
       {axioms.map((axiom) => (
+        <div key={axiom.id} style={styles.axiomRow}>
         <button
-          key={axiom.id}
           onClick={() => toggleSelected(axiom.id)}
           style={{
             ...styles.axiomButtonBase,
@@ -30,6 +30,8 @@ export default function RulePanel({ axioms, toggleSelected }: RulePanelProps) {
         >
           {axiom.text}
         </button>
+        <div style={styles.axiomDescription}>{axiom.description}</div>
+        </div>
       ))}
       <div style={styles.main}>
         <h1>Right side content...</h1>
@@ -49,11 +51,19 @@ const styles = {
     gap: 12, // space between children
   } satisfies React.CSSProperties,
 
-  varsCol: {
+  axiomRow: {
     display: "flex",
-    flexDirection: "column",
-    gap: 10,
+    alignItems: "center",
+    gap: 12,
   } satisfies React.CSSProperties,
+
+  axiomDescription: {
+    flex: 1,
+    fontSize: 13,
+    color: "#333",
+    lineHeight: 1.2,
+  } satisfies React.CSSProperties,
+
 
   slot: {
     border: "1px solid #ddd",

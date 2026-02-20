@@ -118,11 +118,12 @@ export function isBinaryNode(node: ProofNode): boolean {
  * @param parents is the 2 elm array of parents
  * @return returns the new node
  */
-export function createResultNode<N extends ProofNode>(result: N, parents: N[]): N{
+export function createResultNode<N extends ProofNode>(result: N, parents: N[]): N {
   return {
     ...result,
-    parents: parents
-  }
+    isStarter: false,
+    parents: parents,
+  };
 }
 
 // Node returned if operation isnt possible
@@ -130,12 +131,15 @@ export const ERROR_NODE: ProofNode = {
   id: "ERROR",
   text: "ERORR",
   selected: false,
+  isStarter: false,
 };
 
 export type ProofNode = {
   id: string;
   text: string;
   selected: boolean;
+  /** True if this node is a given/premise (loaded or added as starter). False for derived nodes. */
+  isStarter?: boolean;
   parents?: ProofNode[];
   relationship?: Relationship; // Only present on non-atomic nodes
 };
@@ -170,11 +174,13 @@ export function createNode(
   text: string,
   selected: boolean,
   parents?: ProofNode[],
+  isStarter?: boolean,
 ): ProofNode {
   return {
     id: crypto.randomUUID(),
     text: text,
     selected: selected,
+    isStarter: isStarter ?? false,
     parents: parents ?? [],
   };
 }
@@ -184,11 +190,13 @@ export function createNotNode(
   selected: boolean,
   contains: ProofNode,
   parents?: ProofNode[],
+  isStarter?: boolean,
 ): NotNode {
   return {
     id: crypto.randomUUID(),
     text: text,
     selected: selected,
+    isStarter: isStarter ?? false,
     relationship: "Not",
     contains: contains,
     parents: parents ?? [],
@@ -201,11 +209,13 @@ export function createImplicationNode(
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
+  isStarter?: boolean,
 ): ImplicationNode {
   return {
     id: crypto.randomUUID(),
     text: text,
     selected: selected,
+    isStarter: isStarter ?? false,
     parents: parents ?? [],
     relationship: "If",
     left: left,
@@ -219,11 +229,13 @@ export function createAndNode(
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
+  isStarter?: boolean,
 ): AndNode {
   return {
     id: crypto.randomUUID(),
     text: text,
     selected: selected,
+    isStarter: isStarter ?? false,
     parents: parents ?? [],
     relationship: "And",
     left: left,
@@ -237,11 +249,13 @@ export function createOrNode(
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
+  isStarter?: boolean,
 ): OrNode {
   return {
     id: crypto.randomUUID(),
     text: text,
     selected: selected,
+    isStarter: isStarter ?? false,
     parents: parents ?? [],
     relationship: "Or",
     left: left,
@@ -255,11 +269,13 @@ export function createIffNode(
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
+  isStarter?: boolean,
 ): IffNode {
   return {
     id: crypto.randomUUID(),
     text: text,
     selected: selected,
+    isStarter: isStarter ?? false,
     parents: parents ?? [],
     relationship: "Iff",
     left: left,
@@ -270,13 +286,15 @@ export function createIffNode(
 /**
  * Function converts a DB node into a ProofNode
  * @param dbNode is the node from the database
+ * @param isStarter defaults to true for given nodes; pass false for solution/target nodes
  * @return returns a ProofNode with the correct fields
  */
-export function nodeFromDb(dbNode: any): ProofNode {
+export function nodeFromDb(dbNode: any, isStarter: boolean = true): ProofNode {
   return {
     id: String(dbNode.id),
     text: String(dbNode.text),
     selected: Boolean(dbNode.selected ?? false),
+    isStarter: dbNode.isStarter !== undefined ? Boolean(dbNode.isStarter) : isStarter,
     parents: Array.isArray(dbNode.parents) ? dbNode.parents : [],
     relationship: dbNode.relationship as Relationship | undefined,
   };

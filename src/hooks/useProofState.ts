@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { nodeFromDb, ERROR_NODE } from "./ProofNode";
-import type { ProofNode } from "./ProofNode";
-import type { Axiom } from "./Axiom";
-import { Axioms } from "./Axiom";
+import { nodeFromDb, ERROR_NODE } from "../logic/ProofNode";
+import type { ProofNode } from "../logic/ProofNode";
+import type { Axiom } from "../logic/Axiom";
+import { Axioms } from "../logic/Axiom";
 
 /**
  * Manages the state of our App
@@ -21,7 +21,7 @@ export function useProofState() {
       const loaded: ProofNode[] = (firstDay.givenNodes ?? []).map(nodeFromDb);
       const rawSolution = firstDay.solution;
       setNodes(loaded);
-      setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
+      setSolutionNode(rawSolution ? nodeFromDb(rawSolution, false) : ERROR_NODE);
     })();
   }, []);
 

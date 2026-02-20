@@ -7,7 +7,9 @@ import {
   disjunctiveSyllogism,
   simplification,
   addition,
-  conjunction
+  conjunction,
+  constructiveDilemmaAnd,
+  constructiveDilemmaOr,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -564,6 +566,32 @@ describe("Conjunction", () => {
 
     const ACTUAL = conjunction(aConj, cConj)
     expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
+  })
+})
+
+describe("Constructive Dilemma And", () => {
+  
+  it("[(A → B) ∧ (C → D)] → (A ∧ B) → (C ∧ D)", () => {
+    const aImpB = createImplicationNode("A → B", false,A,B,undefined)
+    const CImpD = createImplicationNode("C → D", false,C,D,undefined)
+    const EXPECTED = "(A ∧ B) → (C ∧ D)"
+
+    const ACTUAL = constructiveDilemmaAnd(premises(aImpB, CImpD), [aImpB, CImpD])
+    console.log(ACTUAL.text)
+    expect(ACTUAL.text === EXPECTED).toBe(true)
+  })
+})
+
+describe("Constructive Dilemma or", () => {
+  
+  it("[(A → B) ∧ (C → D)] → (A ∨ B) → (C ∨ D)", () => {
+    const aImpB = createImplicationNode("A → B", false,A,B,undefined)
+    const CImpD = createImplicationNode("C → D", false,C,D,undefined)
+    const EXPECTED = "(A ∨ B) → (C ∨ D)"
+
+    const ACTUAL = constructiveDilemmaOr(premises(aImpB, CImpD), [aImpB, CImpD])
+    console.log(ACTUAL.text)
+    expect(ACTUAL.text === EXPECTED).toBe(true)
   })
 })
 

@@ -6,7 +6,7 @@
 
 import GivenPanel from "./components/left_panel/GivenPanel";
 import RulePanel from "./components/right_panel/RulePanel";
-import { useProofState } from "./logic/useProofState";
+import { useProofState } from "./hooks/useProofState";
 
 /**
  * Main App

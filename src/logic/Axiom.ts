@@ -26,12 +26,12 @@ export type Axiom = {
   id: string;
   text: string;
   selected: boolean;
+  description: string;
   /** Most axioms take selected nodes; Simplification takes "left" | "right". */
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
     | ((premises: AndNode, side: "left" | "right") => ProofNode)
     | ((original: ProofNode, addition: ProofNode) => ProofNode)
-    | ((premises: AndNode, type: "or" | "and") => ProofNode)
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -50,6 +50,8 @@ export function checkParentheses(n: ProofNode): string {
  * Hypothetical Syllogism [(p → q) ∧ (q → r)] → (p → r)
  * @param premises And node whose left and right are the two implication nodes
  * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
+ * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
+ * @throws Error if premises are undefined
  */
 export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
@@ -79,7 +81,8 @@ export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]):
  * Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q
  * @param premises are the or conjunction and the not
  * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
- * @return returns the desired node or ERROR_NODE if invalid operation
+ * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
+ * @throws Error if premises are undefined
  */
 export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
@@ -115,6 +118,8 @@ export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): 
  * Modus Ponens: from P and (P -> Q), infer Q
  * @param premises And node whose left and right are the two premise nodes
  * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
+ * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
+ * @throws Error if premises are undefined
  */
 export function modusPonens(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
@@ -160,6 +165,8 @@ export function modusPonens(premises: AndNode, selected: ProofNode[]): ProofNode
  * Modus Tollens: [¬q ∧ (p → q)] → ¬p
  * @param premises And node whose left and right are the two premise nodes
  * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
+ * @return returns proof node result, ERROR_NODE if invalid
+ * @throws Error if premises are undefined
  */
 export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
@@ -196,6 +203,7 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
  * @param premises is an and node to simplify
  * @param side is the node to get out
  * @return returns error nod if invalid operation, correct node if valid
+ * @throws Error if premises are undefined
  */
 export function simplification(premises: AndNode, side: "left" | "right") {
   checkPremises(premises)
@@ -210,14 +218,48 @@ export function simplification(premises: AndNode, side: "left" | "right") {
 }
 
 /**
- * Constructive Dilemma [(p → q) ∧ (r → s)] → [(p ∨ r) → (q ∨ s)]
- * @param premises is the two nodes 
- * @param type is the type of dilemma
- * @return returns error node if invalid operation, correct node if valid
+ * Constructive Dilemma (OR): [(p → q) ∧ (r → s)] → [(p ∨ r) → (q ∨ s)]
+ * @param premises are the premises to use
+ * @param selected are the nodes selected to make the dilema
+ * @return returns the node result, ERROR_NODE if unsuccessful
+ * @throws Error if premises are undefined
  */
-export function constructiveDilemma(premises: AndNode, type: "or" | "and") {
-  
+//TODO TEST ME AND DOCUMENT US
+export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
+  if (!(isImplicationNode(a) && isImplicationNode(b))) {
+    return ERROR_NODE;
+  }
+  const textA = `${a.left.text} ∨ ${a.right.text}`;
+  const nodeA = createOrNode(textA, false, a.left, a.right, undefined);
+  const textB = `${b.left.text} ∨ ${b.right.text}`;
+  const nodeB = createOrNode(textB, false, b.left, b.right, undefined);
+  const finalText = `(${nodeA.text}) → (${nodeB.text})`;
+  return createImplicationNode(finalText, false, nodeA, nodeB, selected);
+}
 
+/**
+ * Constructive Dilemma (AND): [(p → q) ∧ (r → s)] → [(p ∧ r) → (q ∧ s)]
+ * @param premises are the premises to use
+ * @param selected are the nodes selected to make the dilema
+ * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
+ * @throws Error if premises are undefined
+ */
+export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
+  if (!(isImplicationNode(a) && isImplicationNode(b))) {
+    return ERROR_NODE;
+  }
+  const textA = `${a.left.text} ∧ ${a.right.text}`;
+  const nodeA = createAndNode(textA, false, a.left, a.right, undefined);
+  const textB = `${b.left.text} ∧ ${b.right.text}`;
+  const nodeB = createAndNode(textB, false, b.left, b.right, undefined);
+  const finalText = `(${nodeA.text}) → (${nodeB.text})`;
+  return createImplicationNode(finalText, false, nodeA, nodeB, selected);
 }
 
 /**
@@ -252,42 +294,63 @@ export const Axioms: Axiom[] = [
     id: "1",
     text: "Hypothetical Syllogism",
     selected: false,
+    description: "[(A → B) ∧ (B → C)] → (A → C)",
     apply: hypotheticalSyllogism,
   },
   {
     id: "2",
     text: "Disjunctive Syllogism",
     selected: false,
+    description: "[(A ∨ B) ∧ ¬(A)] → B",
     apply: disjunctiveSyllogism
   },
   {
     id: "3",
     text: "Modus Ponens",
     selected: false,
+    description: "[A ∧ (A → B)] → B",
     apply: modusPonens,
   },
   {
     id: "4",
     text: "Modus Tollens",
     selected: false,
+    description: "[(A → B) ∧ ¬B] → ¬A",
     apply: modusTollens,
   },
   {
     id: "6",
     text: "Simplification",
     selected: false,
+    description: "(A ∧ B) → A",
     apply: simplification,
+  },
+  {
+    id: "7",
+    text: "Constructive Dilemma (OR)",
+    selected: false,
+    description: "[(A → B) ∧ (C → D)] → ((A ∨ B) → (C ∨ D))",
+    apply: constructiveDilemmaOr,
+  },
+  {
+    id: "8",
+    text: "Constructive Dilemma (AND)",
+    selected: false,
+    description: "[(A → B) ∧ (C → D)] → ((A ∧ B) → (C ∧ D))",
+    apply: constructiveDilemmaAnd,
   },
   {
     id: "9",
     text: "Addition",
     selected: false,
+    description: "A → (A ∨ B)",
     apply: addition
   },
   {
     id: "10",
     text: "Conjunction",
     selected: false,
+    description: "[A ∧ B] →(A ∧ B)",
     apply: conjunction
   }
 ];
