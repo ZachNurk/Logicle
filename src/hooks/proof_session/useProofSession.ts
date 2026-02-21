@@ -50,15 +50,18 @@ export function useProofSession() {
       throw new Error("Prem error!")
     }
     
-    if (selectedAxiom.applyType === "1") {
-      result = (applyFn as (premises: ProofNode, selected: ProofNode[]) => ProofNode)(prem, selectedNodes);
-    } 
-    else if (selectedAxiom.applyType === "2") {
-      result = (applyFn as (premises: ProofNode, side: string) => ProofNode)(prem, side);
-    } else if (selectedAxiom.applyType === "3") {
-      result = (applyFn as (original: ProofNode, addition: ProofNode) => ProofNode)(prem, addition);
-    } else {
-      result = undefined
+    switch (selectedAxiom.applyType) {
+      case "1":
+        result = (applyFn as (premises: ProofNode, selected: ProofNode[]) => ProofNode)(prem, selectedNodes);
+        break;
+      case "2":
+        result = (applyFn as (premises: ProofNode, side: string) => ProofNode)(prem, side);
+        break;
+      case "3":
+        result = (applyFn as (original: ProofNode, addition: ProofNode) => ProofNode)(prem, addition);
+        break;
+      default:
+        result = undefined;
     }
 
     
