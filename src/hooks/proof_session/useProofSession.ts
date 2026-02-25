@@ -60,6 +60,9 @@ export function useProofSession() {
       case "3":
         result = (applyFn as (original: ProofNode, addition: ProofNode) => ProofNode)(prem, addition);
         break;
+      case "4":
+        result = (applyFn as (original: ProofNode) => ProofNode)(prem);
+        break;
       default:
         result = undefined;
     }
@@ -80,6 +83,16 @@ export function useProofSession() {
       setVictory(true)
       //TODO make it connect to the solution node at the bottom? or maybe some other UI?
       //TODO also make a nice you won screen?
+    }
+
+    // Don't add if we already have an equivalent node (sameNode handles And/Or commutativity).
+    if (nodes.some((n) => sameNode(n, result))) {
+      // deselect axiom
+      setAxioms((prev) =>
+        prev.map((a) => (a.id === selectedAxiom.id ? { ...a, selected: false } : a)),
+      );
+      alert("Duplicate node!")
+      return;
     }
 
     addGivenNode(result);

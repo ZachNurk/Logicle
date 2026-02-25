@@ -18,18 +18,7 @@ export type Relationship = "If" | "Not" | "And" | "Or" | "Iff";
  */
 export function sameNode(a?: ProofNode, b?: ProofNode): boolean {
   if (!a || !b) return false;
-  if (isAndNode(a) && isAndNode(b)) {
-    return (
-      (sameNode(a.left, b.left) && sameNode(a.right, b.right)) ||
-      (sameNode(a.left, b.right) && sameNode(a.right, b.left))
-    );
-  }
-  if (isOrNode(a) && isOrNode(b)) {
-    return (
-      (sameNode(a.left, b.left) && sameNode(a.right, b.right)) ||
-      (sameNode(a.left, b.right) && sameNode(a.right, b.left))
-    );
-  }
+
   return a.text === b.text;
 }
 

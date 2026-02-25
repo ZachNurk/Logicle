@@ -22,20 +22,21 @@ import {
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
-/** Type 1: (premises: AndNode, selected: ProofNode[]) => ProofNode. Type 2: (premises: AndNode, side: "left"|"right") => ProofNode. Type 3: (original: ProofNode, addition: ProofNode) => ProofNode. */
-export type AxiomApplyType = "1" | "2" | "3";
+/** Type 1: (premises: AndNode, selected: ProofNode[]) => ProofNode. Type 2: (premises: AndNode, side: "left"|"right") => ProofNode. Type 3: (original: ProofNode, addition: ProofNode) => ProofNode. Type 4: (original: ProofNode) => ProofNode. */
+export type AxiomApplyType = "1" | "2" | "3" | "4";
 
 export type Axiom = {
   id: string;
   text: string;
   selected: boolean;
   description: string;
-  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition. */
+  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only. */
   applyType: AxiomApplyType;
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
     | ((premises: AndNode, side: "left" | "right") => ProofNode)
     | ((original: ProofNode, addition: ProofNode) => ProofNode)
+    | ((original: ProofNode) => ProofNode)
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -45,7 +46,13 @@ function checkPremises(premises: AndNode) {
   }
 }
 
-/** Wrap in parens only when node has multiple parts (And, Or, If, Iff). Single (atom, Not) stays unwrapped. */
+/**
+ * Wrap in parens only when node has multiple parts (And, Or, If, Iff). Single (atom, Not) stays unwrapped.
+ * Convention: create* functions in ProofNode do not add parentheses; any code that builds a formula
+ * string from child nodes (e.g. axioms) should use this so the result is unambiguous.
+ * @param n the node to format as a subexpression
+ * @returns the node's text, wrapped in parentheses when it is a binary node
+ */
 export function checkParentheses(n: ProofNode): string {
   return isBinaryNode(n) ? `(${n.text})` : n.text;
 }
@@ -289,7 +296,240 @@ export function conjunction(original: ProofNode, addition: ProofNode): ProofNode
   return createAndNode(text, false, original, addition, [original, addition])
 }
 
+/**
+ * Double negation: ¬¬p ≡ p
+ * @param original is the node to double negate
+ * @return returns the node if correct operation, error node if not
+ */
+export function doubleNegation(original: ProofNode): ProofNode {
+  if (!isNotNode(original)) {
+    return ERROR_NODE
+  }
+  if (!isNotNode(original.contains)) {
+    return ERROR_NODE
+  }
+  const inner = original.contains.contains;
+  const result = { ...inner, text: checkParentheses(inner) };
+  return createResultNode(result as typeof inner, [original]);
+}
 
+/**
+ * OR commutativity: (A ∨ B) ≡ (B ∨ A)
+ * @param original is the Or node (A ∨ B) to reorder
+ * @return returns a proof node (B ∨ A), or ERROR_NODE if original is not an Or node
+ */
+export function orCommutativity(original: ProofNode): ProofNode {
+  if (!isOrNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  const text = `${checkParentheses(original.right)} ∨ ${checkParentheses(original.left)}`;
+  
+  return createOrNode(text, false, original.right, original.left, [original]);
+}
+
+/**
+ * AND commutativity: (A ∧ B) ≡ (B ∧ A)
+ * @param original is the And node (A ∧ B) to reorder
+ * @return returns a proof node (B ∧ A), or ERROR_NODE if original is not an And node
+ */
+export function andCommutativity(original: ProofNode): ProofNode {
+  if (!isAndNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  const text = `${checkParentheses(original.right)} ∧ ${checkParentheses(original.left)}`;
+
+  return createAndNode(text, false, original.right, original.left, [original]);
+}
+
+/**
+ * AND associativity: (A ∧ B) ∧ C ≡ A ∧ (B ∧ C)
+ * Re-brackets so the inner conjunction is on the side that was already grouped.
+ * @param original is an And node of the form (A ∧ B) ∧ C or A ∧ (B ∧ C)
+ * @return the equivalent associatively re-bracketed node, or ERROR_NODE if not applicable
+ */
+export function andAssociativity(original: ProofNode): ProofNode {
+  if (!isAndNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  if (isAndNode(original.left)) {
+    // ((A ∧ B) ∧ C) → (A ∧ (B ∧ C))
+    const inner = createAndNode(
+      `${checkParentheses(original.left.right)} ∧ ${checkParentheses(original.right)}`,
+      false,
+      original.left.right,
+      original.right,
+      undefined
+    );
+    const text = `${checkParentheses(original.left.left)} ∧ ${checkParentheses(inner)}`;
+    return createAndNode(text, false, original.left.left, inner, [original]);
+  }
+  if (isAndNode(original.right)) {
+    // (A ∧ (B ∧ C)) → ((A ∧ B) ∧ C)
+    const inner = createAndNode(
+      `${checkParentheses(original.left)} ∧ ${checkParentheses(original.right.left)}`,
+      false,
+      original.left,
+      original.right.left,
+      undefined
+    );
+    const text = `${checkParentheses(inner)} ∧ ${checkParentheses(original.right.right)}`;
+    return createAndNode(text, false, inner, original.right.right, [original]);
+  }
+  return ERROR_NODE;
+}
+
+/**
+ * OR associativity: (A ∨ B) ∨ C ≡ A ∨ (B ∨ C)
+ * Re-brackets so the inner disjunction is on the side that was already grouped.
+ * @param original is an Or node of the form (A ∨ B) ∨ C or A ∨ (B ∨ C)
+ * @return the equivalent associatively re-bracketed node, or ERROR_NODE if not applicable
+ */
+export function orAssociativity(original: ProofNode): ProofNode {
+  if (!isOrNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  if (isOrNode(original.left)) {
+    // ((A ∨ B) ∨ C) → (A ∨ (B ∨ C))
+    const inner = createOrNode(
+      `${checkParentheses(original.left.right)} ∨ ${checkParentheses(original.right)}`,
+      false,
+      original.left.right,
+      original.right,
+      undefined
+    );
+    const text = `${checkParentheses(original.left.left)} ∨ ${checkParentheses(inner)}`;
+    return createOrNode(text, false, original.left.left, inner, [original]);
+  }
+  if (isOrNode(original.right)) {
+    // (A ∨ (B ∨ C)) → ((A ∨ B) ∨ C)
+    const inner = createOrNode(
+      `${checkParentheses(original.left)} ∨ ${checkParentheses(original.right.left)}`,
+      false,
+      original.left,
+      original.right.left,
+      undefined
+    );
+    const text = `${checkParentheses(inner)} ∨ ${checkParentheses(original.right.right)}`;
+    return createOrNode(text, false, inner, original.right.right, [original]);
+  }
+  return ERROR_NODE;
+}
+
+/**
+ * Distributivity of ∨ over ∧: A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)
+ * @param original is an Or node of the form A ∨ (B ∧ C) or (B ∧ C) ∨ A
+ * @return an And node (A ∨ B) ∧ (A ∨ C), or ERROR_NODE if not applicable
+ */
+export function orOverAndDistributivity(original: ProofNode): ProofNode {
+  if (!isOrNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  if (isAndNode(original.right)) {
+    // A ∨ (B ∧ C) → (A ∨ B) ∧ (A ∨ C)
+    const a = original.left;
+    const b = original.right.left;
+    const c = original.right.right;
+    if (!b || !c) return ERROR_NODE;
+    const aOrB = createOrNode(
+      `${checkParentheses(a)} ∨ ${checkParentheses(b)}`,
+      false,
+      a,
+      b,
+      undefined
+    );
+    const aOrC = createOrNode(
+      `${checkParentheses(a)} ∨ ${checkParentheses(c)}`,
+      false,
+      a,
+      c,
+      undefined
+    );
+    const text = `${checkParentheses(aOrB)} ∧ ${checkParentheses(aOrC)}`;
+    return createAndNode(text, false, aOrB, aOrC, [original]);
+  }
+  if (isAndNode(original.left)) {
+    // (B ∧ C) ∨ A → (B ∨ A) ∧ (C ∨ A) which we write as (A ∨ B) ∧ (A ∨ C) for consistency
+    const a = original.right;
+    const b = original.left.left;
+    const c = original.left.right;
+    if (!b || !c) return ERROR_NODE;
+    const aOrB = createOrNode(
+      `${checkParentheses(a)} ∨ ${checkParentheses(b)}`,
+      false,
+      a,
+      b,
+      undefined
+    );
+    const aOrC = createOrNode(
+      `${checkParentheses(a)} ∨ ${checkParentheses(c)}`,
+      false,
+      a,
+      c,
+      undefined
+    );
+    const text = `${checkParentheses(aOrB)} ∧ ${checkParentheses(aOrC)}`;
+    return createAndNode(text, false, aOrB, aOrC, [original]);
+  }
+  return ERROR_NODE;
+}
+
+/**
+ * Distributivity of ∧ over ∨: A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)
+ * @param original is an And node of the form A ∧ (B ∨ C) or (B ∨ C) ∧ A
+ * @return an Or node (A ∧ B) ∨ (A ∧ C), or ERROR_NODE if not applicable
+ */
+export function andOverOrDistributivity(original: ProofNode): ProofNode {
+  if (!isAndNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  if (isOrNode(original.right)) {
+    // A ∧ (B ∨ C) → (A ∧ B) ∨ (A ∧ C)
+    const a = original.left;
+    const b = original.right.left;
+    const c = original.right.right;
+    if (!b || !c) return ERROR_NODE;
+    const aAndB = createAndNode(
+      `${checkParentheses(a)} ∧ ${checkParentheses(b)}`,
+      false,
+      a,
+      b,
+      undefined
+    );
+    const aAndC = createAndNode(
+      `${checkParentheses(a)} ∧ ${checkParentheses(c)}`,
+      false,
+      a,
+      c,
+      undefined
+    );
+    const text = `${checkParentheses(aAndB)} ∨ ${checkParentheses(aAndC)}`;
+    return createOrNode(text, false, aAndB, aAndC, [original]);
+  }
+  if (isOrNode(original.left)) {
+    // (B ∨ C) ∧ A → (A ∧ B) ∨ (A ∧ C)
+    const a = original.right;
+    const b = original.left.left;
+    const c = original.left.right;
+    if (!b || !c) return ERROR_NODE;
+    const aAndB = createAndNode(
+      `${checkParentheses(a)} ∧ ${checkParentheses(b)}`,
+      false,
+      a,
+      b,
+      undefined
+    );
+    const aAndC = createAndNode(
+      `${checkParentheses(a)} ∧ ${checkParentheses(c)}`,
+      false,
+      a,
+      c,
+      undefined
+    );
+    const text = `${checkParentheses(aAndB)} ∨ ${checkParentheses(aAndC)}`;
+    return createOrNode(text, false, aAndB, aAndC, [original]);
+  }
+  return ERROR_NODE;
+}
 
 // Axioms list
 export const Axioms: Axiom[] = [
@@ -364,5 +604,61 @@ export const Axioms: Axiom[] = [
     description: "[A ∧ B] → (A ∧ B)",
     applyType: "3",
     apply: conjunction,
+  },
+  {
+    id: "11",
+    text: "Double Negation",
+    selected: false,
+    description: "¬¬A ≡ A",
+    applyType: "4",
+    apply: doubleNegation,
+  },
+  {
+    id: "12",
+    text: "OR Commutativity",
+    selected: false,
+    description: "(A ∨ B) ≡ (B ∨ A)",
+    applyType: "4",
+    apply: orCommutativity,
+  },
+  {
+    id: "13",
+    text: "AND Commutativity",
+    selected: false,
+    description: "(A ∧ B) ≡ (B ∧ A)",
+    applyType: "4",
+    apply: andCommutativity,
+  },
+  {
+    id: "14",
+    text: "AND Associativity",
+    selected: false,
+    description: "(A ∧ B) ∧ C ≡ A ∧ (B ∧ C)",
+    applyType: "4",
+    apply: andAssociativity,
+  },
+  {
+    id: "15",
+    text: "OR Associativity",
+    selected: false,
+    description: "(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)",
+    applyType: "4",
+    apply: orAssociativity,
+  },
+  {
+    id: "16",
+    text: "Distributivity (∨ over ∧)",
+    selected: false,
+    description: "A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)",
+    applyType: "4",
+    apply: orOverAndDistributivity,
+  },
+  {
+    id: "17",
+    text: "Distributivity (∧ over ∨)",
+    selected: false,
+    description: "A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)",
+    applyType: "4",
+    apply: andOverOrDistributivity,
   },
 ];
