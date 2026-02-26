@@ -6,7 +6,7 @@
       "nodes": [
         {
           "id": "n1",
-          "text": "(P ∧ Q)",
+          "text": "P ∧ Q",
           "selected": false,
           "isStarter": true,
           "parentIds": [],
@@ -31,7 +31,7 @@
         },
         {
           "id": "n2",
-          "text": "(P → R)",
+          "text": "P → R",
           "selected": false,
           "isStarter": true,
           "parentIds": [],
