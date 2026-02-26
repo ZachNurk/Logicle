@@ -4,6 +4,7 @@
  */
 
 import type { ProofNode } from "../../logic/ProofNode";
+import "./GivenPanel.css";
 
 type Props = {
   givenArray: ProofNode[];
@@ -21,32 +22,26 @@ export default function GivenPanel({
 }: Props) {
   //TODO does this have poor runtime?
   return (
-    <div style={styles.container}>
-      <div style={styles.topSlots.main}>
+    <div className="container">
+      <div className="top-slots-main">
         {(givenArray ?? []).filter((node) => node.isStarter === true && node.context === false).map((node) => (
           <button
             key={node.id}
             onClick={() => toggleSelected(node.id)}
-            style={{
-              ...styles.givenButtonBase,
-              backgroundColor: node.selected ? "#ff4107" : "#07b9ff",
-            }}
+            className={`given-button-base ${node.selected ? "given-button-base--selected" : ""}`}
           >
             {node.text}
           </button>
         ))}
       </div>
 
-      <div style={styles.main}>
-        <div style={styles.topSlots.main}>
+      <div className="main">
+        <div className="top-slots-main">
           {(givenArray ?? []).filter((node) => node.isStarter !== true).map((node) => (
             <button
               key={node.id}
               onClick={() => toggleSelected(node.id)}
-              style={{
-                ...styles.givenButtonBase,
-                backgroundColor: node.selected ? "#ff4107" : "#07b9ff",
-              }}
+              className={`given-button-base ${node.selected ? "given-button-base--selected" : ""}`}
             >
               {node.text}
             </button>
@@ -55,10 +50,7 @@ export default function GivenPanel({
         <button
           key={solutionNode.id}
           disabled
-          style={{
-            ...styles.givenButtonBase,
-            ...styles.solutionButton,
-          }}
+          className="given-button-base solution-button"
         >
           {solutionNode.text}
         </button>
@@ -66,46 +58,3 @@ export default function GivenPanel({
     </div>
   );
 }
-
-const styles = {
-  container: {
-    flex: 1,
-    border: "5px solid #ccc",
-    borderRadius: "20px",
-    padding: 16,
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  } satisfies React.CSSProperties,
-
-  topSlots: {
-    main: {
-      display: "flex",
-      gap: 10,
-      flexWrap: "wrap",
-    } satisfies React.CSSProperties,
-  },
-
-  givenButtonBase: {
-    padding: "10px 16px",
-    fontSize: "14px",
-    width: "140px",
-    height: "44px",
-    borderRadius: "5px",
-    border: "none",
-    cursor: "pointer",
-  } satisfies React.CSSProperties,
-
-  solutionButton: {
-    cursor: "default",
-    backgroundColor: "#11d663",
-    color: "black"
-  } satisfies React.CSSProperties,
-
-  main: {
-    flex: 1,
-    border: "1px solid #eee",
-    borderRadius: 8,
-    padding: 12,
-  } satisfies React.CSSProperties,
-};

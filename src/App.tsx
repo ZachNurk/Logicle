@@ -7,6 +7,7 @@
 import GivenPanel from "./components/left_panel/GivenPanel";
 import RulePanel from "./components/right_panel/RulePanel";
 import { useProofSession } from "./hooks/proof_session/useProofSession";
+import "./App.css";
 
 /**
  * Main App
@@ -25,7 +26,7 @@ export default function App() {
 
   if (!victory) {
     return (
-      <div style={styles.split}>
+      <div className="split">
         <GivenPanel givenArray={nodes} solutionNode={solutionNode} toggleSelected={toggleSelectedProofNode} />
         <RulePanel
           axioms={axioms}
@@ -35,13 +36,4 @@ export default function App() {
       </div>
     );
   }
-  
 }
-
-const styles = {
-  split: {
-    display: "flex",
-    height: "100vh",
-    gap: "5px",
-  } satisfies React.CSSProperties,
-};

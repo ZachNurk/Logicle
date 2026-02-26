@@ -1,0 +1,43 @@
+.container {
+  flex: 1;
+  border: 5px solid #ccc;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top-slots-main {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.given-button-base {
+  padding: 10px 16px;
+  font-size: 14px;
+  width: 140px;
+  height: 44px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  background-color: #07b9ff;
+}
+
+.given-button-base--selected {
+  background-color: #ff4107;
+}
+
+.solution-button {
+  cursor: default;
+  background-color: #11d663;
+  color: black;
+}
+
+.main {
+  flex: 1;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px;
+}
