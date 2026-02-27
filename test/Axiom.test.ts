@@ -17,6 +17,7 @@ import {
   andAssociativity,
   orOverAndDistributivity,
   andOverOrDistributivity,
+  indempotentOr,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -756,6 +757,28 @@ describe("Axioms", () => {
   
       const ACTUAL = andOverOrDistributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
+    })
+  })
+
+  describe("Indempent Or", () => {
+    it("A ∨ A yields A", () => {
+      const aOra = createOrNode("(A ∨ A)", false, A, A, undefined)
+      const EXPECTED = A.text
+      const ACTUAL = indempotentOr(aOra).text
+      expect(EXPECTED === ACTUAL).toBe(true)
+    })
+
+    it("(A ∧ B) ∨ (A ∧ B) yields (A ∧ B)", () => {
+      const aAndB = createAndNode("(A ∧ B)", false, A, B, undefined)
+      const aAndBOrAAndB = createOrNode("(A ∧ B) ∨ (A ∧ B)", false, aAndB, aAndB, undefined)
+      const EXPECTED = aAndB.text
+      const ACTUAL = indempotentOr(aAndBOrAAndB).text
+      expect(EXPECTED === ACTUAL).toBe(true)
+    })
+
+    it("Trying a non or node returns error", () => {
+      expect(indempotentOr(A).text === "error")
+      expect(indempotentOr(createAndNode("(A ∧ B)", false, A, B, undefined)).text === "error")
     })
   })
 });

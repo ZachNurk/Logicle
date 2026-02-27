@@ -18,7 +18,8 @@ import {
   isIffNode,
   createResultNode,
   createOrNode,
-  createAndNode
+  createAndNode,
+  createNode
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -528,6 +529,22 @@ export function andOverOrDistributivity(original: ProofNode): ProofNode {
     const text = `${checkParentheses(aAndB)} ∨ ${checkParentheses(aAndC)}`;
     return createOrNode(text, false, aAndB, aAndC, [original]);
   }
+  return ERROR_NODE;
+}
+
+/**
+ * Indempotent Or [P V P] = P
+ * @param original is the original node. should be an Or node
+ * @returns returns errror node if invalid operation
+ */
+export function indempotentOr(original: ProofNode): ProofNode {
+  if (!isOrNode(original)) {
+    return ERROR_NODE;
+  }
+  if (sameNode(original.left,original.right)) {
+    return createNode(original.left.text, false, [original])
+  }
+
   return ERROR_NODE;
 }
 
