@@ -54,7 +54,7 @@ export default function RulePanel({
                 </button>
                 {hoveredId === axiom.id && (
                   <div className="tooltip">
-                    {axiom.description}
+                    {axiom.description}<br></br>{axiom.description2}
                   </div>
                 )}
               </div>

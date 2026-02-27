@@ -15,9 +15,8 @@ import {
   andCommutativity,
   orAssociativity,
   andAssociativity,
-  orOverAndDistributivity,
-  andOverOrDistributivity,
-  indempotentOr,
+  distributivity,
+  indempotent,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -717,7 +716,7 @@ describe("Axioms", () => {
       const expectedRight = createOrNode("A ∨ C", false, A, C)
       const EXPECTED = createAndNode("(A ∨ B) ∧ (A ∨ C)", false, expectedLeft, expectedRight)
   
-      const ACTUAL = orOverAndDistributivity(original)
+      const ACTUAL = distributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   
@@ -729,7 +728,7 @@ describe("Axioms", () => {
       const expectedRight = createOrNode("A ∨ C", false, A, C)
       const EXPECTED = createAndNode("(A ∨ B) ∧ (A ∨ C)", false, expectedLeft, expectedRight)
   
-      const ACTUAL = orOverAndDistributivity(original)
+      const ACTUAL = distributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   })
@@ -743,7 +742,7 @@ describe("Axioms", () => {
       const expectedRight = createAndNode("A ∧ C", false, A, C)
       const EXPECTED = createOrNode("(A ∧ B) ∨ (A ∧ C)", false, expectedLeft, expectedRight)
   
-      const ACTUAL = andOverOrDistributivity(original)
+      const ACTUAL = distributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   
@@ -755,30 +754,54 @@ describe("Axioms", () => {
       const expectedRight = createAndNode("A ∧ C", false, A, C)
       const EXPECTED = createOrNode("(A ∧ B) ∨ (A ∧ C)", false, expectedLeft, expectedRight)
   
-      const ACTUAL = andOverOrDistributivity(original)
+      const ACTUAL = distributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   })
 
-  describe("Indempent Or", () => {
-    it("A ∨ A yields A", () => {
-      const aOra = createOrNode("(A ∨ A)", false, A, A, undefined)
-      const EXPECTED = A.text
-      const ACTUAL = indempotentOr(aOra).text
-      expect(EXPECTED === ACTUAL).toBe(true)
+  describe("Indempent", () => {
+    describe("Indempent Or", () => {
+      it("A ∨ A yields A", () => {
+        const aOra = createOrNode("(A ∨ A)", false, A, A, undefined)
+        const EXPECTED = A.text
+        const ACTUAL = indempotent(aOra).text
+        expect(EXPECTED === ACTUAL).toBe(true)
+      })
+  
+      it("(A ∧ B) ∨ (A ∧ B) yields (A ∧ B)", () => {
+        const aAndB = createAndNode("(A ∧ B)", false, A, B, undefined)
+        const aAndBOrAAndB = createOrNode("(A ∧ B) ∨ (A ∧ B)", false, aAndB, aAndB, undefined)
+        const EXPECTED = aAndB.text
+        const ACTUAL = indempotent(aAndBOrAAndB).text
+        expect(EXPECTED === ACTUAL).toBe(true)
+      })
+  
+      it("Trying a non and/or node returns error", () => {
+        expect(indempotent(A).text === "error")
+      })
     })
-
-    it("(A ∧ B) ∨ (A ∧ B) yields (A ∧ B)", () => {
-      const aAndB = createAndNode("(A ∧ B)", false, A, B, undefined)
-      const aAndBOrAAndB = createOrNode("(A ∧ B) ∨ (A ∧ B)", false, aAndB, aAndB, undefined)
-      const EXPECTED = aAndB.text
-      const ACTUAL = indempotentOr(aAndBOrAAndB).text
-      expect(EXPECTED === ACTUAL).toBe(true)
-    })
-
-    it("Trying a non or node returns error", () => {
-      expect(indempotentOr(A).text === "error")
-      expect(indempotentOr(createAndNode("(A ∧ B)", false, A, B, undefined)).text === "error")
+  
+    describe("Indempent And", () => {
+      it("A ∧ A yields A", () => {
+        const aAnda = createAndNode("(A ∨ A)", false, A, A, undefined)
+        const EXPECTED = A.text
+        const ACTUAL = indempotent(aAnda).text
+        expect(EXPECTED === ACTUAL).toBe(true)
+      })
+  
+      it("(A ∧ B) ∧ (A ∧ B) yields (A ∧ B)", () => {
+        const aAndB = createAndNode("(A ∧ B)", false, A, B, undefined)
+        const aAndBOrAAndB = createAndNode("(A ∧ B) ∧ (A ∧ B)", false, aAndB, aAndB, undefined)
+        const EXPECTED = aAndB.text
+        const ACTUAL = indempotent(aAndBOrAAndB).text
+        expect(EXPECTED === ACTUAL).toBe(true)
+      })
+  
+      it("Trying a non or node returns error", () => {
+        expect(indempotent(A).text === "error")
+      })
     })
   })
+
+  
 });

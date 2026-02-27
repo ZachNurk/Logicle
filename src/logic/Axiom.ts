@@ -31,6 +31,7 @@ export type Axiom = {
   text: string;
   selected: boolean;
   description: string;
+  description2?: string;
   /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only. */
   applyType: AxiomApplyType;
   apply?:
@@ -421,7 +422,7 @@ export function orAssociativity(original: ProofNode): ProofNode {
  * @param original is an Or node of the form A ∨ (B ∧ C) or (B ∧ C) ∨ A
  * @return an And node (A ∨ B) ∧ (A ∨ C), or ERROR_NODE if not applicable
  */
-export function orOverAndDistributivity(original: ProofNode): ProofNode {
+function orOverAndDistributivity(original: ProofNode): ProofNode {
   if (!isOrNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
@@ -479,7 +480,7 @@ export function orOverAndDistributivity(original: ProofNode): ProofNode {
  * @param original is an And node of the form A ∧ (B ∨ C) or (B ∨ C) ∧ A
  * @return an Or node (A ∧ B) ∨ (A ∧ C), or ERROR_NODE if not applicable
  */
-export function andOverOrDistributivity(original: ProofNode): ProofNode {
+function andOverOrDistributivity(original: ProofNode): ProofNode {
   if (!isAndNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
@@ -532,21 +533,43 @@ export function andOverOrDistributivity(original: ProofNode): ProofNode {
   return ERROR_NODE;
 }
 
+export function distributivity(original: ProofNode): ProofNode {
+  if (isAndNode(original)) {
+   return andOverOrDistributivity(original)
+  } 
+  else if (isOrNode(original)) {
+    return orOverAndDistributivity(original)
+  }
+  return ERROR_NODE
+}
+
 /**
- * Indempotent Or [P V P] = P
+ * Indempotent Or/And [P V P] = P
  * @param original is the original node. should be an Or node
  * @returns returns errror node if invalid operation
  */
-export function indempotentOr(original: ProofNode): ProofNode {
-  if (!isOrNode(original)) {
+export function indempotent(original: ProofNode): ProofNode {
+  if (isOrNode(original)) {
+    if (sameNode(original.left,original.right)) {
+      return createResultNode(original.left, [original])
+    }
+  
     return ERROR_NODE;
   }
-  if (sameNode(original.left,original.right)) {
-    return createNode(original.left.text, false, [original])
+  else if (isAndNode(original)) {
+    if (sameNode(original.left,original.right)) {
+      return createResultNode(original.left, [original])
+    }
+    return ERROR_NODE;
   }
-
   return ERROR_NODE;
 }
+
+
+/**
+ * De Morgan's Law (s)
+ */
+
 
 // Axioms list
 export const Axioms: Axiom[] = [
@@ -557,7 +580,7 @@ export const Axioms: Axiom[] = [
     description: "[(A → B) ∧ (B → C)] → (A → C)",
     applyType: "1",
     apply: hypotheticalSyllogism,
-  },
+  } satisfies Axiom,
   {
     id: "2",
     text: "Disjunctive Syllogism",
@@ -565,7 +588,7 @@ export const Axioms: Axiom[] = [
     description: "[(A ∨ B) ∧ ¬(A)] → B",
     applyType: "1",
     apply: disjunctiveSyllogism,
-  },
+  } satisfies Axiom,
   {
     id: "3",
     text: "Modus Ponens",
@@ -573,7 +596,7 @@ export const Axioms: Axiom[] = [
     description: "[A ∧ (A → B)] → B",
     applyType: "1",
     apply: modusPonens,
-  },
+  } satisfies Axiom,
   {
     id: "4",
     text: "Modus Tollens",
@@ -581,7 +604,7 @@ export const Axioms: Axiom[] = [
     description: "[(A → B) ∧ ¬B] → ¬A",
     applyType: "1",
     apply: modusTollens,
-  },
+  } satisfies Axiom,
   {
     id: "6",
     text: "Simplification",
@@ -589,7 +612,7 @@ export const Axioms: Axiom[] = [
     description: "(A ∧ B) → A",
     applyType: "2",
     apply: simplification,
-  },
+  } satisfies Axiom,
   {
     id: "7",
     text: "Constructive Dilemma (OR)",
@@ -597,7 +620,7 @@ export const Axioms: Axiom[] = [
     description: "[(A → B) ∧ (C → D)] → ((A ∨ B) → (C ∨ D))",
     applyType: "1",
     apply: constructiveDilemmaOr,
-  },
+  } satisfies Axiom,
   {
     id: "8",
     text: "Constructive Dilemma (AND)",
@@ -605,7 +628,7 @@ export const Axioms: Axiom[] = [
     description: "[(A → B) ∧ (C → D)] → ((A ∧ B) → (C ∧ D))",
     applyType: "1",
     apply: constructiveDilemmaAnd,
-  },
+  } satisfies Axiom,
   {
     id: "9",
     text: "Addition",
@@ -613,7 +636,7 @@ export const Axioms: Axiom[] = [
     description: "A → (A ∨ B)",
     applyType: "3",
     apply: addition,
-  },
+  } satisfies Axiom,
   {
     id: "10",
     text: "Conjunction",
@@ -621,7 +644,7 @@ export const Axioms: Axiom[] = [
     description: "[A ∧ B] → (A ∧ B)",
     applyType: "3",
     apply: conjunction,
-  },
+  } satisfies Axiom,
   {
     id: "11",
     text: "Double Negation",
@@ -629,7 +652,7 @@ export const Axioms: Axiom[] = [
     description: "¬¬A ≡ A",
     applyType: "4",
     apply: doubleNegation,
-  },
+  } satisfies Axiom,
   {
     id: "12",
     text: "OR Commutativity",
@@ -637,7 +660,7 @@ export const Axioms: Axiom[] = [
     description: "(A ∨ B) ≡ (B ∨ A)",
     applyType: "4",
     apply: orCommutativity,
-  },
+  } satisfies Axiom,
   {
     id: "13",
     text: "AND Commutativity",
@@ -645,7 +668,7 @@ export const Axioms: Axiom[] = [
     description: "(A ∧ B) ≡ (B ∧ A)",
     applyType: "4",
     apply: andCommutativity,
-  },
+  } satisfies Axiom,
   {
     id: "14",
     text: "AND Associativity",
@@ -653,7 +676,7 @@ export const Axioms: Axiom[] = [
     description: "(A ∧ B) ∧ C ≡ A ∧ (B ∧ C)",
     applyType: "4",
     apply: andAssociativity,
-  },
+  } satisfies Axiom,
   {
     id: "15",
     text: "OR Associativity",
@@ -661,21 +684,23 @@ export const Axioms: Axiom[] = [
     description: "(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)",
     applyType: "4",
     apply: orAssociativity,
-  },
+  } satisfies Axiom,
   {
     id: "16",
     text: "Distributivity (∨ over ∧)",
     selected: false,
     description: "A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)",
+    description2: "A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)",
     applyType: "4",
-    apply: orOverAndDistributivity,
-  },
+    apply: distributivity,
+  } satisfies Axiom,
   {
     id: "17",
-    text: "Distributivity (∧ over ∨)",
+    text: "Idempotent",
     selected: false,
-    description: "A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)",
+    description: "(A ∨ A) ≡ A",
+    description2: "(A ∧ A) ≡ A",
     applyType: "4",
-    apply: andOverOrDistributivity,
-  },
+    apply: indempotent,
+  } satisfies Axiom,
 ];
