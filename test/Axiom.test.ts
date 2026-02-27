@@ -11,10 +11,8 @@ import {
   constructiveDilemmaAnd,
   constructiveDilemmaOr,
   doubleNegation,
-  orCommutativity,
-  andCommutativity,
-  orAssociativity,
-  andAssociativity,
+  commutativity,
+  associativity,
   distributivity,
   indempotent,
 } from "../src/logic/Axiom";
@@ -628,7 +626,7 @@ describe("Axioms", () => {
       const aOrB = createOrNode("A ∨ B", false, A, B)
       const EXPECTED = "B ∨ A"
   
-      const ACTUAL = orCommutativity(aOrB)
+      const ACTUAL = commutativity(aOrB)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   
@@ -637,7 +635,7 @@ describe("Axioms", () => {
       const aAndBOrC = createOrNode("(A ∧ B) ∨ C", false, aAndB, C)
       const EXPECTED = "C ∨ (A ∧ B)"
   
-      const ACTUAL = orCommutativity(aAndBOrC)
+      const ACTUAL = commutativity(aAndBOrC)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   })
@@ -647,7 +645,7 @@ describe("Axioms", () => {
       const aAndB = createAndNode("A ∧ B", false, A, B)
       const EXPECTED = "B ∧ A"
   
-      const ACTUAL = andCommutativity(aAndB)
+      const ACTUAL = commutativity(aAndB)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   
@@ -656,7 +654,7 @@ describe("Axioms", () => {
       const aOrBAndC = createAndNode("(A ∨ B) ∧ C", false, aOrB, C)
       const EXPECTED = "C ∧ (A ∨ B)"
   
-      const ACTUAL = andCommutativity(aOrBAndC)
+      const ACTUAL = commutativity(aOrBAndC)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   })
@@ -667,7 +665,9 @@ describe("Axioms", () => {
       const aOrBOrC = createOrNode("(A ∨ B) ∨ C", false, aOrB, C)
       const EXPECTED = "A ∨ (B ∨ C)"
   
-      const ACTUAL = orAssociativity(aOrBOrC)
+      const ACTUAL = associativity(aOrBOrC)
+      console.log(ACTUAL.text)
+      console.log(EXPECTED)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   
@@ -678,7 +678,7 @@ describe("Axioms", () => {
       const expectedLeft = createOrNode("A ∨ B", false, A, B)
       const EXPECTED = createOrNode("(A ∨ B) ∨ C", false, expectedLeft, C)
   
-      const ACTUAL = orAssociativity(aOr_bOrC)
+      const ACTUAL = associativity(aOr_bOrC)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   })
@@ -691,7 +691,7 @@ describe("Axioms", () => {
       const expectedInner = createAndNode("B ∧ C", false, B, C)
       const EXPECTED = createAndNode("A ∧ (B ∧ C)", false, A, expectedInner)
   
-      const ACTUAL = andAssociativity(original)
+      const ACTUAL = associativity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   
@@ -702,7 +702,7 @@ describe("Axioms", () => {
       const expectedInner = createAndNode("A ∧ B", false, A, B)
       const EXPECTED = createAndNode("(A ∧ B) ∧ C", false, expectedInner, C)
   
-      const ACTUAL = andAssociativity(original)
+      const ACTUAL = associativity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   })

@@ -274,6 +274,8 @@ export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[])
   return createImplicationNode(finalText, false, nodeA, nodeB, selected);
 }
 
+//TODO wrap and and or constructive dilemma into function here
+
 /**
  * Addition: p → (p ∨ q)
  * @param original is the original node to add to
@@ -320,7 +322,7 @@ export function doubleNegation(original: ProofNode): ProofNode {
  * @param original is the Or node (A ∨ B) to reorder
  * @return returns a proof node (B ∨ A), or ERROR_NODE if original is not an Or node
  */
-export function orCommutativity(original: ProofNode): ProofNode {
+function orCommutativity(original: ProofNode): ProofNode {
   if (!isOrNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
@@ -334,7 +336,7 @@ export function orCommutativity(original: ProofNode): ProofNode {
  * @param original is the And node (A ∧ B) to reorder
  * @return returns a proof node (B ∧ A), or ERROR_NODE if original is not an And node
  */
-export function andCommutativity(original: ProofNode): ProofNode {
+function andCommutativity(original: ProofNode): ProofNode {
   if (!isAndNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
@@ -344,12 +346,26 @@ export function andCommutativity(original: ProofNode): ProofNode {
 }
 
 /**
+ * Function combines communativity of and and or
+ * @param original is the original node 
+ * @return returns a proof node, or ERROR_NODE if original is not a valid node
+ */
+export function commutativity(original: ProofNode): ProofNode {
+  if (isAndNode(original)) {
+    return andCommutativity(original)
+  }
+  else if (isOrNode(original)) {
+    return orCommutativity(original)
+  }
+  return ERROR_NODE
+}
+/**
  * AND associativity: (A ∧ B) ∧ C ≡ A ∧ (B ∧ C)
  * Re-brackets so the inner conjunction is on the side that was already grouped.
  * @param original is an And node of the form (A ∧ B) ∧ C or A ∧ (B ∧ C)
  * @return the equivalent associatively re-bracketed node, or ERROR_NODE if not applicable
  */
-export function andAssociativity(original: ProofNode): ProofNode {
+function andAssociativity(original: ProofNode): ProofNode {
   if (!isAndNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
@@ -386,7 +402,7 @@ export function andAssociativity(original: ProofNode): ProofNode {
  * @param original is an Or node of the form (A ∨ B) ∨ C or A ∨ (B ∨ C)
  * @return the equivalent associatively re-bracketed node, or ERROR_NODE if not applicable
  */
-export function orAssociativity(original: ProofNode): ProofNode {
+function orAssociativity(original: ProofNode): ProofNode {
   if (!isOrNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
@@ -415,6 +431,21 @@ export function orAssociativity(original: ProofNode): ProofNode {
     return createOrNode(text, false, inner, original.right.right, [original]);
   }
   return ERROR_NODE;
+}
+
+/**
+ * Combines the two associativity functions
+ * @param original is the original node
+ * @return returns the associativity node or ERROR_NODE if not applicable.
+ */
+export function associativity(original: ProofNode): ProofNode {
+  if (isAndNode(original)) {
+    return andAssociativity(original)
+  }
+  else if (isOrNode(original)) {
+    return orAssociativity(original)
+  }
+  return ERROR_NODE
 }
 
 /**
@@ -533,6 +564,11 @@ function andOverOrDistributivity(original: ProofNode): ProofNode {
   return ERROR_NODE;
 }
 
+/**
+ * Combines the two distributivity functions into one
+ * @param original is the original node
+ * @returns returns a valid node if the operation is valid, ERROR_NODE if not
+ */
 export function distributivity(original: ProofNode): ProofNode {
   if (isAndNode(original)) {
    return andOverOrDistributivity(original)
@@ -655,39 +691,25 @@ export const Axioms: Axiom[] = [
   } satisfies Axiom,
   {
     id: "12",
-    text: "OR Commutativity",
-    selected: false,
-    description: "(A ∨ B) ≡ (B ∨ A)",
-    applyType: "4",
-    apply: orCommutativity,
-  } satisfies Axiom,
-  {
-    id: "13",
-    text: "AND Commutativity",
+    text: "Commutativity",
     selected: false,
     description: "(A ∧ B) ≡ (B ∧ A)",
+    description2: "(A ∨ B) ≡ (B ∨ A)",
     applyType: "4",
     apply: andCommutativity,
   } satisfies Axiom,
   {
-    id: "14",
-    text: "AND Associativity",
-    selected: false,
-    description: "(A ∧ B) ∧ C ≡ A ∧ (B ∧ C)",
-    applyType: "4",
-    apply: andAssociativity,
-  } satisfies Axiom,
-  {
     id: "15",
-    text: "OR Associativity",
+    text: "Associativity",
     selected: false,
     description: "(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)",
+    description2: "(A ∧ B) ∧ C ≡ A ∧ (B ∧ C)",
     applyType: "4",
-    apply: orAssociativity,
+    apply: associativity,
   } satisfies Axiom,
   {
     id: "16",
-    text: "Distributivity (∨ over ∧)",
+    text: "Distributivity",
     selected: false,
     description: "A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)",
     description2: "A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)",
