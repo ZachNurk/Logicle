@@ -27,6 +27,7 @@ export function useProofSession() {
 
     let side = "left" //TODO replace this with functionality to specify side!!!
     let addition = createNode("DUMMY",false,undefined,false) //TODO replace this with functionality to specify node!!!
+    let connective: "or" | "and" = "or"; // for testing; panel can set later
 
     let result: ProofNode | undefined;
 
@@ -62,6 +63,13 @@ export function useProofSession() {
         break;
       case "4":
         result = (applyFn as (original: ProofNode) => ProofNode)(prem);
+        break;
+      case "5":
+        result = (applyFn as (premises: ProofNode, selected: ProofNode[], connective: "or" | "and") => ProofNode)(
+          prem,
+          selectedNodes,
+          connective
+        );
         break;
       default:
         result = undefined;

@@ -13,7 +13,7 @@ type RulePanelProps = {
   onApply?: () => void;
 };
 
-//TODO make the panel smaller so its coser to the Left panel
+
 
 /**
  * UI element for the right side

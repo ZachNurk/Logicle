@@ -20,7 +20,6 @@ export default function GivenPanel({
   solutionNode,
   toggleSelected,
 }: Props) {
-  //TODO does this have poor runtime?
   return (
     <div className="container">
       <div className="top-slots-main">

@@ -286,7 +286,6 @@ export function createIffNode(
 /**
  * Wraps DB JSON as a ProofNode. If the node is binary (And/Or/If/Iff), defines left/right from dbNode.left and dbNode.right; if Not, defines contains.
  */
-//TODO understand me
 export function nodeFromDb(dbNode: any, isStarter: boolean = true): ProofNode {
   const rel = dbNode?.relationship as Relationship | undefined;
   const base = {

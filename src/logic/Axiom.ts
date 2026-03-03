@@ -23,8 +23,8 @@ import {
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
-/** Type 1: (premises: AndNode, selected: ProofNode[]) => ProofNode. Type 2: (premises: AndNode, side: "left"|"right") => ProofNode. Type 3: (original: ProofNode, addition: ProofNode) => ProofNode. Type 4: (original: ProofNode) => ProofNode. */
-export type AxiomApplyType = "1" | "2" | "3" | "4";
+/** Type 1: premises + selected. Type 2: premises + side. Type 3: original + addition. Type 4: original only. Type 5: premises + selected + connective (Constructive Dilemma). */
+export type AxiomApplyType = "1" | "2" | "3" | "4" | "5";
 
 export type Axiom = {
   id: string;
@@ -32,13 +32,14 @@ export type Axiom = {
   selected: boolean;
   description: string;
   description2?: string;
-  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only. */
+  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only, "5" = premises + selected + connective. */
   applyType: AxiomApplyType;
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
     | ((premises: AndNode, side: "left" | "right") => ProofNode)
     | ((original: ProofNode, addition: ProofNode) => ProofNode)
     | ((original: ProofNode) => ProofNode)
+    | ((premises: AndNode, selected: ProofNode[], connective: "or" | "and") => ProofNode);
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -232,8 +233,11 @@ export function simplification(premises: AndNode, side: "left" | "right") {
 
 /**
  * Constructive Dilemma (OR): [(p → q) ∧ (r → s)] → [(p ∨ r) → (q ∨ s)]
+ * @param premises are the premises to use
+ * @param selected are the nodes selected to make the dilemma
+ * @return returns the node result, ERROR_NODE if unsuccessful
  */
-function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
+export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -250,8 +254,11 @@ function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofN
 
 /**
  * Constructive Dilemma (AND): [(p → q) ∧ (r → s)] → [(p ∧ r) → (q ∧ s)]
+ * @param premises are the premises to use
+ * @param selected are the nodes selected to make the dilemma
+ * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
  */
-function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): ProofNode {
+export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -268,17 +275,17 @@ function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): Proof
 
 /**
  * Constructive Dilemma: [(p → q) ∧ (r → s)] → [(p ⋄ r) → (q ⋄ s)] where ⋄ is OR or AND.
- * Tries OR first, then AND if OR returns ERROR_NODE.
  * @param premises are the premises to use
  * @param selected are the nodes selected to make the dilemma
+ * @param connective "or" for (p ∨ r) → (q ∨ s), "and" for (p ∧ r) → (q ∧ s)
  * @return the result node, or ERROR_NODE if invalid
  */
 export function constructiveDilemma(
   premises: AndNode,
-  selected: ProofNode[]
+  selected: ProofNode[],
+  connective: "or" | "and"
 ): ProofNode {
-  const orResult = constructiveDilemmaOr(premises, selected);
-  if (!sameNode(orResult, ERROR_NODE)) return orResult;
+  if (connective === "or") return constructiveDilemmaOr(premises, selected);
   return constructiveDilemmaAnd(premises, selected);
 }
 
@@ -614,6 +621,15 @@ export function indempotent(original: ProofNode): ProofNode {
 
 
 // Axioms list
+
+//TODO 
+// 27. ¬(p ∨ q) ≡ (¬p ∧ ¬q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . DeMorgan’s (∨)
+// 28. ¬(p ∧ q) ≡ (¬p ∨ ¬q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . DeMorgan’s (∧)
+// 29. (p → q) ≡ (¬q → ¬p) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Contrapositive
+// 30. (p → q) ≡ (¬p ∨ q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Conditional Identity (→)
+// 31. p ↔ q ≡ (p → q) ∧ (q → p) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Conditional Identity (↔)
+// 32. [(p → r) ∧ (q → r)] ≡ [(p ∨ q) → r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
+// 33. [(p → q) ∧ (p → r)] ≡ [p → (q ∧ r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
 export const Axioms: Axiom[] = [
   {
     id: "1",
@@ -661,7 +677,7 @@ export const Axioms: Axiom[] = [
     selected: false,
     description: "[(A → B) ∧ (C → D)] → ((A ∨ C) → (B ∨ D))",
     description2: "[(A → B) ∧ (C → D)] → ((A ∧ C) → (B ∧ D))",
-    applyType: "1",
+    applyType: "5",
     apply: constructiveDilemma,
   } satisfies Axiom,
   {
