@@ -232,12 +232,8 @@ export function simplification(premises: AndNode, side: "left" | "right") {
 
 /**
  * Constructive Dilemma (OR): [(p → q) ∧ (r → s)] → [(p ∨ r) → (q ∨ s)]
- * @param premises are the premises to use
- * @param selected are the nodes selected to make the dilema
- * @return returns the node result, ERROR_NODE if unsuccessful
- * @throws Error if premises are undefined
  */
-export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
+function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -254,12 +250,8 @@ export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]):
 
 /**
  * Constructive Dilemma (AND): [(p → q) ∧ (r → s)] → [(p ∧ r) → (q ∧ s)]
- * @param premises are the premises to use
- * @param selected are the nodes selected to make the dilema
- * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
- * @throws Error if premises are undefined
  */
-export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): ProofNode {
+function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): ProofNode {
   checkPremises(premises);
   const a = premises.left;
   const b = premises.right;
@@ -274,7 +266,21 @@ export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[])
   return createImplicationNode(finalText, false, nodeA, nodeB, selected);
 }
 
-//TODO wrap and and or constructive dilemma into function here
+/**
+ * Constructive Dilemma: [(p → q) ∧ (r → s)] → [(p ⋄ r) → (q ⋄ s)] where ⋄ is OR or AND.
+ * Tries OR first, then AND if OR returns ERROR_NODE.
+ * @param premises are the premises to use
+ * @param selected are the nodes selected to make the dilemma
+ * @return the result node, or ERROR_NODE if invalid
+ */
+export function constructiveDilemma(
+  premises: AndNode,
+  selected: ProofNode[]
+): ProofNode {
+  const orResult = constructiveDilemmaOr(premises, selected);
+  if (!sameNode(orResult, ERROR_NODE)) return orResult;
+  return constructiveDilemmaAnd(premises, selected);
+}
 
 /**
  * Addition: p → (p ∨ q)
@@ -651,19 +657,12 @@ export const Axioms: Axiom[] = [
   } satisfies Axiom,
   {
     id: "7",
-    text: "Constructive Dilemma (OR)",
+    text: "Constructive Dilemma",
     selected: false,
-    description: "[(A → B) ∧ (C → D)] → ((A ∨ B) → (C ∨ D))",
+    description: "[(A → B) ∧ (C → D)] → ((A ∨ C) → (B ∨ D))",
+    description2: "[(A → B) ∧ (C → D)] → ((A ∧ C) → (B ∧ D))",
     applyType: "1",
-    apply: constructiveDilemmaOr,
-  } satisfies Axiom,
-  {
-    id: "8",
-    text: "Constructive Dilemma (AND)",
-    selected: false,
-    description: "[(A → B) ∧ (C → D)] → ((A ∧ B) → (C ∧ D))",
-    applyType: "1",
-    apply: constructiveDilemmaAnd,
+    apply: constructiveDilemma,
   } satisfies Axiom,
   {
     id: "9",
