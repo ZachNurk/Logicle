@@ -15,6 +15,7 @@ import {
   associativity,
   distributivity,
   indempotent,
+  contrapositive,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -801,6 +802,39 @@ describe("Axioms", () => {
         expect(indempotent(A).text === "error")
       })
     })
+  })
+
+  describe("Contrapositive", () => {
+    it("(A → B) ≡ (¬B → ¬A)", () => {
+      
+      const aImpB = createImplicationNode("(A → B)",false,A,B,[A,B])
+      const ACTUAL = contrapositive(aImpB).text
+      const EXPECTED = "(¬B → ¬A)"
+      expect(EXPECTED === ACTUAL).toBe(true)
+    })
+  })
+
+  it("Contrapositive of a compound implication: ((A ∧ B) → (C ∨ D)) becomes (¬(C ∨ D) → ¬(A ∧ B)) and does not mutate original", () => {
+    // Build antecedent (A ∧ B)
+    const aAndB = createAndNode("(A ∧ B)", false, A, B, [A, B])
+  
+    // Build consequent (C ∨ D)
+    const cOrD = createOrNode("(C ∨ D)", false, C, D, [C, D])
+  
+    // Build implication ((A ∧ B) → (C ∨ D))
+    const imp = createImplicationNode("((A ∧ B) → (C ∨ D))", false, aAndB, cOrD, [aAndB, cOrD])
+  
+    const originalTextBefore = imp.text
+  
+    const result = contrapositive(imp)
+  
+    const EXPECTED = "(¬(C ∨ D) → ¬(A ∧ B))"
+    expect(result.text).toBe(EXPECTED)
+  
+    // Ensure original node wasn't mutated
+    expect(imp.text).toBe(originalTextBefore)
+  
+  
   })
 
   

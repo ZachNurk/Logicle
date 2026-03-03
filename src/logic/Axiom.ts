@@ -619,13 +619,28 @@ export function indempotent(original: ProofNode): ProofNode {
  * De Morgan's Law (s)
  */
 
+/**
+ * Contrapositive ( (p → q) ≡ (¬q → ¬p) )
+ * @param original is the original node
+ * @return returns an error node if invalid operation, proofnode if valid
+ */
+export function contrapositive(original: ProofNode) : ProofNode {
+  if (!isImplicationNode(original)) {
+    return ERROR_NODE
+  }
+  const textL = `¬${original.left.text}`;
+  const left: NotNode = createNotNode(textL,false,original.left,undefined) 
+  const textR = `¬${original.right.text}`;
+  const right: NotNode = createNotNode(textR,false,original.right,undefined) 
+  const text = `(${textR} → ${textL})`
+  return createImplicationNode(text,false,right,left,[original])
+}
 
 // Axioms list
 
 //TODO 
 // 27. ¬(p ∨ q) ≡ (¬p ∧ ¬q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . DeMorgan’s (∨)
 // 28. ¬(p ∧ q) ≡ (¬p ∨ ¬q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . DeMorgan’s (∧)
-// 29. (p → q) ≡ (¬q → ¬p) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Contrapositive
 // 30. (p → q) ≡ (¬p ∨ q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Conditional Identity (→)
 // 31. p ↔ q ≡ (p → q) ∧ (q → p) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Conditional Identity (↔)
 // 32. [(p → r) ∧ (q → r)] ≡ [(p ∨ q) → r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
@@ -739,5 +754,13 @@ export const Axioms: Axiom[] = [
     description2: "(A ∧ A) ≡ A",
     applyType: "4",
     apply: indempotent,
+  } satisfies Axiom,
+  {
+    id: "18",
+    text: "Contrapositive",
+    selected: false,
+    description: "(A → B) ≡ (¬B → ¬A)",
+    applyType: "4",
+    apply: contrapositive,
   } satisfies Axiom,
 ];
