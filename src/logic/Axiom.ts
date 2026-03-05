@@ -636,6 +636,51 @@ export function contrapositive(original: ProofNode) : ProofNode {
   return createImplicationNode(text,false,right,left,[original])
 }
 
+/**
+ * Conditional Identity
+ * (p → q) ≡ (¬p ∨ q)
+ */
+function conditionalIdentityImp(original: ProofNode) : ProofNode {
+  if (!isImplicationNode(original)) {
+    return ERROR_NODE
+  }
+  const textL = `¬${original.left.text}`;
+  const left: NotNode = createNotNode(textL,false,original.left,undefined) 
+  const textR = original.right.text;
+  const right: ProofNode = original.right
+  const text = `(${textL} ∨ ${textR})`
+  return createOrNode(text,false,left,right,[original])
+
+}
+
+/**
+ * Conditional Identity IFF
+ * p ↔ q ≡ (p → q) ∧ (q → p)
+ * @param original
+ */
+function conditionalIdentityIff(original: ProofNode) : ProofNode {
+  if (!isIffNode(original)) {
+    return ERROR_NODE
+  }
+}
+
+/**
+ * Conditional Identity Wrapper
+ * @param original is the original node
+ * @returns returs the new node created or error node if invalid operation
+ */
+export function conditionalIdentity(original: ProofNode) {
+  if (isImplicationNode(original)) {
+    return conditionalIdentityImp(original)
+  }
+  else if (isIffNode(original)) {
+    return conditionalIdentityIff(original)
+  }
+  return ERROR_NODE
+
+}
+
+
 // Axioms list
 
 //TODO 
