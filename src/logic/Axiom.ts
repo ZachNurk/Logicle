@@ -12,14 +12,13 @@ import {
   isNotNode,
   createNotNode,
   createImplicationNode,
-  isBinaryNode,
   isAndNode,
   isOrNode,
   isIffNode,
   createResultNode,
   createOrNode,
   createAndNode,
-  createNode
+  checkParentheses,
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -50,17 +49,6 @@ function checkPremises(premises: AndNode) {
 }
 
 /**
- * Wrap in parens only when node has multiple parts (And, Or, If, Iff). Single (atom, Not) stays unwrapped.
- * Convention: create* functions in ProofNode do not add parentheses; any code that builds a formula
- * string from child nodes (e.g. axioms) should use this so the result is unambiguous.
- * @param n the node to format as a subexpression
- * @returns the node's text, wrapped in parentheses when it is a binary node
- */
-export function checkParentheses(n: ProofNode): string {
-  return isBinaryNode(n) ? `(${n.text})` : n.text;
-}
-
-/**
  * Hypothetical Syllogism [(p → q) ∧ (q → r)] → (p → r)
  * @param premises And node whose left and right are the two implication nodes
  * @param selected is the nodes that are selected (needed becuase we dont know if passed node is true and or constructed and)
@@ -77,16 +65,10 @@ export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]):
   }
 
   if (sameNode(a.right, b.left)) {
-    const first = checkParentheses(a.left);
-    const fourth = checkParentheses(b.right);
-    const text = `${first} → ${fourth}`;
-    return createImplicationNode(text, false, a.left, b.right, selected);
+    return createImplicationNode(false, a.left, b.right, selected);
   }
   if (sameNode(a.left, b.right)) {
-    const first = checkParentheses(b.left);
-    const fourth = checkParentheses(a.right);
-    const text = `${first} → ${fourth}`;
-    return createImplicationNode(text, false, b.left, a.right, selected);
+    return createImplicationNode(false, b.left, a.right, selected);
   }
   return ERROR_NODE;
 }
@@ -205,8 +187,7 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
   }
 
   if (sameNode(premise.contains, implication.right)) {
-    const text = `¬${checkParentheses(implication.left)}`;
-    return createNotNode(text, false, implication.left, selected);
+  return createNotNode(false, implication.left, selected);
   }
   return ERROR_NODE;
 
@@ -244,12 +225,9 @@ export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]):
   if (!(isImplicationNode(a) && isImplicationNode(b))) {
     return ERROR_NODE;
   }
-  const textA = `${a.left.text} ∨ ${a.right.text}`;
-  const nodeA = createOrNode(textA, false, a.left, a.right, undefined);
-  const textB = `${b.left.text} ∨ ${b.right.text}`;
-  const nodeB = createOrNode(textB, false, b.left, b.right, undefined);
-  const finalText = `(${nodeA.text}) → (${nodeB.text})`;
-  return createImplicationNode(finalText, false, nodeA, nodeB, selected);
+  const nodeA = createOrNode(false, a.left, a.right, undefined);
+  const nodeB = createOrNode(false, b.left, b.right, undefined);
+  return createImplicationNode(false, nodeA, nodeB, selected);
 }
 
 /**
@@ -265,12 +243,9 @@ export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[])
   if (!(isImplicationNode(a) && isImplicationNode(b))) {
     return ERROR_NODE;
   }
-  const textA = `${a.left.text} ∧ ${a.right.text}`;
-  const nodeA = createAndNode(textA, false, a.left, a.right, undefined);
-  const textB = `${b.left.text} ∧ ${b.right.text}`;
-  const nodeB = createAndNode(textB, false, b.left, b.right, undefined);
-  const finalText = `(${nodeA.text}) → (${nodeB.text})`;
-  return createImplicationNode(finalText, false, nodeA, nodeB, selected);
+  const nodeA = createAndNode(false, a.left, a.right, undefined);
+  const nodeB = createAndNode(false, b.left, b.right, undefined);
+  return createImplicationNode(false, nodeA, nodeB, selected);
 }
 
 /**
@@ -295,10 +270,7 @@ export function constructiveDilemma(
  * @param addition is the node we are adding (designed by the UI)
  */
 export function addition(original: ProofNode, addition: ProofNode): ProofNode {
-  let a = checkParentheses(original)
-  let b = checkParentheses(addition)
-  let text = `${a} ∨ ${b}`
-  return createOrNode(text, false, original, addition, [original])
+  return createOrNode(false, original, addition, [original]);
 }
 
 /**
@@ -307,10 +279,7 @@ export function addition(original: ProofNode, addition: ProofNode): ProofNode {
  * @param addition is the node we are adding (designed by the UI)
  */
 export function conjunction(original: ProofNode, addition: ProofNode): ProofNode {
-  let a = checkParentheses(original)
-  let b = checkParentheses(addition)
-  let text = `${a} ∧ ${b}`
-  return createAndNode(text, false, original, addition, [original, addition])
+  return createAndNode(false, original, addition, [original, addition]);
 }
 
 /**
@@ -339,9 +308,7 @@ function orCommutativity(original: ProofNode): ProofNode {
   if (!isOrNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
-  const text = `${checkParentheses(original.right)} ∨ ${checkParentheses(original.left)}`;
-  
-  return createOrNode(text, false, original.right, original.left, [original]);
+  return createOrNode(false, original.right, original.left, [original]);
 }
 
 /**
@@ -353,9 +320,7 @@ function andCommutativity(original: ProofNode): ProofNode {
   if (!isAndNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
-  const text = `${checkParentheses(original.right)} ∧ ${checkParentheses(original.left)}`;
-
-  return createAndNode(text, false, original.right, original.left, [original]);
+  return createAndNode(false, original.right, original.left, [original]);
 }
 
 /**
@@ -384,27 +349,13 @@ function andAssociativity(original: ProofNode): ProofNode {
   }
   if (isAndNode(original.left)) {
     // ((A ∧ B) ∧ C) → (A ∧ (B ∧ C))
-    const inner = createAndNode(
-      `${checkParentheses(original.left.right)} ∧ ${checkParentheses(original.right)}`,
-      false,
-      original.left.right,
-      original.right,
-      undefined
-    );
-    const text = `${checkParentheses(original.left.left)} ∧ ${checkParentheses(inner)}`;
-    return createAndNode(text, false, original.left.left, inner, [original]);
+    const inner = createAndNode(false, original.left.right, original.right, undefined);
+    return createAndNode(false, original.left.left, inner, [original]);
   }
   if (isAndNode(original.right)) {
     // (A ∧ (B ∧ C)) → ((A ∧ B) ∧ C)
-    const inner = createAndNode(
-      `${checkParentheses(original.left)} ∧ ${checkParentheses(original.right.left)}`,
-      false,
-      original.left,
-      original.right.left,
-      undefined
-    );
-    const text = `${checkParentheses(inner)} ∧ ${checkParentheses(original.right.right)}`;
-    return createAndNode(text, false, inner, original.right.right, [original]);
+    const inner = createAndNode(false, original.left, original.right.left, undefined);
+    return createAndNode(false, inner, original.right.right, [original]);
   }
   return ERROR_NODE;
 }
@@ -421,27 +372,13 @@ function orAssociativity(original: ProofNode): ProofNode {
   }
   if (isOrNode(original.left)) {
     // ((A ∨ B) ∨ C) → (A ∨ (B ∨ C))
-    const inner = createOrNode(
-      `${checkParentheses(original.left.right)} ∨ ${checkParentheses(original.right)}`,
-      false,
-      original.left.right,
-      original.right,
-      undefined
-    );
-    const text = `${checkParentheses(original.left.left)} ∨ ${checkParentheses(inner)}`;
-    return createOrNode(text, false, original.left.left, inner, [original]);
+    const inner = createOrNode(false, original.left.right, original.right, undefined);
+    return createOrNode(false, original.left.left, inner, [original]);
   }
   if (isOrNode(original.right)) {
     // (A ∨ (B ∨ C)) → ((A ∨ B) ∨ C)
-    const inner = createOrNode(
-      `${checkParentheses(original.left)} ∨ ${checkParentheses(original.right.left)}`,
-      false,
-      original.left,
-      original.right.left,
-      undefined
-    );
-    const text = `${checkParentheses(inner)} ∨ ${checkParentheses(original.right.right)}`;
-    return createOrNode(text, false, inner, original.right.right, [original]);
+    const inner = createOrNode(false, original.left, original.right.left, undefined);
+    return createOrNode(false, inner, original.right.right, [original]);
   }
   return ERROR_NODE;
 }
@@ -476,22 +413,9 @@ function orOverAndDistributivity(original: ProofNode): ProofNode {
     const b = original.right.left;
     const c = original.right.right;
     if (!b || !c) return ERROR_NODE;
-    const aOrB = createOrNode(
-      `${checkParentheses(a)} ∨ ${checkParentheses(b)}`,
-      false,
-      a,
-      b,
-      undefined
-    );
-    const aOrC = createOrNode(
-      `${checkParentheses(a)} ∨ ${checkParentheses(c)}`,
-      false,
-      a,
-      c,
-      undefined
-    );
-    const text = `${checkParentheses(aOrB)} ∧ ${checkParentheses(aOrC)}`;
-    return createAndNode(text, false, aOrB, aOrC, [original]);
+    const aOrB = createOrNode(false, a, b, undefined);
+    const aOrC = createOrNode(false, a, c, undefined);
+    return createAndNode(false, aOrB, aOrC, [original]);
   }
   if (isAndNode(original.left)) {
     // (B ∧ C) ∨ A → (B ∨ A) ∧ (C ∨ A) which we write as (A ∨ B) ∧ (A ∨ C) for consistency
@@ -499,22 +423,9 @@ function orOverAndDistributivity(original: ProofNode): ProofNode {
     const b = original.left.left;
     const c = original.left.right;
     if (!b || !c) return ERROR_NODE;
-    const aOrB = createOrNode(
-      `${checkParentheses(a)} ∨ ${checkParentheses(b)}`,
-      false,
-      a,
-      b,
-      undefined
-    );
-    const aOrC = createOrNode(
-      `${checkParentheses(a)} ∨ ${checkParentheses(c)}`,
-      false,
-      a,
-      c,
-      undefined
-    );
-    const text = `${checkParentheses(aOrB)} ∧ ${checkParentheses(aOrC)}`;
-    return createAndNode(text, false, aOrB, aOrC, [original]);
+    const aOrB = createOrNode(false, a, b, undefined);
+    const aOrC = createOrNode(false, a, c, undefined);
+    return createAndNode(false, aOrB, aOrC, [original]);
   }
   return ERROR_NODE;
 }
@@ -534,22 +445,9 @@ function andOverOrDistributivity(original: ProofNode): ProofNode {
     const b = original.right.left;
     const c = original.right.right;
     if (!b || !c) return ERROR_NODE;
-    const aAndB = createAndNode(
-      `${checkParentheses(a)} ∧ ${checkParentheses(b)}`,
-      false,
-      a,
-      b,
-      undefined
-    );
-    const aAndC = createAndNode(
-      `${checkParentheses(a)} ∧ ${checkParentheses(c)}`,
-      false,
-      a,
-      c,
-      undefined
-    );
-    const text = `${checkParentheses(aAndB)} ∨ ${checkParentheses(aAndC)}`;
-    return createOrNode(text, false, aAndB, aAndC, [original]);
+    const aAndB = createAndNode(false, a, b, undefined);
+    const aAndC = createAndNode(false, a, c, undefined);
+    return createOrNode(false, aAndB, aAndC, [original]);
   }
   if (isOrNode(original.left)) {
     // (B ∨ C) ∧ A → (A ∧ B) ∨ (A ∧ C)
@@ -557,22 +455,9 @@ function andOverOrDistributivity(original: ProofNode): ProofNode {
     const b = original.left.left;
     const c = original.left.right;
     if (!b || !c) return ERROR_NODE;
-    const aAndB = createAndNode(
-      `${checkParentheses(a)} ∧ ${checkParentheses(b)}`,
-      false,
-      a,
-      b,
-      undefined
-    );
-    const aAndC = createAndNode(
-      `${checkParentheses(a)} ∧ ${checkParentheses(c)}`,
-      false,
-      a,
-      c,
-      undefined
-    );
-    const text = `${checkParentheses(aAndB)} ∨ ${checkParentheses(aAndC)}`;
-    return createOrNode(text, false, aAndB, aAndC, [original]);
+    const aAndB = createAndNode(false, a, b, undefined);
+    const aAndC = createAndNode(false, a, c, undefined);
+    return createOrNode(false, aAndB, aAndC, [original]);
   }
   return ERROR_NODE;
 }
@@ -616,8 +501,55 @@ export function indempotent(original: ProofNode): ProofNode {
 
 
 /**
- * De Morgan's Law (s)
+ * De Morgan's (∨): ¬(p ∨ q) ≡ (¬p ∧ ¬q)
+ * @param original must be a NotNode containing an OrNode
  */
+function deMorganOr(original: ProofNode): ProofNode {
+  if (!isNotNode(original)) {
+    return ERROR_NODE;
+  } 
+  const inner = original.contains;
+  if (!isOrNode(inner) || !inner.left || !inner.right) {
+    return ERROR_NODE;
+  } 
+  const leftNot = createNotNode(false, inner.left, undefined);
+  const rightNot = createNotNode(false, inner.right, undefined);
+  return createAndNode(false, leftNot, rightNot, [original]);
+}
+
+/**
+ * De Morgan's (∧): ¬(p ∧ q) ≡ (¬p ∨ ¬q)
+ * @param original must be a NotNode containing an AndNode
+ */
+function deMorganAnd(original: ProofNode): ProofNode {
+  if (!isNotNode(original)) {
+    return ERROR_NODE;
+  } 
+  const inner = original.contains;
+  if (!isAndNode(inner) || !inner.left || !inner.right) {
+    return ERROR_NODE;
+  } 
+  const leftNot = createNotNode(false, inner.left, undefined);
+  const rightNot = createNotNode(false, inner.right, undefined);
+  return createOrNode(false, leftNot, rightNot, [original]);
+}
+
+/**
+ * De Morgan's Laws: dispatches to OR or AND variant based on the negated node type.
+ */
+export function deMorgan(original: ProofNode): ProofNode {
+  if (!isNotNode(original)) {
+    return ERROR_NODE;
+  } 
+  const inner = original.contains;
+  if (isOrNode(inner)) {
+    return deMorganOr(original);
+  } 
+  if (isAndNode(inner)) {
+    return deMorganAnd(original);
+  } 
+  return ERROR_NODE;
+}
 
 /**
  * Contrapositive ( (p → q) ≡ (¬q → ¬p) )
@@ -628,21 +560,40 @@ export function contrapositive(original: ProofNode) : ProofNode {
   if (!isImplicationNode(original)) {
     return ERROR_NODE
   }
-  const textL = `¬${original.left.text}`;
-  const left: NotNode = createNotNode(textL,false,original.left,undefined) 
-  const textR = `¬${original.right.text}`;
-  const right: NotNode = createNotNode(textR,false,original.right,undefined) 
-  const text = `(${textR} → ${textL})`
-  return createImplicationNode(text,false,right,left,[original])
+  const left: NotNode = createNotNode(false, original.left, undefined);
+  const right: NotNode = createNotNode(false, original.right, undefined);
+  return createImplicationNode(false, right, left, [original]);
+}
+
+/**
+ * Conditional Identity (→): (p → q) ≡ (¬p ∨ q)
+ * @param original must be an ImplicationNode
+ */
+export function conditionalIdentityImplication(original: ProofNode): ProofNode {
+  if (!isImplicationNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  } 
+  const notLeft = createNotNode(false, original.left, undefined);
+  return createOrNode(false, notLeft, original.right, [original]);
+}
+
+/**
+ * Conditional Identity (↔): p ↔ q ≡ (p → q) ∧ (q → p)
+ * @param original must be an IffNode
+ */
+export function conditionalIdentityIff(original: ProofNode): ProofNode {
+  if (!isIffNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  const pImplQ = createImplicationNode(false, original.left, original.right, undefined);
+  const qImplP = createImplicationNode(false, original.right, original.left, undefined);
+  return createAndNode(false, pImplQ, qImplP, [original]);
 }
 
 // Axioms list
 
-//TODO 
-// 27. ¬(p ∨ q) ≡ (¬p ∧ ¬q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . DeMorgan’s (∨)
-// 28. ¬(p ∧ q) ≡ (¬p ∨ ¬q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . DeMorgan’s (∧)
-// 30. (p → q) ≡ (¬p ∨ q) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Conditional Identity (→)
-// 31. p ↔ q ≡ (p → q) ∧ (q → p) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Conditional Identity (↔)
+// 30. (p → q) ≡ (¬p ∨ q) Conditional Identity (→) ✓
+// 31. p ↔ q ≡ (p → q) ∧ (q → p) Conditional Identity (↔) ✓
 // 32. [(p → r) ∧ (q → r)] ≡ [(p ∨ q) → r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
 // 33. [(p → q) ∧ (p → r)] ≡ [p → (q ∧ r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
 export const Axioms: Axiom[] = [
@@ -762,5 +713,30 @@ export const Axioms: Axiom[] = [
     description: "(A → B) ≡ (¬B → ¬A)",
     applyType: "4",
     apply: contrapositive,
+  } satisfies Axiom,
+  {
+    id: "27",
+    text: "De Morgan",
+    selected: false,
+    description: "¬(A ∨ B) ≡ (¬A ∧ ¬B)",
+    description2: "¬(A ∧ B) ≡ (¬A ∨ ¬B)",
+    applyType: "4",
+    apply: deMorgan,
+  } satisfies Axiom,
+  {
+    id: "30",
+    text: "Conditional Identity (→)",
+    selected: false,
+    description: "(A → B) ≡ (¬A ∨ B)",
+    applyType: "4",
+    apply: conditionalIdentityImplication,
+  } satisfies Axiom,
+  {
+    id: "31",
+    text: "Conditional Identity (↔)",
+    selected: false,
+    description: "A ↔ B ≡ (A → B) ∧ (B → A)",
+    applyType: "4",
+    apply: conditionalIdentityIff,
   } satisfies Axiom,
 ];

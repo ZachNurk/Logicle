@@ -40,7 +40,7 @@ export function useProofSession() {
     } else if (selectedNodes.length == 2) {
       // good, we have two nodes
       const [left, right] = selectedNodes;
-      prem = createAndNode(`${left.text} ∧ ${right.text}`, false, left, right);
+      prem = createAndNode(false, left, right);
       
     } else if (selectedNodes.length == 1) {
      

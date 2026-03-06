@@ -102,6 +102,15 @@ export function isBinaryNode(node: ProofNode): boolean {
 }
 
 /**
+ * Returns the node's text, wrapped in parentheses when it is a binary node.
+ * Use when building a formula string and this node appears as a subexpression (e.g. left/right of another operator).
+ * @param n the node to format as a subexpression
+ */
+export function checkParentheses(n: ProofNode): string {
+  return isBinaryNode(n) ? `(${n.text})` : n.text;
+}
+
+/**
  * Creates a new node, but with newly defined parents. Used in the result of an axiom operation
  * @param result is the result of the operation
  * @param parents is the 2 elm array of parents
@@ -181,105 +190,105 @@ export function createNode(
 }
 
 export function createNotNode(
-  text: string,
   selected: boolean,
   contains: ProofNode,
   parents?: ProofNode[],
   isStarter?: boolean,
 ): NotNode {
+  const text = `¬${checkParentheses(contains)}`;
   return {
     id: crypto.randomUUID(),
-    text: text,
-    selected: selected,
+    text,
+    selected,
     isStarter: isStarter ?? false,
     context: false,
     relationship: "Not",
-    contains: contains,
+    contains,
     parents: parents ?? [],
   };
 }
 
 export function createImplicationNode(
-  text: string,
   selected: boolean,
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
   isStarter?: boolean,
 ): ImplicationNode {
+  const text = `${checkParentheses(left)} → ${checkParentheses(right)}`;
   return {
     id: crypto.randomUUID(),
-    text: text,
-    selected: selected,
+    text,
+    selected,
     isStarter: isStarter ?? false,
     context: false,
     parents: parents ?? [],
     relationship: "If",
-    left: left,
-    right: right,
+    left,
+    right,
   };
 }
 
 export function createAndNode(
-  text: string,
   selected: boolean,
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
   isStarter?: boolean,
 ): AndNode {
+  const text = `${checkParentheses(left)} ∧ ${checkParentheses(right)}`;
   return {
     id: crypto.randomUUID(),
-    text: text,
-    selected: selected,
+    text,
+    selected,
     isStarter: isStarter ?? false,
     context: false,
     parents: parents ?? [],
     relationship: "And",
-    left: left,
-    right: right,
+    left,
+    right,
   };
 }
 
 export function createOrNode(
-  text: string,
   selected: boolean,
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
   isStarter?: boolean,
 ): OrNode {
+  const text = `${checkParentheses(left)} ∨ ${checkParentheses(right)}`;
   return {
     id: crypto.randomUUID(),
-    text: text,
-    selected: selected,
+    text,
+    selected,
     isStarter: isStarter ?? false,
     context: false,
     parents: parents ?? [],
     relationship: "Or",
-    left: left,
-    right: right,
+    left,
+    right,
   };
 }
 
 export function createIffNode(
-  text: string,
   selected: boolean,
   left: ProofNode,
   right: ProofNode,
   parents?: ProofNode[],
   isStarter?: boolean,
 ): IffNode {
+  const text = `${checkParentheses(left)} ↔ ${checkParentheses(right)}`;
   return {
     id: crypto.randomUUID(),
-    text: text,
-    selected: selected,
+    text,
+    selected,
     isStarter: isStarter ?? false,
     context: false,
     parents: parents ?? [],
     relationship: "Iff",
-    left: left,
-    right: right,
+    left,
+    right,
   };
 }
 
