@@ -598,25 +598,14 @@ function conditionalIdentityImp(original: ProofNode) : ProofNode {
   if (!isImplicationNode(original)) {
     return ERROR_NODE
   }
-  const textL = `¬${original.left.text}`;
-  const left: NotNode = createNotNode(textL,false,original.left,undefined) 
-  const textR = original.right.text;
+
+  const left: NotNode = createNotNode(false,original.left,undefined) 
   const right: ProofNode = original.right
-  const text = `(${textL} ∨ ${textR})`
-  return createOrNode(text,false,left,right,[original])
+  return createOrNode(false,left,right,[original])
 
 }
 
-/**
- * Conditional Identity IFF
- * p ↔ q ≡ (p → q) ∧ (q → p)
- * @param original
- */
-function conditionalIdentityIff(original: ProofNode) : ProofNode {
-  if (!isIffNode(original)) {
-    return ERROR_NODE
-  }
-}
+
 
 /**
  * Conditional Identity Wrapper
@@ -635,12 +624,54 @@ export function conditionalIdentity(original: ProofNode) {
 }
 
 
+/**
+ * Implication #32: [(p → r) ∧ (q → r)] → ((p ∨ q) → r)
+ * @param premises And node containing two implication nodes
+ * @param selected selected nodes used as parents for the result
+ */
+export function implicationCommonConsequent(premises: AndNode, selected: ProofNode[]): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
+
+  if (!(isImplicationNode(a) && isImplicationNode(b))) {
+    return ERROR_NODE;
+  }
+  if (!sameNode(a.right, b.right)) {
+    return ERROR_NODE;
+  }
+
+  const left = createOrNode(false, a.left, b.left, undefined);
+  return createImplicationNode(false, left, a.right, selected);
+}
+
+/**
+ * Implication #33: [(p → q) ∧ (p → r)] → (p → (q ∧ r))
+ * @param premises And node containing two implication nodes
+ * @param selected selected nodes used as parents for the result
+ */
+export function implicationCommonAntecedent(premises: AndNode, selected: ProofNode[]): ProofNode {
+  checkPremises(premises);
+  const a = premises.left;
+  const b = premises.right;
+
+  if (!(isImplicationNode(a) && isImplicationNode(b))) {
+    return ERROR_NODE;
+  }
+  if (!sameNode(a.left, b.left)) {
+    return ERROR_NODE;
+  }
+
+  const right = createAndNode(false, a.right, b.right, undefined);
+  return createImplicationNode(false, a.left, right, selected);
+}
+
+
 // Axioms list
 
-// 30. (p → q) ≡ (¬p ∨ q) Conditional Identity (→) ✓
-// 31. p ↔ q ≡ (p → q) ∧ (q → p) Conditional Identity (↔) ✓
 // 32. [(p → r) ∧ (q → r)] ≡ [(p ∨ q) → r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
 // 33. [(p → q) ∧ (p → r)] ≡ [p → (q ∧ r)] . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . Implication
+
 export const Axioms: Axiom[] = [
   {
     id: "1",
@@ -783,5 +814,21 @@ export const Axioms: Axiom[] = [
     description: "A ↔ B ≡ (A → B) ∧ (B → A)",
     applyType: "4",
     apply: conditionalIdentityIff,
+  } satisfies Axiom,
+  {
+    id: "32",
+    text: "Implication (Common Consequent)",
+    selected: false,
+    description: "[(A → C) ∧ (B → C)] → ((A ∨ B) → C)",
+    applyType: "1",
+    apply: implicationCommonConsequent,
+  } satisfies Axiom,
+  {
+    id: "33",
+    text: "Implication (Common Antecedent)",
+    selected: false,
+    description: "[(A → B) ∧ (A → C)] → (A → (B ∧ C))",
+    applyType: "1",
+    apply: implicationCommonAntecedent,
   } satisfies Axiom,
 ];

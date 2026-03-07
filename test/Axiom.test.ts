@@ -19,6 +19,9 @@ import {
   deMorgan,
   conditionalIdentityImplication,
   conditionalIdentityIff,
+  conditionalIdentity,
+  implicationCommonConsequent,
+  implicationCommonAntecedent,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -754,6 +757,112 @@ describe("Axioms", () => {
   
   
   })
+
+
+  describe("Conditional Identity:", () => {
+    it("Conditional Identity: A → B ≡ ¬A ∨ B", () => {
+      const aImpB = createImplicationNode(false, A, B, [A, B])
+      const EXPECTED = "¬A ∨ B"
+      const RESULT = conditionalIdentity(aImpB).text
+  
+      expect(RESULT).toBe(EXPECTED)
+    })
+
+    it("Conditional Identity: (A ∧ B) → (C ∨ D) ≡ ¬(A ∧ B) ∨ (C ∨ D)", () => {
+      const aAndB = createAndNode(false, A, B, [A, B])
+      const cOrD = createOrNode(false, C, D, [C, D])
+      const nestedImplication = createImplicationNode(false, aAndB, cOrD, [aAndB, cOrD])
+      const EXPECTED = "¬(A ∧ B) ∨ (C ∨ D)"
+      const RESULT = conditionalIdentity(nestedImplication).text
+  
+      expect(RESULT).toBe(EXPECTED)
+    })
+    
+    it("Conditional Identity: A ↔ B ≡ (A → B) ∧ (B → A)", () => {
+      const aIffB = createIffNode(false, A, B, [A, B])
+      const EXPECTED = "(A → B) ∧ (B → A)"
+      const RESULT = conditionalIdentity(aIffB).text
+  
+      expect(RESULT).toBe(EXPECTED)
+    })
+
+
+    it("Conditional Identity: (A ∧ B) ↔ (C ∨ D) ≡ ((A ∧ B) → (C ∨ D)) ∧ ((C ∨ D) → (A ∧ B))", () => {
+      const aAndB = createAndNode(false, A, B, [A, B])
+      const cOrD = createOrNode(false, C, D, [C, D])
+      const nestedIff = createIffNode(false, aAndB, cOrD, [aAndB, cOrD])
+      const EXPECTED = "((A ∧ B) → (C ∨ D)) ∧ ((C ∨ D) → (A ∧ B))"
+      const RESULT = conditionalIdentity(nestedIff).text
+  
+      expect(RESULT).toBe(EXPECTED)
+    })
+  })
+
+  describe("Implication (Common Consequent)", () => {
+    it("[(A → C) ∧ (B → C)] → ((A ∨ B) → C)", () => {
+      const aImpC = createImplicationNode(false, A, C)
+      const bImpC = createImplicationNode(false, B, C)
+
+      const ACTUAL = implicationCommonConsequent(premises(aImpC, bImpC), [aImpC, bImpC]).text
+      const EXPECTED = "(A ∨ B) → C"
+      expect(ACTUAL).toBe(EXPECTED)
+    })
+
+    it("nested antecedents: [((A ∧ B) → E) ∧ ((C ∨ D) → E)] → (((A ∧ B) ∨ (C ∨ D)) → E)", () => {
+      const aAndB = createAndNode(false, A, B)
+      const cOrD = createOrNode(false, C, D)
+      const aAndBImpE = createImplicationNode(false, aAndB, E)
+      const cOrDImpE = createImplicationNode(false, cOrD, E)
+
+      const ACTUAL = implicationCommonConsequent(
+        premises(aAndBImpE, cOrDImpE),
+        [aAndBImpE, cOrDImpE],
+      ).text
+      const EXPECTED = "((A ∧ B) ∨ (C ∨ D)) → E"
+      expect(ACTUAL).toBe(EXPECTED)
+    })
+
+    it("returns ERROR when consequents differ", () => {
+      const aImpC = createImplicationNode(false, A, C)
+      const bImpD = createImplicationNode(false, B, D)
+      const ACTUAL = implicationCommonConsequent(premises(aImpC, bImpD), [aImpC, bImpD])
+      expect(sameNode(ACTUAL, ERROR_NODE)).toBe(true)
+    })
+  })
+
+  describe("Implication (Common Antecedent)", () => {
+    it("[(A → B) ∧ (A → C)] → (A → (B ∧ C))", () => {
+      const aImpB = createImplicationNode(false, A, B)
+      const aImpC = createImplicationNode(false, A, C)
+
+      const ACTUAL = implicationCommonAntecedent(premises(aImpB, aImpC), [aImpB, aImpC]).text
+      const EXPECTED = "A → (B ∧ C)"
+      expect(ACTUAL).toBe(EXPECTED)
+    })
+
+    it("nested consequents: [(A → (B ∨ C)) ∧ (A → (D ∧ E))] → (A → ((B ∨ C) ∧ (D ∧ E)))", () => {
+      const bOrC = createOrNode(false, B, C)
+      const dAndE = createAndNode(false, D, E)
+      const aImpBOrC = createImplicationNode(false, A, bOrC)
+      const aImpDAndE = createImplicationNode(false, A, dAndE)
+
+      const ACTUAL = implicationCommonAntecedent(
+        premises(aImpBOrC, aImpDAndE),
+        [aImpBOrC, aImpDAndE],
+      ).text
+      const EXPECTED = "A → ((B ∨ C) ∧ (D ∧ E))"
+      expect(ACTUAL).toBe(EXPECTED)
+    })
+
+    it("returns ERROR when antecedents differ", () => {
+      const aImpB = createImplicationNode(false, A, B)
+      const cImpD = createImplicationNode(false, C, D)
+      const ACTUAL = implicationCommonAntecedent(premises(aImpB, cImpD), [aImpB, cImpD])
+      expect(sameNode(ACTUAL, ERROR_NODE)).toBe(true)
+    })
+  })
+  
+
 
   
 });
