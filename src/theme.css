@@ -1,0 +1,16 @@
+/**
+ * Global color theme. Import once (e.g. in main.tsx) then use var(--color-name) in any stylesheet.
+ *
+ * W  = white
+ * B  = black
+ * DP = dark pink
+ * MP = medium pink
+ * LP = light pink
+ */
+:root {
+  --color-w: #ffffff;
+  --color-b: #000000;
+  --color-dp: #ff7aad;
+  --color-mp: #ff9bc5;
+  --color-lp: #ffcfe3;
+}

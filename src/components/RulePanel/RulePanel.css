@@ -1,4 +1,3 @@
-
 .container {
   display: flex;
   flex-direction: column;
@@ -8,17 +7,33 @@
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-auto-rows: minmax(52px, 1fr);
   gap: 10px;
+  padding: 16px;
+  border: 4px solid var(--color-b);;
+  border-radius: 20px;
+}
+
+.axiom-cell {
+  position: relative;
+  min-height: 0;
+  display: flex;
+}
+
+.axiom-cell:has(.info-dot-wrapper:hover) {
+  z-index: 10;
 }
 
 .axiom-button {
-  --bg: #000;
-  --hover-bg: #ff90e8;
-  --hover-text: #000;
+  --bg: var(--color-b);
+  --hover-bg: var(--color-lp);
+  --hover-text: var(--color-b);
   position: relative;
-  color: #fff;
+  flex: 1;
+  min-height: 44px;
+  width: 100%;
+  color: var(--color-w);
   cursor: pointer;
   border: 1px solid var(--bg);
   border-radius: 4px;
@@ -26,7 +41,7 @@
   padding-right: 2.5em;
   background: var(--bg);
   transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s;
-  text-align: left;
+  text-align: center;
 }
 
 .axiom-button:hover {
@@ -38,7 +53,7 @@
 
 .axiom-button.button-active {
   color: var(--hover-text);
-  background: #FFFFFF;
+  background: var(--color-w);
   box-shadow: 0.25rem 0.25rem var(--bg);
 }
 
@@ -51,31 +66,59 @@
   display: block;
 }
 
-.info-dot {
+.info-dot-wrapper {
   position: absolute;
   top: 50%;
-  right: 6px; /* make go on right */
+  right: 6px;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-dot {
   width: 22px;
   height: 22px;
   border-radius: 50%;
   border: 1px solid #ccc;
-  background: #fff;
-  color: #000;
+  background: var(--color-w);
+  color: var(--color-b);
   font-size: 12px;
   font-style: italic;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: default;
+}
+
+.info-tooltip {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 6px 10px;
+  background: var(--color-dp);
+  color: var(--color-w);
+  font-size: 12px;
+  font-style: normal;
+  white-space: nowrap;
+  max-width: 320px;
+  border-radius: 4px;
+  z-index: 1000;
   pointer-events: none;
 }
 
+.info-dot-wrapper:hover .info-tooltip {
+  display: block;
+}
+
 .button {
-  --bg: #000;
-  --hover-bg: #ff90e8;
-  --hover-text: #000;
-  color: #fff;
+  --bg: var(--color-b);
+  --hover-bg: var(--color-mp);
+  --hover-text: var(--color-b);
+  color: var(--color-w);
   cursor: pointer;
   border: 1px solid var(--bg);
   border-radius: 4px;

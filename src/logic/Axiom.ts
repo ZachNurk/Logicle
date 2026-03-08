@@ -22,8 +22,8 @@ import {
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
-/** Type 1: premises + selected. Type 2: premises + side. Type 3: original + addition. Type 4: original only. Type 5: premises + selected + connective (Constructive Dilemma). */
-export type AxiomApplyType = "1" | "2" | "3" | "4" | "5";
+/** Type 1: premises + selected. Type 2: premises + side. Type 3: original + addition. Type 4: original only. Type 5: premises + selected + connective. Type 6: original + option. Type 7: premises + selected + option (e.g. Implication common consequent/antecedent). */
+export type AxiomApplyType = "1" | "2" | "3" | "4" | "5" | "6" | "7";
 
 export type Axiom = {
   id: string;
@@ -31,14 +31,18 @@ export type Axiom = {
   selected: boolean;
   description: string;
   description2?: string;
-  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only, "5" = premises + selected + connective. */
+  /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only, "5" = premises + selected + connective, "6" = original + option, "7" = premises + selected + option. */
   applyType: AxiomApplyType;
+  /** For applyType "6" or "7", passed as option argument to apply. */
+  applyOption?: string;
   apply?:
     | ((premises: AndNode, selected: ProofNode[]) => ProofNode)
     | ((premises: AndNode, side: "left" | "right") => ProofNode)
     | ((original: ProofNode, addition: ProofNode) => ProofNode)
     | ((original: ProofNode) => ProofNode)
-    | ((premises: AndNode, selected: ProofNode[], connective: "or" | "and") => ProofNode);
+    | ((premises: AndNode, selected: ProofNode[], connective: "or" | "and") => ProofNode)
+    | ((original: ProofNode, option: string) => ProofNode)
+    | ((premises: AndNode, selected: ProofNode[], option: string) => ProofNode);
 };
 
 /** Throws if premises is not a valid And node with left and right. */
@@ -623,6 +627,19 @@ export function conditionalIdentity(original: ProofNode) {
 
 }
 
+/**
+ * Conditional Identity with variant: "imp" for (→) ≡ (¬A ∨ B), "iff" for A ↔ B ≡ (A → B) ∧ (B → A).
+ */
+export function conditionalIdentityWithVariant(
+  original: ProofNode,
+  variant: string
+): ProofNode {
+  if (variant === "iff") {
+    return conditionalIdentityIff(original);
+  }
+  return conditionalIdentityImplication(original);
+}
+
 
 /**
  * Implication #32: [(p → r) ∧ (q → r)] → ((p ∨ q) → r)
@@ -666,6 +683,19 @@ export function implicationCommonAntecedent(premises: AndNode, selected: ProofNo
   return createImplicationNode(false, a.left, right, selected);
 }
 
+/**
+ * Implication with variant: "consequent" for common consequent, "antecedent" for common antecedent.
+ */
+export function implicationCommonWithVariant(
+  premises: AndNode,
+  selected: ProofNode[],
+  variant: string
+): ProofNode {
+  if (variant === "antecedent") {
+    return implicationCommonAntecedent(premises, selected);
+  }
+  return implicationCommonConsequent(premises, selected);
+}
 
 // Axioms list
 
@@ -674,7 +704,7 @@ export function implicationCommonAntecedent(premises: AndNode, selected: ProofNo
 
 export const Axioms: Axiom[] = [
   {
-    id: "1",
+    id: "HS",
     text: "Hypothetical Syllogism",
     selected: false,
     description: "[(A → B) ∧ (B → C)] → (A → C)",
@@ -682,7 +712,7 @@ export const Axioms: Axiom[] = [
     apply: hypotheticalSyllogism,
   } satisfies Axiom,
   {
-    id: "2",
+    id: "DS",
     text: "Disjunctive Syllogism",
     selected: false,
     description: "[(A ∨ B) ∧ ¬(A)] → B",
@@ -690,7 +720,7 @@ export const Axioms: Axiom[] = [
     apply: disjunctiveSyllogism,
   } satisfies Axiom,
   {
-    id: "3",
+    id: "MP",
     text: "Modus Ponens",
     selected: false,
     description: "[A ∧ (A → B)] → B",
@@ -698,7 +728,7 @@ export const Axioms: Axiom[] = [
     apply: modusPonens,
   } satisfies Axiom,
   {
-    id: "4",
+    id: "MT",
     text: "Modus Tollens",
     selected: false,
     description: "[(A → B) ∧ ¬B] → ¬A",
@@ -706,7 +736,7 @@ export const Axioms: Axiom[] = [
     apply: modusTollens,
   } satisfies Axiom,
   {
-    id: "6",
+    id: "Simp",
     text: "Simplification",
     selected: false,
     description: "(A ∧ B) → A",
@@ -714,7 +744,7 @@ export const Axioms: Axiom[] = [
     apply: simplification,
   } satisfies Axiom,
   {
-    id: "7",
+    id: "CD",
     text: "Constructive Dilemma",
     selected: false,
     description: "[(A → B) ∧ (C → D)] → ((A ∨ C) → (B ∨ D))",
@@ -723,7 +753,7 @@ export const Axioms: Axiom[] = [
     apply: constructiveDilemma,
   } satisfies Axiom,
   {
-    id: "9",
+    id: "Add",
     text: "Addition",
     selected: false,
     description: "A → (A ∨ B)",
@@ -731,7 +761,7 @@ export const Axioms: Axiom[] = [
     apply: addition,
   } satisfies Axiom,
   {
-    id: "10",
+    id: "Conj",
     text: "Conjunction",
     selected: false,
     description: "[A ∧ B] → (A ∧ B)",
@@ -739,7 +769,7 @@ export const Axioms: Axiom[] = [
     apply: conjunction,
   } satisfies Axiom,
   {
-    id: "11",
+    id: "DN",
     text: "Double Negation",
     selected: false,
     description: "¬¬A ≡ A",
@@ -747,7 +777,7 @@ export const Axioms: Axiom[] = [
     apply: doubleNegation,
   } satisfies Axiom,
   {
-    id: "12",
+    id: "Comm",
     text: "Commutativity",
     selected: false,
     description: "(A ∧ B) ≡ (B ∧ A)",
@@ -756,7 +786,7 @@ export const Axioms: Axiom[] = [
     apply: andCommutativity,
   } satisfies Axiom,
   {
-    id: "15",
+    id: "Asso",
     text: "Associativity",
     selected: false,
     description: "(A ∨ B) ∨ C ≡ A ∨ (B ∨ C)",
@@ -765,7 +795,7 @@ export const Axioms: Axiom[] = [
     apply: associativity,
   } satisfies Axiom,
   {
-    id: "16",
+    id: "Dist",
     text: "Distributivity",
     selected: false,
     description: "A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)",
@@ -774,7 +804,7 @@ export const Axioms: Axiom[] = [
     apply: distributivity,
   } satisfies Axiom,
   {
-    id: "17",
+    id: "Idem",
     text: "Idempotent",
     selected: false,
     description: "(A ∨ A) ≡ A",
@@ -783,7 +813,7 @@ export const Axioms: Axiom[] = [
     apply: indempotent,
   } satisfies Axiom,
   {
-    id: "18",
+    id: "CP",
     text: "Contrapositive",
     selected: false,
     description: "(A → B) ≡ (¬B → ¬A)",
@@ -791,7 +821,7 @@ export const Axioms: Axiom[] = [
     apply: contrapositive,
   } satisfies Axiom,
   {
-    id: "27",
+    id: "DM",
     text: "De Morgan",
     selected: false,
     description: "¬(A ∨ B) ≡ (¬A ∧ ¬B)",
@@ -800,35 +830,39 @@ export const Axioms: Axiom[] = [
     apply: deMorgan,
   } satisfies Axiom,
   {
-    id: "30",
+    id: "CI",
     text: "Conditional Identity (→)",
     selected: false,
     description: "(A → B) ≡ (¬A ∨ B)",
-    applyType: "4",
-    apply: conditionalIdentityImplication,
+    applyType: "6",
+    applyOption: "imp",
+    apply: conditionalIdentityWithVariant,
   } satisfies Axiom,
   {
     id: "31",
     text: "Conditional Identity (↔)",
     selected: false,
     description: "A ↔ B ≡ (A → B) ∧ (B → A)",
-    applyType: "4",
-    apply: conditionalIdentityIff,
+    applyType: "6",
+    applyOption: "iff",
+    apply: conditionalIdentityWithVariant,
   } satisfies Axiom,
   {
     id: "32",
     text: "Implication (Common Consequent)",
     selected: false,
     description: "[(A → C) ∧ (B → C)] → ((A ∨ B) → C)",
-    applyType: "1",
-    apply: implicationCommonConsequent,
+    applyType: "7",
+    applyOption: "consequent",
+    apply: implicationCommonWithVariant,
   } satisfies Axiom,
   {
     id: "33",
     text: "Implication (Common Antecedent)",
     selected: false,
     description: "[(A → B) ∧ (A → C)] → (A → (B ∧ C))",
-    applyType: "1",
-    apply: implicationCommonAntecedent,
+    applyType: "7",
+    applyOption: "antecedent",
+    apply: implicationCommonWithVariant,
   } satisfies Axiom,
 ];

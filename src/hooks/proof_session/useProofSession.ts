@@ -71,6 +71,19 @@ export function useProofSession() {
           connective
         );
         break;
+      case "6":
+        result = (applyFn as (original: ProofNode, option: string) => ProofNode)(
+          prem,
+          selectedAxiom.applyOption ?? ""
+        );
+        break;
+      case "7":
+        result = (applyFn as (premises: ProofNode, selected: ProofNode[], option: string) => ProofNode)(
+          prem,
+          selectedNodes,
+          selectedAxiom.applyOption ?? ""
+        );
+        break;
       default:
         result = undefined;
     }
