@@ -6,12 +6,6 @@
 import type { ProofNode } from "../../logic/ProofNode";
 import "./GivenPanel.css";
 
-type Props = {
-  givenArray: ProofNode[];
-  solutionNode: ProofNode;
-  toggleSelected: (id: string) => void;
-};
-
 /**
  * UI element of the left panel
  */
@@ -19,7 +13,11 @@ export default function GivenPanel({
   givenArray,
   solutionNode,
   toggleSelected,
-}: Props) {
+}: {
+  givenArray: ProofNode[];
+  solutionNode: ProofNode;
+  toggleSelected: (id: string) => void;
+}) {
   return (
     <div className="container">
       <div className="top-slots-main">

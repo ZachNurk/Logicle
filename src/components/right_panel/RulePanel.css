@@ -1,93 +1,105 @@
+
 .container {
-  flex: 1;
-  min-width: 0;
-  border: 5px solid #ccc;
-  border-radius: 20px;
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: stretch;
 }
 
-.axiom-grid {
+.grid-container {
   display: grid;
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  max-width: 600px;
-  max-height: 450px;
-  grid-template-columns: repeat(3, minmax(100px, 1fr));
-  row-gap: 10px;
-  background-color: dodgerblue;
-  padding: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 10px;
 }
 
 .axiom-button {
+  --bg: #000;
+  --hover-bg: #ff90e8;
+  --hover-text: #000;
+  position: relative;
+  color: #fff;
+  cursor: pointer;
+  border: 1px solid var(--bg);
+  border-radius: 4px;
+  padding: 0.8em 2em;
+  padding-right: 2.5em;
+  background: var(--bg);
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s;
+  text-align: left;
+}
+
+.axiom-button:hover {
+  color: var(--hover-text);
+  transform: translate(-2px, -2px);
+  background: var(--hover-bg);
+  box-shadow: 0.25rem 0.25rem var(--bg);
+}
+
+.axiom-button.button-active {
+  color: var(--hover-text);
+  background: #FFFFFF;
+  box-shadow: 0.25rem 0.25rem var(--bg);
+}
+
+.axiom-button:active {
+  transform: translate(0);
+  box-shadow: none;
+}
+
+.axiom-label {
+  display: block;
+}
+
+.info-dot {
+  position: absolute;
+  top: 50%;
+  right: 6px; /* make go on right */
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  font-style: italic;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.axiom-button-base {
-  padding: 10px 16px;
-  font-size: 14px;
-  width: 140px;
-  height: 44px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  background-color: #07b9ff;
-}
-
-.axiom-button-base--selected {
-  background-color: #ff4107;
-}
-
-.info-button-wrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.info-button {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  padding: 0;
-  line-height: 24px;
-  cursor: pointer;
-  background-color: #fff;
-  border: 1px solid #ccc;
-}
-
-.rule-panel-info-btn:focus,
-.rule-panel-info-btn:active {
-  outline: none;
-  background-color: #fff;
-  border: 1px solid #ccc;
-}
-
-.tooltip {
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 6px;
-  z-index: 999;
-  background: black;
-  color: white;
-  padding: 5px;
-  border-radius: 4px;
-  white-space: nowrap;
+  justify-content: center;
+  cursor: default;
   pointer-events: none;
 }
 
-.apply-button {
-  padding: 10px 20px;
-  font-size: 14px;
-  border-radius: 5px;
-  border: none;
+.button {
+  --bg: #000;
+  --hover-bg: #ff90e8;
+  --hover-text: #000;
+  color: #fff;
   cursor: pointer;
-  background-color: #07b9ff;
+  border: 1px solid var(--bg);
+  border-radius: 4px;
+  padding: 0.8em 2em;
+  background: var(--bg);
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s;
 }
+
+.button:hover {
+  color: var(--hover-text);
+  transform: translate(-2px, -2px);
+  background: var(--hover-bg);
+  box-shadow: 0.25rem 0.25rem var(--bg);
+}
+
+.button:active {
+  transform: translate(0);
+  box-shadow: none;
+}
+
+.apply-button {
+  width: 100%;
+  margin-top: 8px;
+}
+
+
+

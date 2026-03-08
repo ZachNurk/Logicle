@@ -4,65 +4,44 @@
  */
 
 import type { Axiom } from "../../logic/Axiom";
-import { useState } from "react";
 import "./RulePanel.css";
 
-type RulePanelProps = {
-  axioms: Axiom[];
-  toggleSelected: (id: string) => void;
-  onApply?: () => void;
-};
-
-
-
-/**
- * UI element for the right side
- */
 export default function RulePanel({
   axioms,
   toggleSelected,
   onApply,
-}: RulePanelProps) {
-  // hook tracks the currently hovered axiom
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
+}: {
+  axioms: Axiom[];
+  toggleSelected: (id: string) => void;
+  onApply?: () => void;
+}) {
   return (
     <div className="container">
-      <div className="axiom-grid">
+      <div className="grid-container">
         {axioms.map((axiom) => (
-            <div key={axiom.id} className="axiom-button">
-              <button
-                onClick={() => toggleSelected(axiom.id)}
-                title={axiom.description}
-                className={`axiom-button-base ${axiom.selected ? "axiom-button-base--selected" : ""}`}
-              >
-                {axiom.text}
-              </button>
-
-              <div
-                className="info-button-wrapper"
-                
-              >
-                <button
-                  type="button"
-                  className="rule-panel-info-btn info-button"
-                  onClick={(e) => e.stopPropagation()}
-                  onMouseEnter={() => setHoveredId(axiom.id)}
-                  onMouseLeave={() => setHoveredId((current) => (current === axiom.id ? null : current))}
-                >
-                  i
-                </button>
-                {hoveredId === axiom.id && (
-                  <div className="tooltip">
-                    {axiom.description}<br></br>{axiom.description2}
-                  </div>
-                )}
-              </div>
-            </div>
+          <button
+            key={axiom.id}
+            type="button"
+            className={`axiom-button ${axiom.selected ? "button-active" : ""}`}
+            onClick={() => toggleSelected(axiom.id)}
+            title={axiom.description}
+          >
+            <span className="axiom-label">{axiom.text}</span>
+            <span
+              className="info-dot"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
+              aria-hidden
+            >
+              i
+            </span>
+          </button>
         ))}
       </div>
+
       {onApply && (
-        <button onClick={onApply} className="apply-button">
+        <button type="button" className="button apply-button" onClick={onApply}>
           Apply selected
         </button>
       )}
