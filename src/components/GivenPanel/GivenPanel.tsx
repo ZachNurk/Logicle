@@ -19,7 +19,7 @@ export default function GivenPanel({
   toggleSelected: (id: string) => void;
 }) {
   return (
-    <div className="container">
+    <div className="given-panel container">
       <div className="top-slots-main">
         {(givenArray ?? []).filter((node) => node.isStarter === true && node.context === false).map((node) => (
           <button

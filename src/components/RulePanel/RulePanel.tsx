@@ -16,7 +16,7 @@ export default function RulePanel({
   onApply?: () => void;
 }) {
   return (
-    <div className="container">
+    <div className="rule-panel container">
       <div className="grid-container">
         {axioms.map((axiom) => (
           <div key={axiom.id} className="axiom-cell">
