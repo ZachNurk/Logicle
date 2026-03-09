@@ -23,7 +23,9 @@ export default function RulePanel({
             <button
               type="button"
               className={`axiom-button ${axiom.selected ? "button-active" : ""}`}
-              onClick={() => toggleSelected(axiom.id)}
+              // TODO make it so we have a pop up to specify left or right or to make result AND or OR. SPLIT
+              // constructive dilemma into 2 functions.
+              onClick={axiom.applyType === "6" || axiom.applyType === "7" ?  undefined : () => toggleSelected(axiom.id)}
             >
               <span className="axiom-label">{axiom.text}</span>
               <span
