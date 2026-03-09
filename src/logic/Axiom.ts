@@ -611,21 +611,7 @@ function conditionalIdentityImp(original: ProofNode) : ProofNode {
 
 
 
-/**
- * Conditional Identity Wrapper
- * @param original is the original node
- * @returns returs the new node created or error node if invalid operation
- */
-export function conditionalIdentity(original: ProofNode) {
-  if (isImplicationNode(original)) {
-    return conditionalIdentityImp(original)
-  }
-  else if (isIffNode(original)) {
-    return conditionalIdentityIff(original)
-  }
-  return ERROR_NODE
 
-}
 
 /**
  * Conditional Identity with variant: "imp" for (→) ≡ (¬A ∨ B), "iff" for A ↔ B ≡ (A → B) ∧ (B → A).

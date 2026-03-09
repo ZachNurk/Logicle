@@ -22,7 +22,9 @@ export default function App() {
     axioms,
     toggleSelectedAxiom,
     applySelectedAxiom,
-    victory
+    victory,
+    selectedSide,
+    setSide,
   } = useProofSession();
 
   if (!victory) {
@@ -33,6 +35,8 @@ export default function App() {
           axioms={axioms}
           toggleSelected={toggleSelectedAxiom}
           onApply={applySelectedAxiom}
+          selectedSide={selectedSide}
+          onSelectSide={setSide}
         />
         <InfoPanel />
       </div>

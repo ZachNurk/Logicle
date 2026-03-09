@@ -6,15 +6,24 @@
 import type { Axiom } from "../../logic/Axiom";
 import "./RulePanel.css";
 
+type RulePanelProps = {
+  axioms: Axiom[];
+  toggleSelected: (id: string) => void;
+  onApply?: () => void;
+  selectedSide: "left" | "right";
+  onSelectSide: (side: "left" | "right") => void;
+};
+
 export default function RulePanel({
   axioms,
   toggleSelected,
   onApply,
-}: {
-  axioms: Axiom[];
-  toggleSelected: (id: string) => void;
-  onApply?: () => void;
-}) {
+  selectedSide,
+  onSelectSide,
+}: RulePanelProps) {
+  const selectedAxiom = axioms.find((a) => a.selected);
+
+
   return (
     <div className="rule-panel container">
       <div className="grid-container">
@@ -48,6 +57,26 @@ export default function RulePanel({
           </div>
         ))}
       </div>
+
+      {selectedAxiom?.applyType === "2" && (
+        <div className="side-selector">
+          <span className="side-label">Choose side:</span>
+          <button
+            type="button"
+            className={`axiom-button ${selectedSide === "left" ? "button-active" : ""}`}
+            onClick={() => onSelectSide("left")}
+          >
+            Left
+          </button>
+          <button
+            type="button"
+            className={`axiom-button ${selectedSide === "right" ? "button-active" : ""}`}
+            onClick={() => onSelectSide("right")}
+          >
+            Right
+          </button>
+        </div>
+      )}
 
       {onApply && (
         <button type="button" className="button apply-button" onClick={onApply}>

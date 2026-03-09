@@ -18,14 +18,17 @@ export function useProofSession() {
   } = useProofNodes();
   const { axioms, setAxioms, toggleSelectedAxiom } = useAxioms();
   const [ victory, setVictory ] = useState(false)
+  const [ selectedSide, setSelectedSide ] = useState<"left" | "right" | "">("");
 
+  const setSide = (side: "left" | "right") => {
+    setSelectedSide(side);
+  }
   const applySelectedAxiom = useCallback(() => {
     const selectedAxiom = axioms.find((a) => a.selected);
     if (!selectedAxiom?.apply) return;
 
     const selectedNodes = nodes.filter((n) => n.selected);
 
-    let side = "left" //TODO replace this with functionality to specify side!!!
     let addition = createNode("DUMMY",false,undefined,false) //TODO replace this with functionality to specify node!!!
     let connective: "or" | "and" = "or"; // for testing; panel can set later
 
@@ -48,7 +51,8 @@ export function useProofSession() {
     }
 
     if (!prem) {
-      throw new Error("Prem error!")
+      alert("Please select Node(s)")
+      return;
     }
     
     switch (selectedAxiom.applyType) {
@@ -56,7 +60,15 @@ export function useProofSession() {
         result = (applyFn as (premises: ProofNode, selected: ProofNode[]) => ProofNode)(prem, selectedNodes);
         break;
       case "2":
-        result = (applyFn as (premises: ProofNode, side: string) => ProofNode)(prem, side);
+        if (selectedSide == "") {
+          alert("Please select Left or Right")
+          return;
+        }
+
+        result = (applyFn as (premises: ProofNode, side: "left" | "right") => ProofNode)(
+          prem,
+          selectedSide,
+        );
         break;
       case "3":
         result = (applyFn as (original: ProofNode, addition: ProofNode) => ProofNode)(prem, addition);
@@ -120,7 +132,7 @@ export function useProofSession() {
     setAxioms((prev) =>
       prev.map((a) => (a.id === selectedAxiom.id ? { ...a, selected: false } : a)),
     );
-  }, [axioms, nodes, addGivenNode, setAxioms]);
+  }, [axioms, nodes, addGivenNode, setAxioms, selectedSide]);
 
   return {
     nodes,
@@ -133,5 +145,7 @@ export function useProofSession() {
     setAxioms,
     applySelectedAxiom,
     victory,
+    selectedSide,
+    setSide,
   };
 }
