@@ -9,15 +9,15 @@ import "./RulePanel.css";
 type RulePanelProps = {
   axioms: Axiom[];
   toggleSelected: (id: string) => void;
-  onApply?: () => void;
-  selectedSide: "left" | "right";
+  applyAxiom: (axiom: Axiom, sideOverride?: "left" | "right") => void;
+  selectedSide: "" | "left" | "right";
   onSelectSide: (side: "left" | "right") => void;
 };
 
 export default function RulePanel({
   axioms,
   toggleSelected,
-  onApply,
+  applyAxiom,
   selectedSide,
   onSelectSide,
 }: RulePanelProps) {
@@ -32,9 +32,13 @@ export default function RulePanel({
             <button
               type="button"
               className={`axiom-button ${axiom.selected ? "button-active" : ""}`}
-              // TODO make it so we have a pop up to specify left or right or to make result AND or OR. SPLIT
-              // constructive dilemma into 2 functions.
-              onClick={axiom.applyType === "6" || axiom.applyType === "7" ?  undefined : () => toggleSelected(axiom.id)}
+              onClick={
+                axiom.applyType === "6" || axiom.applyType === "7"
+                  ? undefined
+                  : axiom.applyType === "2"
+                    ? () => toggleSelected(axiom.id)
+                    : () => applyAxiom(axiom)
+              }
             >
               <span className="axiom-label">{axiom.text}</span>
               <span
@@ -64,24 +68,24 @@ export default function RulePanel({
           <button
             type="button"
             className={`axiom-button ${selectedSide === "left" ? "button-active" : ""}`}
-            onClick={() => onSelectSide("left")}
+            onClick={() => {
+              onSelectSide("left");
+              applyAxiom(selectedAxiom, "left");
+            }}
           >
             Left
           </button>
           <button
             type="button"
             className={`axiom-button ${selectedSide === "right" ? "button-active" : ""}`}
-            onClick={() => onSelectSide("right")}
+            onClick={() => {
+              onSelectSide("right");
+              applyAxiom(selectedAxiom, "right");
+            }}
           >
             Right
           </button>
         </div>
-      )}
-
-      {onApply && (
-        <button type="button" className="button apply-button" onClick={onApply}>
-          Apply selected
-        </button>
       )}
     </div>
   );

@@ -21,7 +21,7 @@ export default function App() {
     toggleSelectedProofNode,
     axioms,
     toggleSelectedAxiom,
-    applySelectedAxiom,
+    applyAxiom,
     victory,
     selectedSide,
     setSide,
@@ -34,7 +34,7 @@ export default function App() {
         <RulePanel
           axioms={axioms}
           toggleSelected={toggleSelectedAxiom}
-          onApply={applySelectedAxiom}
+          applyAxiom={applyAxiom}
           selectedSide={selectedSide}
           onSelectSide={setSide}
         />
