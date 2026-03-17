@@ -7,7 +7,6 @@ import type { ProofNode } from "../logic/ProofNode";
 import type { CSSProperties } from "react";
 import { Colors } from "../constants/theme";
 
-
 /**
  * UI element of the left panel
  */
@@ -20,30 +19,12 @@ export default function ProofNodePanel({
   solutionNode: ProofNode;
   toggleSelected: (id: string) => void;
 }) {
-  
-
-
-
   return (
     <div style={{ ...styles.container, ...styles.givenPanel }}>
       <div style={styles.topSlotsMain}>
-        {(givenArray ?? []).filter((node) => node.isStarter === true && node.context === false).map((node) => (
-          <button
-            key={node.id}
-            onClick={() => toggleSelected(node.id)}
-            style={{
-              ...styles.givenButtonBase,
-              ...(node.selected ? styles.givenButtonBaseSelected : {}),
-            }}
-          >
-            {node.text}
-          </button>
-        ))}
-      </div>
-
-      <div style={styles.main}>
-        <div style={styles.topSlotsMain}>
-          {(givenArray ?? []).filter((node) => node.isStarter !== true).map((node) => (
+        {(givenArray ?? [])
+          .filter((node) => node.isStarter === true && node.context === false)
+          .map((node) => (
             <button
               key={node.id}
               onClick={() => toggleSelected(node.id)}
@@ -55,6 +36,24 @@ export default function ProofNodePanel({
               {node.text}
             </button>
           ))}
+      </div>
+
+      <div style={styles.main}>
+        <div style={styles.topSlotsMain}>
+          {(givenArray ?? [])
+            .filter((node) => node.isStarter !== true)
+            .map((node) => (
+              <button
+                key={node.id}
+                onClick={() => toggleSelected(node.id)}
+                style={{
+                  ...styles.givenButtonBase,
+                  ...(node.selected ? styles.givenButtonBaseSelected : {}),
+                }}
+              >
+                {node.text}
+              </button>
+            ))}
         </div>
         <button
           key={solutionNode.id}
@@ -67,7 +66,6 @@ export default function ProofNodePanel({
     </div>
   );
 }
-
 
 const styles: Record<string, CSSProperties> = {
   container: {
@@ -90,7 +88,11 @@ const styles: Record<string, CSSProperties> = {
   givenButtonBase: {
     padding: "10px 16px",
     fontSize: "14px",
-    width: "140px",
+    width: "fit-content", // grow to fit text
+    maxWidth: "100%", // don’t overflow panel
+    whiteSpace: "nowrap", // prevent wrapping
+    overflow: "hidden", // optional safety
+    textOverflow: "ellipsis",
     height: "44px",
     borderRadius: "5px",
     border: "none",

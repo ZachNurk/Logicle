@@ -35,6 +35,11 @@ export function useProofSession() {
     setSelectedSide(side);
   };
 
+  const clearAxiomSelection = useCallback(() => {
+    toggleSelectedAxiom("");
+    setSelectedSide("");
+  }, [toggleSelectedAxiom]);
+
   /** Apply a specific axiom. For type "2", pass side so we don't rely on state. */
   const applyAxiom = useCallback(
     (axiom: Axiom, sideOverride?: "left" | "right") => {
@@ -45,17 +50,32 @@ export function useProofSession() {
       const addition = createNode("DUMMY", false, undefined, false);
       const connective: "or" | "and" = "or";
 
+      if (selectedNodes.length === 0) {
+        alert("Please select Node(s)");
+        clearAxiomSelection();
+        return;
+      }
+
       let prem: ProofNode | undefined;
+      if (axiom.id === "Conj" && selectedNodes.length != 2) {
+        alert("Invalid operation. Must only select 2 nodes")
+        clearAxiomSelection();
+        return;
+      }
       if (selectedNodes.length > 2) return;
       if (selectedNodes.length === 2) {
         const [left, right] = selectedNodes;
         prem = createAndNode(false, left, right);
+
+
+
       } else if (selectedNodes.length === 1) {
         prem = selectedNodes[0];
       }
 
       if (!prem) {
         alert("Please select Node(s)");
+        clearAxiomSelection();
         return;
       }
 
@@ -137,7 +157,7 @@ export function useProofSession() {
         prev.map((a) => (a.id === axiom.id ? { ...a, selected: false } : a)),
       );
     },
-    [nodes, addGivenNode, setAxioms, selectedSide, solutionNode],
+    [nodes, addGivenNode, setAxioms, selectedSide, solutionNode, clearAxiomSelection],
   );
 
   return {

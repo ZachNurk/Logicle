@@ -25,100 +25,114 @@ export default function AxiomPanel({
 }: AxiomPanelProps) {
   const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
-  const selectedAxiom = axioms.find((a) => a.selected);
-
 
   return (
     <div style={{ ...styles.rulePanelContainer, ...styles.container }}>
       <div style={styles.gridContainer}>
-        {axioms.map((axiom) => (
-          <div
-            key={axiom.id}
-            style={{
-              ...styles.axiomCell,
-            }}
-          >
-            <button
-              type="button"
+        {axioms.map((axiom) => {
+          const showSidePicker = axiom.selected && axiom.applyType === "2";
+          return (
+            <div
+              key={axiom.id}
               style={{
-                ...styles.axiomButton,
-                // raises tooltip and hover anim
-                ...(hoveredButton === axiom.id || hoveredAxiomId === axiom.id
-                  ? { ...styles.axiomButtonHover, ...styles.axiomButtonRaised }
-                  : {}),
-                ...(axiom.selected ? styles.axiomButtonActive : {}),
-                ...(axiom.selected ? styles.axiomButtonActive : {}),
+                ...styles.axiomCell,
               }}
-              onClick={
-                axiom.applyType === "6" || axiom.applyType === "7"
-                  ? undefined
-                  : axiom.applyType === "2"
-                    ? () => toggleSelected(axiom.id)
-                    : () => applyAxiom(axiom)
-              }
-              onMouseEnter={() => setHoveredButton(axiom.id)}
-              onMouseLeave={() => setHoveredButton(null)}
             >
-              <span style={styles.axiomLabel}>{axiom.text}</span>
-              <span
-                style={styles.infoDotWrapper}
-                role="presentation"
-                aria-hidden
-                onMouseEnter={() => setHoveredAxiomId(axiom.id)}
-                onMouseLeave={() => setHoveredAxiomId(null)}
+              <button
+                type="button"
+                style={{
+                  ...styles.axiomButton,
+                  // raises tooltip and hover anim
+                  ...(hoveredButton === axiom.id || hoveredAxiomId === axiom.id
+                    ? {
+                        ...styles.axiomButtonHover,
+                        ...styles.axiomButtonRaised,
+                      }
+                    : {}),
+                  ...(axiom.selected ? styles.axiomButtonActive : {}),
+                  ...(axiom.selected ? styles.axiomButtonActive : {}),
+                }}
+                onClick={
+                  axiom.applyType === "7"
+                    ? undefined
+                    : axiom.applyType === "2"
+                      ? () => toggleSelected(axiom.id)
+                      : () => {
+                          toggleSelected(axiom.id);
+                          applyAxiom(axiom);
+                        }
+                }
+                onMouseEnter={() => setHoveredButton(axiom.id)}
+                onMouseLeave={() => setHoveredButton(null)}
               >
-                <span style={styles.infoDot}>i</span>
+                <span style={styles.axiomLabel}>{axiom.text}</span>
                 <span
-                  style={{
-                    ...styles.infoTooltip,
-                    display: hoveredAxiomId === axiom.id ? "block" : "none",
-                  }}
+                  style={styles.infoDotWrapper}
+                  role="presentation"
+                  aria-hidden
+                  onMouseEnter={() => setHoveredAxiomId(axiom.id)}
+                  onMouseLeave={() => setHoveredAxiomId(null)}
                 >
-                  {axiom.description}
-                  {axiom.description2 ? (
-                    <>
-                      <br />
-                      {axiom.description2}
-                    </>
-                  ) : null}
+                  <span style={styles.infoDot}>i</span>
+                  <span
+                    style={{
+                      ...styles.infoTooltip,
+                      display: hoveredAxiomId === axiom.id ? "block" : "none",
+                    }}
+                  >
+                    {axiom.description}
+                    {axiom.description2 ? (
+                      <>
+                        <br />
+                        {axiom.description2}
+                      </>
+                    ) : null}
+                  </span>
                 </span>
-              </span>
-            </button>
-          </div>
-        ))}
+              </button>
+              {showSidePicker && (
+                <div
+                  style={styles.sidePickerOverlay}
+                  onClick={() => toggleSelected(axiom.id)}
+                >
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.sidePickerButton,
+                      ...(selectedSide === "left"
+                        ? styles.axiomButtonActive
+                        : {}),
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectSide("left");
+                      applyAxiom(axiom, "left");
+                    }}
+                  >
+                    Left
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      ...styles.sidePickerButton,
+                      ...(selectedSide === "right"
+                        ? styles.axiomButtonActive
+                        : {}),
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectSide("right");
+                      applyAxiom(axiom, "right");
+                    }}
+                  >
+                    Right
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
-
-      {selectedAxiom?.applyType === "2" && (
-        <div style={styles.sideSelector}>
-          <span style={styles.sideLabel}>Choose side:</span>
-          <button
-            type="button"
-            style={{
-              ...styles.axiomButton,
-              ...(selectedSide === "left" ? styles.axiomButtonActive : {}),
-            }}
-            onClick={() => {
-              onSelectSide("left");
-              applyAxiom(selectedAxiom, "left");
-            }}
-          >
-            Left
-          </button>
-          <button
-            type="button"
-            style={{
-              ...styles.axiomButton,
-              ...(selectedSide === "right" ? styles.axiomButtonActive : {}),
-            }}
-            onClick={() => {
-              onSelectSide("right");
-              applyAxiom(selectedAxiom, "right");
-            }}
-          >
-            Right
-          </button>
-        </div>
-      )}
     </div>
   );
 }
@@ -162,7 +176,8 @@ const styles: Record<string, CSSProperties> = {
     padding: "0.8em 2em",
     paddingRight: "2.5em",
     background: Colors.black,
-    transition: "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
     textAlign: "center",
   },
   axiomButtonRaised: {
@@ -223,6 +238,25 @@ const styles: Record<string, CSSProperties> = {
   },
   sideLabel: {
     fontWeight: 600,
+  },
+  sidePickerOverlay: {
+    position: "absolute",
+    inset: 0,
+    display: "flex",
+    gap: "8px",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(255,255,255,0.92)",
+    borderRadius: "4px",
+    zIndex: 30,
+  },
+  sidePickerButton: {
+    minWidth: "72px",
+    padding: "8px 10px",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    background: Colors.white,
+    cursor: "pointer",
   },
   axiomButtonHover: {
     color: Colors.black,

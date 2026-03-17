@@ -282,8 +282,8 @@ export function addition(original: ProofNode, addition: ProofNode): ProofNode {
  * @param original is the original node to add to
  * @param addition is the node we are adding (designed by the UI)
  */
-export function conjunction(original: ProofNode, addition: ProofNode): ProofNode {
-  return createAndNode(false, original, addition, [original, addition]);
+export function conjunction(original: ProofNode): ProofNode {
+  return original
 }
 
 /**
@@ -781,7 +781,7 @@ export const Axioms: Axiom[] = [
     text: "Conjunction",
     selected: false,
     description: "[A ∧ B] → (A ∧ B)",
-    applyType: "3",
+    applyType: "4",
     apply: conjunction,
   } satisfies Axiom,
   {
