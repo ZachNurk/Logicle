@@ -19,7 +19,6 @@ import {
   deMorgan,
   conditionalIdentityImplication,
   conditionalIdentityIff,
-  conditionalIdentity,
   implicationCommonConsequent,
   implicationCommonAntecedent,
 } from "../src/logic/Axiom";
@@ -696,6 +695,17 @@ describe("Axioms", () => {
       const EXPECTED = "¬A ∧ ¬B"
       expect(ACTUAL).toBe(EXPECTED)
     })
+    it("handles double-negated terms (AND case): ¬(¬A ∧ ¬B) ≡ A ∨ B", () => {
+      const notA = createNotNode(false, A)
+      const notB = createNotNode(false, B)
+      const notAAndNotB = createAndNode(false, notA, notB)
+      const input = createNotNode(false, notAAndNotB)
+
+      const actual = deMorgan(input)
+      const expected = "A ∨ B"
+
+      expect(actual.text).toBe(expected)
+    })
     it("¬(A ∧ B) ≡ (¬A ∨ ¬B)", () => {
       const aAndB = createAndNode(false, A, B)
       const notAAndB = createNotNode(false, aAndB)
@@ -758,12 +768,23 @@ describe("Axioms", () => {
   
   })
 
+  it("¬P → ¬Q is congruent to Q → P (contrapositive)", () => {
+    const notP = createNotNode(false, A)
+    const notQ = createNotNode(false, B)
+    const notPImplNotQ = createImplicationNode(false, notP, notQ, [notP, notQ])
+
+    const result = contrapositive(notPImplNotQ)
+    const expected = "B → A"
+
+    expect(result.text).toBe(expected)
+  })
+
 
   describe("Conditional Identity:", () => {
     it("Conditional Identity: A → B ≡ ¬A ∨ B", () => {
       const aImpB = createImplicationNode(false, A, B, [A, B])
       const EXPECTED = "¬A ∨ B"
-      const RESULT = conditionalIdentity(aImpB).text
+      const RESULT = conditionalIdentityImplication(aImpB).text
   
       expect(RESULT).toBe(EXPECTED)
     })
@@ -773,7 +794,7 @@ describe("Axioms", () => {
       const cOrD = createOrNode(false, C, D, [C, D])
       const nestedImplication = createImplicationNode(false, aAndB, cOrD, [aAndB, cOrD])
       const EXPECTED = "¬(A ∧ B) ∨ (C ∨ D)"
-      const RESULT = conditionalIdentity(nestedImplication).text
+      const RESULT = conditionalIdentityImplication(nestedImplication).text
   
       expect(RESULT).toBe(EXPECTED)
     })
@@ -781,8 +802,17 @@ describe("Axioms", () => {
     it("Conditional Identity: A ↔ B ≡ (A → B) ∧ (B → A)", () => {
       const aIffB = createIffNode(false, A, B, [A, B])
       const EXPECTED = "(A → B) ∧ (B → A)"
-      const RESULT = conditionalIdentity(aIffB).text
+      const RESULT = conditionalIdentityIff(aIffB).text
   
+      expect(RESULT).toBe(EXPECTED)
+    })
+
+    it("Conditional Identity: ¬A → B ≡ A ∨ B", () => {
+      const notA = createNotNode(false, A, [A])
+      const notAImpB = createImplicationNode(false, notA, B, [notA, B])
+      const EXPECTED = "A ∨ B"
+      const RESULT = conditionalIdentityImplication(notAImpB).text
+
       expect(RESULT).toBe(EXPECTED)
     })
 
@@ -792,7 +822,7 @@ describe("Axioms", () => {
       const cOrD = createOrNode(false, C, D, [C, D])
       const nestedIff = createIffNode(false, aAndB, cOrD, [aAndB, cOrD])
       const EXPECTED = "((A ∧ B) → (C ∨ D)) ∧ ((C ∨ D) → (A ∧ B))"
-      const RESULT = conditionalIdentity(nestedIff).text
+      const RESULT = conditionalIdentityIff(nestedIff).text
   
       expect(RESULT).toBe(EXPECTED)
     })

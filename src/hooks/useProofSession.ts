@@ -99,11 +99,6 @@ export function useProofSession() {
             ) => ProofNode
           )(prem, selectedNodes, connective);
           break;
-        case "6":
-          result = (
-            applyFn as (original: ProofNode, option: string) => ProofNode
-          )(prem, axiom.applyOption ?? "");
-          break;
         case "7":
           result = (
             applyFn as (

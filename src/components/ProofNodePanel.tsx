@@ -98,7 +98,7 @@ const styles: Record<string, CSSProperties> = {
     backgroundColor: Colors.darkPink,
   },
   givenButtonBaseSelected: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.gray,
   },
   solutionButton: {
     cursor: "default",

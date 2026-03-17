@@ -14,4 +14,5 @@ export const Colors = {
   darkPink: "#ff7aad",
   mediumPink: "#ff9bc5",
   lightPink: "#ffcfe3",
+  gray: "#abb3ad",
 };

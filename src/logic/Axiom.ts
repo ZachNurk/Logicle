@@ -516,9 +516,22 @@ function deMorganOr(original: ProofNode): ProofNode {
   if (!isOrNode(inner) || !inner.left || !inner.right) {
     return ERROR_NODE;
   } 
-  const leftNot = createNotNode(false, inner.left, undefined);
-  const rightNot = createNotNode(false, inner.right, undefined);
-  return createAndNode(false, leftNot, rightNot, [original]);
+
+  let left;
+  let right;
+  if (isNotNode(inner.left)) {
+    left = inner.left.contains
+  } else {
+     left = createNotNode(false, inner.left, undefined);
+  }
+  if (isNotNode(inner.right)) {
+    right = inner.right.contains
+  } else {
+    right = createNotNode(false, inner.right, undefined);
+  }
+
+
+  return createAndNode(false, left, right, [original]);
 }
 
 /**
@@ -533,9 +546,22 @@ function deMorganAnd(original: ProofNode): ProofNode {
   if (!isAndNode(inner) || !inner.left || !inner.right) {
     return ERROR_NODE;
   } 
-  const leftNot = createNotNode(false, inner.left, undefined);
-  const rightNot = createNotNode(false, inner.right, undefined);
-  return createOrNode(false, leftNot, rightNot, [original]);
+
+  let left;
+  let right;
+  if (isNotNode(inner.left)) {
+    left = inner.left.contains
+  } else {
+     left = createNotNode(false, inner.left, undefined);
+  }
+  if (isNotNode(inner.right)) {
+    right = inner.right.contains
+  } else {
+    right = createNotNode(false, inner.right, undefined);
+  }
+
+  
+  return createOrNode(false, left, right, [original]);
 }
 
 /**
@@ -564,8 +590,20 @@ export function contrapositive(original: ProofNode) : ProofNode {
   if (!isImplicationNode(original)) {
     return ERROR_NODE
   }
-  const left: NotNode = createNotNode(false, original.left, undefined);
-  const right: NotNode = createNotNode(false, original.right, undefined);
+  
+  let left;
+  let right;
+  if (isNotNode(original.left)) {
+    left = original.left.contains
+  } else {
+     left = createNotNode(false, original.left, undefined);
+  }
+  if (isNotNode(original.right)) {
+    right = original.right.contains
+  } else {
+    right = createNotNode(false, original.right, undefined);
+  }
+
   return createImplicationNode(false, right, left, [original]);
 }
 
@@ -573,12 +611,19 @@ export function contrapositive(original: ProofNode) : ProofNode {
  * Conditional Identity (→): (p → q) ≡ (¬p ∨ q)
  * @param original must be an ImplicationNode
  */
+//TODO FLAG
 export function conditionalIdentityImplication(original: ProofNode): ProofNode {
   if (!isImplicationNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   } 
-  const notLeft = createNotNode(false, original.left, undefined);
-  return createOrNode(false, notLeft, original.right, [original]);
+  let left;
+  if (isNotNode(original.left)) {
+    left = original.left.contains
+  } else {
+     left = createNotNode(false, original.left, undefined);
+  }
+
+  return createOrNode(false, left, original.right, [original]);
 }
 
 /**
@@ -594,18 +639,7 @@ export function conditionalIdentityIff(original: ProofNode): ProofNode {
   return createAndNode(false, pImplQ, qImplP, [original]);
 }
 
-/**
- * Conditional Identity with variant: "imp" for (→) ≡ (¬A ∨ B), "iff" for A ↔ B ≡ (A → B) ∧ (B → A).
- */
-export function conditionalIdentityWithVariant(
-  original: ProofNode,
-  variant: string
-): ProofNode {
-  if (variant === "iff") {
-    return conditionalIdentityIff(original);
-  }
-  return conditionalIdentityImplication(original);
-}
+
 
 
 /**
@@ -816,18 +850,18 @@ export const Axioms: Axiom[] = [
     text: "Conditional Identity (→)",
     selected: false,
     description: "(A → B) ≡ (¬A ∨ B)",
-    applyType: "6",
+    applyType: "4",
     applyOption: "imp",
-    apply: conditionalIdentityWithVariant,
+    apply: conditionalIdentityImplication,
   } satisfies Axiom,
   {
     id: "31",
     text: "Conditional Identity (↔)",
     selected: false,
     description: "A ↔ B ≡ (A → B) ∧ (B → A)",
-    applyType: "6",
+    applyType: "4",
     applyOption: "iff",
-    apply: conditionalIdentityWithVariant,
+    apply: conditionalIdentityIff,
   } satisfies Axiom,
   {
     id: "32",
