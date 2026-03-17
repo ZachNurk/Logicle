@@ -61,15 +61,13 @@ export default function AxiomPanel({
                   ...(axiom.selected ? styles.axiomButtonActive : {}),
                 }}
                 onClick={
-                  axiom.applyType === "7"
-                    ? undefined
-                    : axiom.applyType === "2"
-                      ? () => toggleSelected(axiom.id)
-                      : axiom.id === "Add"
-                        ? () => {
-                            setIsChoosingAddition(true);
-                            toggleSelected(axiom.id);
-                          }
+                  axiom.applyType === "2"
+                    ? () => toggleSelected(axiom.id)
+                    : axiom.id === "Add"
+                      ? () => {
+                          setIsChoosingAddition(true);
+                          toggleSelected(axiom.id);
+                        }
                       : () => {
                           toggleSelected(axiom.id);
                           applyAxiom(axiom);
@@ -158,14 +156,9 @@ export default function AxiomPanel({
                       applyAxiom(axiom, undefined, additionLetter);
                     }}
                   >
-                    <label
-                      style={styles.additionLabel}
-                    >
-                      Add letter:
-                    </label>
+                    <label style={styles.additionLabel}>Add letter:</label>
                     {isChoosingAddition ? (
                       <select
-
                         value={additionLetter}
                         onChange={(e) => {
                           setAdditionLetter(e.target.value);
