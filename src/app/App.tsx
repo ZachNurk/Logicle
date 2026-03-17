@@ -4,14 +4,14 @@
  * @file App.tsx
  */
 
-import GivenPanel from "../components/GivenPanel/GivenPanel";
-import RulePanel from "../components/RulePanel/RulePanel";
-import { useProofSession } from "../hooks/proof_session/useProofSession";
+import ProofNodePanel from "../components/ProofNodePanel";
+import AxiomPanel from "../components/AxiomPanel";
+import { useProofSession } from "../hooks/useProofSession";
 import type { CSSProperties } from "react";
 
 /**
  * Main App
- * Program is split into three panels: GivenPanel (left), InfoPanel (center), RulePanel (right).
+ * Program is split into two primary panels: ProofNodePanel (left) and AxiomPanel (right).
  */
 export default function App() {
   const {
@@ -44,14 +44,14 @@ export default function App() {
       <div style={styles.contentWrap}>
         <div style={styles.split}>
           <div style={styles.panel}>
-            <GivenPanel
+            <ProofNodePanel
               givenArray={nodes}
               solutionNode={solutionNode}
               toggleSelected={toggleSelectedProofNode}
             />
           </div>
           <div style={styles.panel}>
-            <RulePanel
+            <AxiomPanel
               axioms={axioms}
               toggleSelected={toggleSelectedAxiom}
               applyAxiom={applyAxiom}
@@ -84,6 +84,9 @@ const styles: Record<string, CSSProperties> = {
     margin: 0,
     fontSize: "20px",
     fontWeight: 700,
+    position: "absolute",
+    left: "50%",
+    transform: "translateX(-50%)"
   },
   rightActions: {
     display: "flex",
@@ -122,9 +125,11 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "stretch",
   },
   panel: {
-    width: "520px",             // fixed panel width
-    height: "680px",            // fixed panel height (same for both panels)
-    maxWidth: "100%",
+    flex: "0 0 520px",   // hard fixed width in flex layout
+    height: "680px",
+    minHeight: "680px",
+    maxWidth: "520px",
     display: "flex",
-  },
+    boxSizing: "border-box",
+  }
 };

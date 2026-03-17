@@ -1,14 +1,14 @@
 /**
- * The Right side of our program. Panel handles the Axiom selection and submitting axioms
+ * The right side panel of our program. Handles axiom selection and application.
  * @file RulePanel.tsx
  */
 
-import type { Axiom } from "../../logic/Axiom";
+import type { Axiom } from "../logic/Axiom";
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { Colors } from "../../constants/theme";
+import { Colors } from "../constants/theme";
 
-type RulePanelProps = {
+type AxiomPanelProps = {
   axioms: Axiom[];
   toggleSelected: (id: string) => void;
   applyAxiom: (axiom: Axiom, sideOverride?: "left" | "right") => void;
@@ -16,13 +16,13 @@ type RulePanelProps = {
   onSelectSide: (side: "left" | "right") => void;
 };
 
-export default function RulePanel({
+export default function AxiomPanel({
   axioms,
   toggleSelected,
   applyAxiom,
   selectedSide,
   onSelectSide,
-}: RulePanelProps) {
+}: AxiomPanelProps) {
   const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const selectedAxiom = axioms.find((a) => a.selected);
@@ -32,12 +32,21 @@ export default function RulePanel({
     <div style={{ ...styles.rulePanelContainer, ...styles.container }}>
       <div style={styles.gridContainer}>
         {axioms.map((axiom) => (
-          <div key={axiom.id} style={styles.axiomCell}>
+          <div
+            key={axiom.id}
+            style={{
+              ...styles.axiomCell,
+            }}
+          >
             <button
               type="button"
               style={{
                 ...styles.axiomButton,
-                ...(hoveredButton === axiom.id ? styles.axiomButtonHover : {}),
+                // raises tooltip and hover anim
+                ...(hoveredButton === axiom.id || hoveredAxiomId === axiom.id
+                  ? { ...styles.axiomButtonHover, ...styles.axiomButtonRaised }
+                  : {}),
+                ...(axiom.selected ? styles.axiomButtonActive : {}),
                 ...(axiom.selected ? styles.axiomButtonActive : {}),
               }}
               onClick={
@@ -116,7 +125,9 @@ export default function RulePanel({
 
 const styles: Record<string, CSSProperties> = {
   container: {
-    flex: 1,
+    width: "100%",
+    height: "100%",
+    boxSizing: "border-box",
     border: `4px solid ${Colors.black}`,
     borderRadius: "20px",
     padding: "16px",
@@ -153,6 +164,9 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.black,
     transition: "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
     textAlign: "center",
+  },
+  axiomButtonRaised: {
+    zIndex: 21,
   },
   axiomButtonActive: {
     color: Colors.black,

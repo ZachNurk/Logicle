@@ -4,14 +4,14 @@
  */
 
 import { useCallback, useState } from "react";
-import type { ProofNode } from "../../logic/ProofNode";
+import type { ProofNode } from "../logic/ProofNode";
 import {
   sameNode,
   createAndNode,
   ERROR_NODE,
   createNode,
-} from "../../logic/ProofNode";
-import type { Axiom } from "../../logic/Axiom";
+} from "../logic/ProofNode";
+import type { Axiom } from "../logic/Axiom";
 import { useProofNodes } from "./useProofNodes";
 import { useAxioms } from "./useAxioms";
 

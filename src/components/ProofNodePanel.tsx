@@ -1,18 +1,17 @@
 /**
- * Left side panel of our program. Handles displaying our nodes
+ * Left side panel of our program. Handles displaying our proof nodes.
  * @file GivenPanel.tsx
  */
 
-import type { ProofNode } from "../../logic/ProofNode";
+import type { ProofNode } from "../logic/ProofNode";
 import type { CSSProperties } from "react";
-import { Colors } from "../../constants/theme";
-import {useState} from 'react';
+import { Colors } from "../constants/theme";
 
 
 /**
  * UI element of the left panel
  */
-export default function GivenPanel({
+export default function ProofNodePanel({
   givenArray,
   solutionNode,
   toggleSelected,
@@ -72,9 +71,10 @@ export default function GivenPanel({
 
 const styles: Record<string, CSSProperties> = {
   container: {
-    flex: 1,
-    border: "4px solid",
-    color: Colors.black,
+    width: "100%",
+    height: "100%",
+    boxSizing: "border-box",
+    border: `4px solid ${Colors.black}`,
     borderRadius: "20px",
     padding: "16px",
     display: "flex",

@@ -595,25 +595,6 @@ export function conditionalIdentityIff(original: ProofNode): ProofNode {
 }
 
 /**
- * Conditional Identity
- * (p → q) ≡ (¬p ∨ q)
- */
-function conditionalIdentityImp(original: ProofNode) : ProofNode {
-  if (!isImplicationNode(original)) {
-    return ERROR_NODE
-  }
-
-  const left: NotNode = createNotNode(false,original.left,undefined) 
-  const right: ProofNode = original.right
-  return createOrNode(false,left,right,[original])
-
-}
-
-
-
-
-
-/**
  * Conditional Identity with variant: "imp" for (→) ≡ (¬A ∨ B), "iff" for A ↔ B ≡ (A → B) ∧ (B → A).
  */
 export function conditionalIdentityWithVariant(
@@ -670,6 +651,18 @@ export function implicationCommonAntecedent(premises: AndNode, selected: ProofNo
 }
 
 /**
+ * Implication wrapper:
+ * first tries common consequent (#32), then common antecedent (#33).
+ */
+export function implication(premises: AndNode, selected: ProofNode[]): ProofNode {
+  const consequentResult = implicationCommonConsequent(premises, selected);
+  if (!sameNode(consequentResult, ERROR_NODE)) {
+    return consequentResult;
+  }
+  return implicationCommonAntecedent(premises, selected);
+}
+
+/**
  * Implication with variant: "consequent" for common consequent, "antecedent" for common antecedent.
  */
 export function implicationCommonWithVariant(
@@ -677,6 +670,9 @@ export function implicationCommonWithVariant(
   selected: ProofNode[],
   variant: string
 ): ProofNode {
+  if (variant !== "antecedent" && variant !== "consequent") {
+    return implication(premises, selected);
+  }
   if (variant === "antecedent") {
     return implicationCommonAntecedent(premises, selected);
   }
@@ -835,20 +831,12 @@ export const Axioms: Axiom[] = [
   } satisfies Axiom,
   {
     id: "32",
-    text: "Implication (Common Consequent)",
+    text: "Implication",
     selected: false,
     description: "[(A → C) ∧ (B → C)] → ((A ∨ B) → C)",
+    description2: "[(A → B) ∧ (A → C)] → (A → (B ∧ C))",
     applyType: "7",
     applyOption: "consequent",
-    apply: implicationCommonWithVariant,
-  } satisfies Axiom,
-  {
-    id: "33",
-    text: "Implication (Common Antecedent)",
-    selected: false,
-    description: "[(A → B) ∧ (A → C)] → (A → (B ∧ C))",
-    applyType: "7",
-    applyOption: "antecedent",
-    apply: implicationCommonWithVariant,
+    apply: implication,
   } satisfies Axiom,
 ];

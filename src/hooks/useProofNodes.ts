@@ -6,8 +6,8 @@
 
 
 import { useState, useEffect, useCallback } from "react";
-import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
-import type { ProofNode } from "../../logic/ProofNode";
+import { nodeFromDb, ERROR_NODE } from "../logic/ProofNode";
+import type { ProofNode } from "../logic/ProofNode";
 
 
 export function useProofNodes() {

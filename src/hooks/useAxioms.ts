@@ -5,8 +5,8 @@
 
 
 import { useState, useCallback } from "react";
-import type { Axiom } from "../../logic/Axiom";
-import { Axioms } from "../../logic/Axiom";
+import type { Axiom } from "../logic/Axiom";
+import { Axioms } from "../logic/Axiom";
 
 /**
  * Manages the list of axioms and which one is selected (for applying a rule).
