@@ -1,3 +1,9 @@
+/**
+ * Hook is used to manage the state of the axioms
+ * @file useAxioms.ts
+ */
+
+
 import { useState, useCallback } from "react";
 import type { Axiom } from "../../logic/Axiom";
 import { Axioms } from "../../logic/Axiom";

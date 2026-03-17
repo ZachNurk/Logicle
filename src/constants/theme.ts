@@ -7,10 +7,11 @@
  * MP = medium pink
  * LP = light pink
  */
-:root {
-  --color-w: #ffffff;
-  --color-b: #000000;
-  --color-dp: #ff7aad;
-  --color-mp: #ff9bc5;
-  --color-lp: #ffcfe3;
-}
+
+export const Colors = {
+  white: "#ffffff",
+  black: "#000000",
+  darkPink: "#ff7aad",
+  mediumPink: "#ff9bc5",
+  lightPink: "#ffcfe3",
+};

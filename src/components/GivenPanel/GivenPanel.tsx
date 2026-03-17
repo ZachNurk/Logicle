@@ -4,7 +4,10 @@
  */
 
 import type { ProofNode } from "../../logic/ProofNode";
-import "./GivenPanel.css";
+import type { CSSProperties } from "react";
+import { Colors } from "../../constants/theme";
+import {useState} from 'react';
+
 
 /**
  * UI element of the left panel
@@ -18,27 +21,37 @@ export default function GivenPanel({
   solutionNode: ProofNode;
   toggleSelected: (id: string) => void;
 }) {
+  
+
+
+
   return (
-    <div className="given-panel container">
-      <div className="top-slots-main">
+    <div style={{ ...styles.container, ...styles.givenPanel }}>
+      <div style={styles.topSlotsMain}>
         {(givenArray ?? []).filter((node) => node.isStarter === true && node.context === false).map((node) => (
           <button
             key={node.id}
             onClick={() => toggleSelected(node.id)}
-            className={`given-button-base ${node.selected ? "given-button-base--selected" : ""}`}
+            style={{
+              ...styles.givenButtonBase,
+              ...(node.selected ? styles.givenButtonBaseSelected : {}),
+            }}
           >
             {node.text}
           </button>
         ))}
       </div>
 
-      <div className="main">
-        <div className="top-slots-main">
+      <div style={styles.main}>
+        <div style={styles.topSlotsMain}>
           {(givenArray ?? []).filter((node) => node.isStarter !== true).map((node) => (
             <button
               key={node.id}
               onClick={() => toggleSelected(node.id)}
-              className={`given-button-base ${node.selected ? "given-button-base--selected" : ""}`}
+              style={{
+                ...styles.givenButtonBase,
+                ...(node.selected ? styles.givenButtonBaseSelected : {}),
+              }}
             >
               {node.text}
             </button>
@@ -47,7 +60,7 @@ export default function GivenPanel({
         <button
           key={solutionNode.id}
           disabled
-          className="given-button-base solution-button"
+          style={{ ...styles.givenButtonBase, ...styles.solutionButton }}
         >
           {solutionNode.text}
         </button>
@@ -55,3 +68,47 @@ export default function GivenPanel({
     </div>
   );
 }
+
+
+const styles: Record<string, CSSProperties> = {
+  container: {
+    flex: 1,
+    border: "4px solid",
+    color: Colors.black,
+    borderRadius: "20px",
+    padding: "16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  givenPanel: {},
+  topSlotsMain: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+  givenButtonBase: {
+    padding: "10px 16px",
+    fontSize: "14px",
+    width: "140px",
+    height: "44px",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: Colors.darkPink,
+  },
+  givenButtonBaseSelected: {
+    backgroundColor: Colors.white,
+  },
+  solutionButton: {
+    cursor: "default",
+    backgroundColor: Colors.lightPink,
+    color: "black",
+  },
+  main: {
+    flex: 1,
+    border: "1px solid #eee",
+    borderRadius: "8px",
+    padding: "12px",
+  },
+};

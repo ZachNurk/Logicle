@@ -4,7 +4,9 @@
  */
 
 import type { Axiom } from "../../logic/Axiom";
-import "./RulePanel.css";
+import type { CSSProperties } from "react";
+import { useState } from "react";
+import { Colors } from "../../constants/theme";
 
 type RulePanelProps = {
   axioms: Axiom[];
@@ -21,17 +23,23 @@ export default function RulePanel({
   selectedSide,
   onSelectSide,
 }: RulePanelProps) {
+  const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const selectedAxiom = axioms.find((a) => a.selected);
 
 
   return (
-    <div className="rule-panel container">
-      <div className="grid-container">
+    <div style={{ ...styles.rulePanelContainer, ...styles.container }}>
+      <div style={styles.gridContainer}>
         {axioms.map((axiom) => (
-          <div key={axiom.id} className="axiom-cell">
+          <div key={axiom.id} style={styles.axiomCell}>
             <button
               type="button"
-              className={`axiom-button ${axiom.selected ? "button-active" : ""}`}
+              style={{
+                ...styles.axiomButton,
+                ...(hoveredButton === axiom.id ? styles.axiomButtonHover : {}),
+                ...(axiom.selected ? styles.axiomButtonActive : {}),
+              }}
               onClick={
                 axiom.applyType === "6" || axiom.applyType === "7"
                   ? undefined
@@ -39,15 +47,24 @@ export default function RulePanel({
                     ? () => toggleSelected(axiom.id)
                     : () => applyAxiom(axiom)
               }
+              onMouseEnter={() => setHoveredButton(axiom.id)}
+              onMouseLeave={() => setHoveredButton(null)}
             >
-              <span className="axiom-label">{axiom.text}</span>
+              <span style={styles.axiomLabel}>{axiom.text}</span>
               <span
-                className="info-dot-wrapper"
+                style={styles.infoDotWrapper}
                 role="presentation"
                 aria-hidden
+                onMouseEnter={() => setHoveredAxiomId(axiom.id)}
+                onMouseLeave={() => setHoveredAxiomId(null)}
               >
-                <span className="info-dot">i</span>
-                <span className="info-tooltip">
+                <span style={styles.infoDot}>i</span>
+                <span
+                  style={{
+                    ...styles.infoTooltip,
+                    display: hoveredAxiomId === axiom.id ? "block" : "none",
+                  }}
+                >
                   {axiom.description}
                   {axiom.description2 ? (
                     <>
@@ -63,11 +80,14 @@ export default function RulePanel({
       </div>
 
       {selectedAxiom?.applyType === "2" && (
-        <div className="side-selector">
-          <span className="side-label">Choose side:</span>
+        <div style={styles.sideSelector}>
+          <span style={styles.sideLabel}>Choose side:</span>
           <button
             type="button"
-            className={`axiom-button ${selectedSide === "left" ? "button-active" : ""}`}
+            style={{
+              ...styles.axiomButton,
+              ...(selectedSide === "left" ? styles.axiomButtonActive : {}),
+            }}
             onClick={() => {
               onSelectSide("left");
               applyAxiom(selectedAxiom, "left");
@@ -77,7 +97,10 @@ export default function RulePanel({
           </button>
           <button
             type="button"
-            className={`axiom-button ${selectedSide === "right" ? "button-active" : ""}`}
+            style={{
+              ...styles.axiomButton,
+              ...(selectedSide === "right" ? styles.axiomButtonActive : {}),
+            }}
             onClick={() => {
               onSelectSide("right");
               applyAxiom(selectedAxiom, "right");
@@ -90,3 +113,107 @@ export default function RulePanel({
     </div>
   );
 }
+
+const styles: Record<string, CSSProperties> = {
+  container: {
+    flex: 1,
+    border: `4px solid ${Colors.black}`,
+    borderRadius: "20px",
+    padding: "16px",
+  },
+  rulePanelContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    alignItems: "stretch",
+  },
+  gridContainer: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+    gridAutoRows: "minmax(52px, 1fr)",
+    gap: "10px",
+    padding: "0",
+  },
+  axiomCell: {
+    position: "relative",
+    minHeight: 0,
+    display: "flex",
+  },
+  axiomButton: {
+    position: "relative",
+    flex: 1,
+    minHeight: "44px",
+    width: "100%",
+    color: Colors.white,
+    cursor: "pointer",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    padding: "0.8em 2em",
+    paddingRight: "2.5em",
+    background: Colors.black,
+    transition: "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    textAlign: "center",
+  },
+  axiomButtonActive: {
+    color: Colors.black,
+    background: Colors.white,
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+  axiomLabel: {
+    display: "block",
+  },
+  infoDotWrapper: {
+    position: "absolute",
+    top: "50%",
+    right: "6px",
+    transform: "translateY(-50%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  infoDot: {
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    border: "1px solid #ccc",
+    background: Colors.white,
+    color: Colors.black,
+    fontSize: "12px",
+    fontStyle: "italic",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "default",
+  },
+  infoTooltip: {
+    position: "absolute",
+    left: "100%",
+    top: "50%",
+    transform: "translateY(-50%)",
+    marginLeft: "8px",
+    padding: "6px 10px",
+    background: Colors.darkPink,
+    color: Colors.white,
+    fontSize: "12px",
+    fontStyle: "normal",
+    whiteSpace: "nowrap",
+    maxWidth: "320px",
+    borderRadius: "4px",
+    zIndex: 1000,
+    pointerEvents: "none",
+  },
+  sideSelector: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  sideLabel: {
+    fontWeight: 600,
+  },
+  axiomButtonHover: {
+    color: Colors.black,
+    transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+};

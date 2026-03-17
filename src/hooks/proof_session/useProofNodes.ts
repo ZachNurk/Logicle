@@ -1,10 +1,15 @@
+/**
+ * Manages the state of the proof nodes. 
+ * @file useProofNodes.ts
+ */
+
+
+
 import { useState, useEffect, useCallback } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
 
-/**
- * Manages given nodes and solution node: loading from API and selection toggling.
- */
+
 export function useProofNodes() {
   const [nodes, setNodes] = useState<ProofNode[]>([]);
   const [solutionNode, setSolutionNode] = useState<ProofNode>(ERROR_NODE);
