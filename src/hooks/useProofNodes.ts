@@ -16,7 +16,10 @@ export function useProofNodes() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("http://localhost:3001/days");
+      const res = await fetch("/api/days");
+      if (!res.ok) {
+        throw new Error(`Failed to load days: ${res.status}`);
+      }
       const data = await res.json();
       const firstDay = Array.isArray(data) ? data[0] : data?.days?.[0];
       const rawNodes = firstDay?.nodes ?? [];

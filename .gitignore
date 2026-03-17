@@ -26,3 +26,16 @@ run-dev.bat
 
 # info for me
 /information
+
+# docker/postgre stuff
+node_modules/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+dist/
+build/
+.next/
+coverage/
