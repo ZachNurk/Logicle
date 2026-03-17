@@ -11,7 +11,11 @@ import { Colors } from "../constants/theme";
 type AxiomPanelProps = {
   axioms: Axiom[];
   toggleSelected: (id: string) => void;
-  applyAxiom: (axiom: Axiom, sideOverride?: "left" | "right") => void;
+  applyAxiom: (
+    axiom: Axiom,
+    sideOverride?: "left" | "right",
+    additionText?: string,
+  ) => void;
   selectedSide: "" | "left" | "right";
   onSelectSide: (side: "left" | "right") => void;
 };
@@ -25,12 +29,16 @@ export default function AxiomPanel({
 }: AxiomPanelProps) {
   const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [additionLetter, setAdditionLetter] = useState("A");
+  const [isChoosingAddition, setIsChoosingAddition] = useState(true);
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   return (
     <div style={{ ...styles.rulePanelContainer, ...styles.container }}>
       <div style={styles.gridContainer}>
         {axioms.map((axiom) => {
           const showSidePicker = axiom.selected && axiom.applyType === "2";
+          const showAddMenu = axiom.selected && axiom.id === "Add";
           return (
             <div
               key={axiom.id}
@@ -57,6 +65,11 @@ export default function AxiomPanel({
                     ? undefined
                     : axiom.applyType === "2"
                       ? () => toggleSelected(axiom.id)
+                      : axiom.id === "Add"
+                        ? () => {
+                            setIsChoosingAddition(true);
+                            toggleSelected(axiom.id);
+                          }
                       : () => {
                           toggleSelected(axiom.id);
                           applyAxiom(axiom);
@@ -127,6 +140,59 @@ export default function AxiomPanel({
                   >
                     Right
                   </button>
+                </div>
+              )}
+              {showAddMenu && (
+                <div
+                  style={styles.sidePickerOverlay}
+                  onClick={() => {
+                    setIsChoosingAddition(true);
+                    toggleSelected(axiom.id);
+                  }}
+                >
+                  <form
+                    style={styles.additionForm}
+                    onClick={(e) => e.stopPropagation()}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      applyAxiom(axiom, undefined, additionLetter);
+                    }}
+                  >
+                    <label
+                      style={styles.additionLabel}
+                    >
+                      Add letter:
+                    </label>
+                    {isChoosingAddition ? (
+                      <select
+
+                        value={additionLetter}
+                        onChange={(e) => {
+                          setAdditionLetter(e.target.value);
+                          setIsChoosingAddition(false);
+                        }}
+                        style={styles.additionSelect}
+                        size={5}
+                      >
+                        {alphabet.map((letter) => (
+                          <option key={letter} value={letter}>
+                            {letter}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <button
+                        type="button"
+                        style={styles.sidePickerButton}
+                        onClick={() => setIsChoosingAddition(true)}
+                      >
+                        {additionLetter}
+                      </button>
+                    )}
+                    <button type="submit" style={styles.sidePickerButton}>
+                      Apply
+                    </button>
+                  </form>
                 </div>
               )}
             </div>
@@ -257,6 +323,24 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "4px",
     background: Colors.white,
     cursor: "pointer",
+  },
+  additionForm: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  additionLabel: {
+    fontSize: "12px",
+    color: Colors.black,
+    fontWeight: 600,
+  },
+  additionSelect: {
+    minWidth: "70px",
+    padding: "6px 8px",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    background: Colors.white,
+    color: Colors.black,
   },
   axiomButtonHover: {
     color: Colors.black,

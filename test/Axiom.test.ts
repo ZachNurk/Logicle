@@ -440,7 +440,7 @@ describe("Axioms", () => {
       const cConj = createAndNode(false, C, D, undefined)
       const EXPECTED = createAndNode(false, aConj, cConj, undefined)
 
-      const ACTUAL = conjunction(aConj, cConj)
+      const ACTUAL = conjunction(createAndNode(false, aConj,cConj));
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   })

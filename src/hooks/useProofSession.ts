@@ -42,12 +42,15 @@ export function useProofSession() {
 
   /** Apply a specific axiom. For type "2", pass side so we don't rely on state. */
   const applyAxiom = useCallback(
-    (axiom: Axiom, sideOverride?: "left" | "right") => {
+    (
+      axiom: Axiom,
+      sideOverride?: "left" | "right",
+      additionText?: string,
+    ) => {
       if (!axiom.apply) return;
 
       const selectedNodes = nodes.filter((n) => n.selected);
-      //TODO make it so field appears to input node, with scrollable so we dont get injection
-      const addition = createNode("DUMMY", false, undefined, false);
+      const addition = createNode(additionText ?? "DUMMY", false, undefined, false);
       const connective: "or" | "and" = "or";
 
       if (selectedNodes.length === 0) {
