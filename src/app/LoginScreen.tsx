@@ -1,5 +1,5 @@
 import type { CSSProperties, FormEvent } from "react";
-import AuthSubmitButton from "../components/LoginSubmitButton";
+import AuthSubmitButton from "../components/AuthSubmitButton";
 
 type LoginScreenProps = {
   email: string;
@@ -9,7 +9,6 @@ type LoginScreenProps = {
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  onCreateAccountClick: () => void;
 };
 
 export default function LoginScreen({
@@ -20,7 +19,6 @@ export default function LoginScreen({
   onEmailChange,
   onPasswordChange,
   onSubmit,
-  onCreateAccountClick,
 }: LoginScreenProps) {
   return (
     <div style={styles.loginPage}>
@@ -61,9 +59,6 @@ export default function LoginScreen({
           idleText="Sign In"
           submittingText="Signing in..."
         />
-        <button type="button" style={styles.secondaryButton} onClick={onCreateAccountClick}>
-          Create Account
-        </button>
       </form>
     </div>
   );
@@ -116,16 +111,5 @@ const styles: Record<string, CSSProperties> = {
     color: "#b00020",
     fontSize: "13px",
     fontWeight: 600,
-  },
-  secondaryButton: {
-    marginTop: "4px",
-    height: "40px",
-    border: "1px solid #bbb",
-    borderRadius: "8px",
-    background: "#fff",
-    color: "#111",
-    fontSize: "14px",
-    fontWeight: 600,
-    cursor: "pointer",
   },
 };

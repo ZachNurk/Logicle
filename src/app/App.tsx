@@ -8,7 +8,6 @@ import { useProofSession } from "../hooks/useProofSession";
 import type { CSSProperties, FormEvent } from "react";
 import PuzzleScreen from "./PuzzleScreen";
 import LoginScreen from "./LoginScreen";
-import CreateAccountScreen from "./CreateAccountScreen";
 import { useState } from "react";
 
 /**
@@ -31,29 +30,18 @@ export default function App() {
   } = useProofSession();
 
   type AuthStatus = "loading" | "loggedOut" | "loggedIn";
-  type AuthView = "login" | "createAccount";
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loggedOut");
-  const [authView, setAuthView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [createAccountError, setCreateAccountError] = useState<string | null>(null);
 
-  type Screen =
-    | "loading"
-    | "error"
-    | "victory"
-    | "puzzle"
-    | "loginScreen"
-    | "createAccountScreen";
+  type Screen = "loading" | "error" | "victory" | "puzzle" | "loginScreen";
   const getScreen = (): Screen => {
     if (isLoading) return "loading";
     if (loadError) return "error";
     if (victory) return "victory";
     if (authStatus === "loggedIn") return "puzzle";
-    if (authStatus === "loggedOut" && authView === "createAccount") return "createAccountScreen";
     if (authStatus === "loggedOut") return "loginScreen";
     return "error";
   };
@@ -98,39 +86,6 @@ export default function App() {
     }
   };
 
-  const handleCreateAccountSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setCreateAccountError(null);
-    setIsCreatingAccount(true);
-
-    try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error ?? "Create account failed");
-      }
-
-      setAuthStatus("loggedIn");
-      setAuthView("login");
-      setCreateAccountError(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Create account failed";
-      setCreateAccountError(message);
-    } finally {
-      setIsCreatingAccount(false);
-    }
-  };
-
   switch (screen) {
     case "loading":
       return <div style={styles.statusScreen}>Loading puzzle...</div>;
@@ -161,27 +116,6 @@ export default function App() {
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
           onSubmit={handleLoginSubmit}
-          onCreateAccountClick={() => {
-            setLoginError(null);
-            setCreateAccountError(null);
-            setAuthView("createAccount");
-          }}
-        />
-      );
-    case "createAccountScreen":
-      return (
-        <CreateAccountScreen
-          email={email}
-          password={password}
-          createAccountError={createAccountError}
-          isCreatingAccount={isCreatingAccount}
-          onEmailChange={setEmail}
-          onPasswordChange={setPassword}
-          onSubmit={handleCreateAccountSubmit}
-          onBackToLogin={() => {
-            setCreateAccountError(null);
-            setAuthView("login");
-          }}
         />
       );
     default:
