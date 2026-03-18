@@ -1,3 +1,7 @@
+/**
+ * Sets up database connection and exports 
+ * @file db.ts
+ */
 import "dotenv/config";
 import pg from "pg";
 

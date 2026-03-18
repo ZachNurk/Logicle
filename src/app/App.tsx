@@ -4,10 +4,12 @@
  * @file App.tsx
  */
 
-import ProofNodePanel from "../components/ProofNodePanel";
-import AxiomPanel from "../components/AxiomPanel";
 import { useProofSession } from "../hooks/useProofSession";
-import type { CSSProperties } from "react";
+import type { CSSProperties, FormEvent } from "react";
+import PuzzleScreen from "./PuzzleScreen";
+import LoginScreen from "./LoginScreen";
+import CreateAccountScreen from "./CreateAccountScreen";
+import { useState } from "react";
 
 /**
  * Main App
@@ -17,6 +19,8 @@ export default function App() {
   const {
     nodes,
     solutionNode,
+    isLoading,
+    loadError,
     toggleSelectedProofNode,
     axioms,
     toggleSelectedAxiom,
@@ -26,80 +30,166 @@ export default function App() {
     setSide,
   } = useProofSession();
 
-  if (victory) {
-    return <div style={styles.winScreen}>You won!</div>;
+  type AuthStatus = "loading" | "loggedOut" | "loggedIn";
+  type AuthView = "login" | "createAccount";
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("loggedOut");
+  const [authView, setAuthView] = useState<AuthView>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [createAccountError, setCreateAccountError] = useState<string | null>(null);
+
+  type Screen =
+    | "loading"
+    | "error"
+    | "victory"
+    | "puzzle"
+    | "loginScreen"
+    | "createAccountScreen";
+  const getScreen = (): Screen => {
+    if (isLoading) return "loading";
+    if (loadError) return "error";
+    if (victory) return "victory";
+    if (authStatus === "loggedIn") return "puzzle";
+    if (authStatus === "loggedOut" && authView === "createAccount") return "createAccountScreen";
+    if (authStatus === "loggedOut") return "loginScreen";
+    return "error";
+  };
+  const screen = getScreen();
+
+  /**
+ * Handles login form submission.
+ * Prevents default form reload, sends email/password to POST /api/login,
+ * updates auth state on success, and surfaces any API/network errors to the UI.
+ * @param _e is the form event, which does nothing here
+ */
+  const handleLoginSubmit = async (_e: FormEvent<HTMLFormElement>) => {
+    _e.preventDefault();
+    setLoginError(null);
+    setIsSigningIn(true);
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      // check for error
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Sign in failed");
+      }
+
+      setAuthStatus("loggedIn");
+      setLoginError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sign in failed";
+      setLoginError(message);
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleCreateAccountSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setCreateAccountError(null);
+    setIsCreatingAccount(true);
+
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Create account failed");
+      }
+
+      setAuthStatus("loggedIn");
+      setAuthView("login");
+      setCreateAccountError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Create account failed";
+      setCreateAccountError(message);
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  switch (screen) {
+    case "loading":
+      return <div style={styles.statusScreen}>Loading puzzle...</div>;
+    case "error":
+      return <div style={styles.statusScreen}>Failed to load puzzle: {loadError}</div>;
+    case "victory":
+      return <div style={styles.winScreen}>You won!</div>;
+    case "puzzle":
+      return (
+        <PuzzleScreen
+          nodes={nodes}
+          solutionNode={solutionNode}
+          toggleSelectedProofNode={toggleSelectedProofNode}
+          axioms={axioms}
+          toggleSelectedAxiom={toggleSelectedAxiom}
+          applyAxiom={applyAxiom}
+          selectedSide={selectedSide}
+          setSide={setSide}
+        />
+      );
+    case "loginScreen":
+      return (
+        <LoginScreen
+          email={email}
+          password={password}
+          loginError={loginError}
+          isSigningIn={isSigningIn}
+          onEmailChange={setEmail}
+          onPasswordChange={setPassword}
+          onSubmit={handleLoginSubmit}
+          onCreateAccountClick={() => {
+            setLoginError(null);
+            setCreateAccountError(null);
+            setAuthView("createAccount");
+          }}
+        />
+      );
+    case "createAccountScreen":
+      return (
+        <CreateAccountScreen
+          email={email}
+          password={password}
+          createAccountError={createAccountError}
+          isCreatingAccount={isCreatingAccount}
+          onEmailChange={setEmail}
+          onPasswordChange={setPassword}
+          onSubmit={handleCreateAccountSubmit}
+          onBackToLogin={() => {
+            setCreateAccountError(null);
+            setAuthView("login");
+          }}
+        />
+      );
+    default:
+      return <div style={styles.statusScreen}>Something went wrong.</div>;
   }
-
-  return (
-    <div style={styles.page}>
-      <header style={styles.topBar}>
-        <button style={styles.menuButton}>?</button>
-        <h1 style={styles.title}>Logicle</h1>
-        <div style={styles.rightActions}>
-          <button style={styles.menuButton}>Stats</button>
-          <button style={styles.menuButton}>Settings</button>
-        </div>
-      </header>
-
-      <div style={styles.contentWrap}>
-        <div style={styles.split}>
-          <div style={styles.panel}>
-            <ProofNodePanel
-              givenArray={nodes}
-              solutionNode={solutionNode}
-              toggleSelected={toggleSelectedProofNode}
-            />
-          </div>
-          <div style={styles.panel}>
-            <AxiomPanel
-              axioms={axioms}
-              toggleSelected={toggleSelectedAxiom}
-              applyAxiom={applyAxiom}
-              selectedSide={selectedSide}
-              onSelectSide={setSide}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-  },
-  topBar: {
-    height: "56px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 12px",
-    borderBottom: "1px solid #ddd",
-    background: "#fff",
-  },
-  title: {
-    margin: 0,
-    fontSize: "20px",
-    fontWeight: 700,
-    position: "absolute",
-    left: "50%",
-    transform: "translateX(-50%)"
-  },
-  rightActions: {
-    display: "flex",
-    gap: "8px",
-  },
-  menuButton: {
-    border: "none",
-    background: "transparent",
-    padding: "8px 10px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "14px",
-  },
   winScreen: {
     minHeight: "100vh",
     display: "flex",
@@ -108,28 +198,12 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "24px",
     fontWeight: 700,
   },
-
-  contentWrap: {
-    flex: 1,
+  statusScreen: {
+    minHeight: "100vh",
     display: "flex",
-    justifyContent: "center",   // center horizontally
-    alignItems: "center",       // center vertically (optional)
-    padding: "24px",
-  },
-  split: {
-    display: "flex",
-    gap: "12px",
-    width: "100%",
-    maxWidth: "1200px",         // overall centered area
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "stretch",
+    fontSize: "20px",
+    fontWeight: 600,
   },
-  panel: {
-    flex: "0 0 520px",   // hard fixed width in flex layout
-    height: "680px",
-    minHeight: "680px",
-    maxWidth: "520px",
-    display: "flex",
-    boxSizing: "border-box",
-  }
 };

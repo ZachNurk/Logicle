@@ -23,6 +23,8 @@ export function useProofSession() {
   const {
     nodes,
     solutionNode,
+    isLoading,
+    loadError,
     setSolutionNode,
     toggleSelectedProofNode,
     addGivenNode,
@@ -166,6 +168,8 @@ export function useProofSession() {
   return {
     nodes,
     solutionNode,
+    isLoading,
+    loadError,
     setSolutionNode,
     toggleSelectedProofNode,
     addGivenNode,

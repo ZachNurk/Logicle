@@ -1,3 +1,8 @@
+/**
+ * Defines SQL queries we can use for operations with days
+ * @file days.ts
+ */
+
 import { pool } from "./db";
 
 export async function getDays() {
@@ -17,7 +22,7 @@ export async function getDayById(id: string) {
     FROM days
     WHERE id = $1
     `,
-    [id]
+    [id],
   );
 
   return result.rows[0] ?? null;

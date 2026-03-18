@@ -13,21 +13,31 @@ import type { ProofNode } from "../logic/ProofNode";
 export function useProofNodes() {
   const [nodes, setNodes] = useState<ProofNode[]>([]);
   const [solutionNode, setSolutionNode] = useState<ProofNode>(ERROR_NODE);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/days");
-      if (!res.ok) {
-        throw new Error(`Failed to load days: ${res.status}`);
-      }
-      const data = await res.json();
-      const firstDay = Array.isArray(data) ? data[0] : data?.days?.[0];
-      const rawNodes = firstDay?.nodes ?? [];
-      const loaded: ProofNode[] = rawNodes.map((n: any) => nodeFromDb(n));
+      try {
+        const res = await fetch("/api/days");
+        if (!res.ok) {
+          throw new Error(`Failed to load days: ${res.status}`);
+        }
 
-      const rawSolution = firstDay?.solution;
-      setNodes(loaded);
-      setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
+        const data = await res.json();
+        const firstDay = Array.isArray(data) ? data[0] : data?.days?.[0];
+        const rawNodes = firstDay?.nodes ?? [];
+        const loaded: ProofNode[] = rawNodes.map((n: any) => nodeFromDb(n));
+
+        const rawSolution = firstDay?.solution;
+        setNodes(loaded);
+        setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load days";
+        setLoadError(message);
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, []);
 
@@ -50,6 +60,8 @@ export function useProofNodes() {
   return {
     nodes,
     solutionNode,
+    isLoading,
+    loadError,
     setSolutionNode,
     toggleSelectedProofNode,
     addGivenNode,
