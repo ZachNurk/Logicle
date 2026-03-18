@@ -17,6 +17,7 @@ type PuzzleScreenProps = {
   ) => void;
   selectedSide: "" | "left" | "right";
   setSide: (side: "left" | "right") => void;
+  logOut: () => void;
 };
 
 export default function PuzzleScreen({
@@ -28,6 +29,7 @@ export default function PuzzleScreen({
   applyAxiom,
   selectedSide,
   setSide,
+  logOut,
 }: PuzzleScreenProps) {
   return (
     <div style={styles.page}>
@@ -37,6 +39,7 @@ export default function PuzzleScreen({
         <div style={styles.rightActions}>
           <button style={styles.menuButton}>Stats</button>
           <button style={styles.menuButton}>Settings</button>
+          <button style={styles.menuButton} onClick={logOut}>Logout</button>
         </div>
       </header>
 

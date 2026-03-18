@@ -6,17 +6,30 @@
 
 
 import { useState, useEffect, useCallback } from "react";
-import { nodeFromDb, ERROR_NODE } from "../logic/ProofNode";
-import type { ProofNode } from "../logic/ProofNode";
+import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
+import type { ProofNode } from "../../logic/ProofNode";
 
 
-export function useProofNodes() {
+export function useProofNodes(userId: string | null) {
   const [nodes, setNodes] = useState<ProofNode[]>([]);
   const [solutionNode, setSolutionNode] = useState<ProofNode>(ERROR_NODE);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    // No user yet — reset to blank state and stop loading.
+    if (!userId) {
+      setNodes([]);
+      setSolutionNode(ERROR_NODE);
+      setLoadError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
+
+    // effect is dependent on userId becuase logout deletes created nodes
     (async () => {
       try {
         const res = await fetch("/api/days");
@@ -39,7 +52,7 @@ export function useProofNodes() {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [userId]);
 
   const toggleSelectedProofNode = useCallback((id: string) => {
     setNodes((prev) =>

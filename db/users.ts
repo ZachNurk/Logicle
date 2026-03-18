@@ -18,3 +18,16 @@ export async function getUserByEmail(email: string): Promise<DbUser | null> {
 
   return result.rows[0] ?? null;
 }
+
+export async function createUser(email: string, password: string): Promise<DbUser> {
+  const result = await pool.query<DbUser>(
+    `
+    INSERT INTO users (email, password)
+    VALUES ($1, $2)
+    RETURNING id, email, password
+    `,
+    [email, password],
+  );
+
+  return result.rows[0];
+}

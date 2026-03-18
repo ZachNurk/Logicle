@@ -1,7 +1,9 @@
 TODOs:
 
-Convert DB to SQL
+
+Hash PWS and more security.
 Implement Top Bar
-Add Log In System and storing days completed
+Store days completed on user info
 More Unit Testing
 More System Testing
+Endless mode

@@ -4,17 +4,37 @@
  * @file App.tsx
  */
 
-import { useProofSession } from "../hooks/useProofSession";
-import type { CSSProperties, FormEvent } from "react";
+import { useProofSession } from "../hooks/proof/useProofSession";
+import type { CSSProperties } from "react";
+import { useUserSession } from "../hooks/user/useUserSession";
 import PuzzleScreen from "./PuzzleScreen";
 import LoginScreen from "./LoginScreen";
-import { useState } from "react";
+import CreateAccountScreen from "./CreateAccountScreen";
 
 /**
  * Main App
  * Program is split into two primary panels: ProofNodePanel (left) and AxiomPanel (right).
  */
 export default function App() {
+  const {
+    authStatus,
+    authView,
+    email,
+    password,
+    isSigningIn,
+    loginError,
+    isCreatingAccount,
+    createAccountError,
+    currentUser,
+    setEmail,
+    setPassword,
+    handleLoginSubmit,
+    handleCreateAccountSubmit,
+    showCreateAccount,
+    showLogin,
+    logout,
+  } = useUserSession();
+
   const {
     nodes,
     solutionNode,
@@ -27,64 +47,25 @@ export default function App() {
     victory,
     selectedSide,
     setSide,
-  } = useProofSession();
+  } = useProofSession(currentUser?.id ?? null);
 
-  type AuthStatus = "loading" | "loggedOut" | "loggedIn";
-  const [authStatus, setAuthStatus] = useState<AuthStatus>("loggedOut");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-
-  type Screen = "loading" | "error" | "victory" | "puzzle" | "loginScreen";
+  type Screen =
+    | "loading"
+    | "error"
+    | "victory"
+    | "puzzle"
+    | "loginScreen"
+    | "createAccountScreen";
   const getScreen = (): Screen => {
     if (isLoading) return "loading";
     if (loadError) return "error";
     if (victory) return "victory";
     if (authStatus === "loggedIn") return "puzzle";
+    if (authStatus === "loggedOut" && authView === "createAccount") return "createAccountScreen";
     if (authStatus === "loggedOut") return "loginScreen";
     return "error";
   };
   const screen = getScreen();
-
-  /**
- * Handles login form submission.
- * Prevents default form reload, sends email/password to POST /api/login,
- * updates auth state on success, and surfaces any API/network errors to the UI.
- * @param _e is the form event, which does nothing here
- */
-  const handleLoginSubmit = async (_e: FormEvent<HTMLFormElement>) => {
-    _e.preventDefault();
-    setLoginError(null);
-    setIsSigningIn(true);
-
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      // check for error
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error ?? "Sign in failed");
-      }
-
-      setAuthStatus("loggedIn");
-      setLoginError(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Sign in failed";
-      setLoginError(message);
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
 
   switch (screen) {
     case "loading":
@@ -104,6 +85,7 @@ export default function App() {
           applyAxiom={applyAxiom}
           selectedSide={selectedSide}
           setSide={setSide}
+          logOut={logout}
         />
       );
     case "loginScreen":
@@ -116,6 +98,20 @@ export default function App() {
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
           onSubmit={handleLoginSubmit}
+          onCreateAccountClick={showCreateAccount}
+        />
+      );
+    case "createAccountScreen":
+      return (
+        <CreateAccountScreen
+          email={email}
+          password={password}
+          createAccountError={createAccountError}
+          isCreatingAccount={isCreatingAccount}
+          onEmailChange={setEmail}
+          onPasswordChange={setPassword}
+          onSubmit={handleCreateAccountSubmit}
+          onBackToLogin={showLogin}
         />
       );
     default:

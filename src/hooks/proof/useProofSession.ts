@@ -4,14 +4,14 @@
  */
 
 import { useCallback, useState } from "react";
-import type { ProofNode } from "../logic/ProofNode";
+import type { ProofNode } from "../../logic/ProofNode";
 import {
   sameNode,
   createAndNode,
   ERROR_NODE,
   createNode,
-} from "../logic/ProofNode";
-import type { Axiom } from "../logic/Axiom";
+} from "../../logic/ProofNode";
+import type { Axiom } from "../../logic/Axiom";
 import { useProofNodes } from "./useProofNodes";
 import { useAxioms } from "./useAxioms";
 
@@ -19,7 +19,7 @@ import { useAxioms } from "./useAxioms";
  * Composes proof nodes + axioms state. Use this when you need to both read and
  * update both states (e.g. apply an axiom and add the result to givens).
  */
-export function useProofSession() {
+export function useProofSession(userId: string | null) {
   const {
     nodes,
     solutionNode,
@@ -28,7 +28,7 @@ export function useProofSession() {
     setSolutionNode,
     toggleSelectedProofNode,
     addGivenNode,
-  } = useProofNodes();
+  } = useProofNodes(userId);
   const { axioms, setAxioms, toggleSelectedAxiom } = useAxioms();
   const [victory, setVictory] = useState(false);
   const [selectedSide, setSelectedSide] = useState<"left" | "right" | "">("");

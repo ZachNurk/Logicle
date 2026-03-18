@@ -1,38 +1,38 @@
 import type { CSSProperties, FormEvent } from "react";
 import AuthSubmitButton from "../components/AuthSubmitButton";
 
-type LoginScreenProps = {
+type CreateAccountScreenProps = {
   email: string;
   password: string;
-  loginError: string | null;
-  isSigningIn: boolean;
+  createAccountError: string | null;
+  isCreatingAccount: boolean;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  onCreateAccountClick: () => void;
+  onBackToLogin: () => void;
 };
 
-export default function LoginScreen({
+export default function CreateAccountScreen({
   email,
   password,
-  loginError,
-  isSigningIn,
+  createAccountError,
+  isCreatingAccount,
   onEmailChange,
   onPasswordChange,
   onSubmit,
-  onCreateAccountClick,
-}: LoginScreenProps) {
+  onBackToLogin,
+}: CreateAccountScreenProps) {
   return (
-    <div style={styles.loginPage}>
-      <form style={styles.loginCard} onSubmit={onSubmit}>
-        <h1 style={styles.loginTitle}>Logicle</h1>
-        <p style={styles.loginSubtitle}>Sign in to start your puzzle.</p>
+    <div style={styles.page}>
+      <form style={styles.card} onSubmit={onSubmit}>
+        <h1 style={styles.title}>Create account</h1>
+        <p style={styles.subtitle}>Set up a new Logicle account.</p>
 
-        <label style={styles.inputLabel} htmlFor="email">
+        <label style={styles.inputLabel} htmlFor="create-email">
           Email
         </label>
         <input
-          id="email"
+          id="create-email"
           type="email"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
@@ -41,28 +41,28 @@ export default function LoginScreen({
           required
         />
 
-        <label style={styles.inputLabel} htmlFor="password">
+        <label style={styles.inputLabel} htmlFor="create-password">
           Password
         </label>
         <input
-          id="password"
+          id="create-password"
           type="password"
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
           style={styles.input}
-          placeholder="********"
+          placeholder="Choose a password"
           required
         />
 
-        {loginError ? <div style={styles.loginError}>{loginError}</div> : null}
+        {createAccountError ? <div style={styles.errorText}>{createAccountError}</div> : null}
 
         <AuthSubmitButton
-          isSubmitting={isSigningIn}
-          idleText="Sign In"
-          submittingText="Signing in..."
+          isSubmitting={isCreatingAccount}
+          idleText="Create Account"
+          submittingText="Creating..."
         />
-        <button type="button" style={styles.secondaryButton} onClick={onCreateAccountClick}>
-          Create Account
+        <button type="button" style={styles.secondaryButton} onClick={onBackToLogin}>
+          Back to Sign In
         </button>
       </form>
     </div>
@@ -70,7 +70,7 @@ export default function LoginScreen({
 }
 
 const styles: Record<string, CSSProperties> = {
-  loginPage: {
+  page: {
     minHeight: "100vh",
     display: "flex",
     alignItems: "center",
@@ -78,7 +78,7 @@ const styles: Record<string, CSSProperties> = {
     background: "#f8f8f8",
     padding: "24px",
   },
-  loginCard: {
+  card: {
     width: "100%",
     maxWidth: "380px",
     display: "flex",
@@ -90,12 +90,12 @@ const styles: Record<string, CSSProperties> = {
     padding: "20px",
     boxSizing: "border-box",
   },
-  loginTitle: {
+  title: {
     margin: 0,
     fontSize: "28px",
     fontWeight: 700,
   },
-  loginSubtitle: {
+  subtitle: {
     marginTop: "4px",
     marginBottom: "10px",
     color: "#555",
@@ -112,19 +112,20 @@ const styles: Record<string, CSSProperties> = {
     padding: "0 10px",
     fontSize: "14px",
   },
-  loginError: {
+  errorText: {
     color: "#b00020",
     fontSize: "13px",
     fontWeight: 600,
   },
   secondaryButton: {
     marginTop: "6px",
-    border: "none",
-    background: "transparent",
-    color: "#333",
+    height: "40px",
+    border: "1px solid #bbb",
+    borderRadius: "8px",
+    background: "#fff",
+    color: "#111",
     fontSize: "14px",
-    fontWeight: 500,
-    textDecoration: "underline",
+    fontWeight: 600,
     cursor: "pointer",
   },
 };
