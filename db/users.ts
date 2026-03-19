@@ -1,3 +1,8 @@
+/**
+ * Db queries for user info
+ * 
+ */
+
 import { pool } from "./db";
 
 export type DbUser = {
@@ -28,6 +33,5 @@ export async function createUser(email: string, password: string): Promise<DbUse
     `,
     [email, password],
   );
-
   return result.rows[0];
 }

@@ -1,8 +1,11 @@
 import type { CSSProperties } from "react";
+import { useState } from "react";
 import AxiomPanel from "../components/AxiomPanel";
 import ProofNodePanel from "../components/ProofNodePanel";
+import StatsModal from "../components/StatsModal";
 import type { Axiom } from "../logic/Axiom";
 import type { ProofNode } from "../logic/ProofNode";
+import type { AuthUser } from "../hooks/user/useAuth";
 
 type PuzzleScreenProps = {
   nodes: ProofNode[];
@@ -18,6 +21,7 @@ type PuzzleScreenProps = {
   selectedSide: "" | "left" | "right";
   setSide: (side: "left" | "right") => void;
   logOut: () => void;
+  currentUser: AuthUser | null;
 };
 
 export default function PuzzleScreen({
@@ -30,14 +34,21 @@ export default function PuzzleScreen({
   selectedSide,
   setSide,
   logOut,
+  currentUser,
 }: PuzzleScreenProps) {
+  const [showStats, setShowStats] = useState(false);
+
   return (
     <div style={styles.page}>
+      {showStats && (
+        <StatsModal currentUser={currentUser} onClose={() => setShowStats(false)} />
+      )}
+
       <header style={styles.topBar}>
         <button style={styles.menuButton}>?</button>
         <h1 style={styles.title}>Logicle</h1>
         <div style={styles.rightActions}>
-          <button style={styles.menuButton}>Stats</button>
+          <button style={styles.menuButton} onClick={() => setShowStats(true)}>Stats</button>
           <button style={styles.menuButton}>Settings</button>
           <button style={styles.menuButton} onClick={logOut}>Logout</button>
         </div>

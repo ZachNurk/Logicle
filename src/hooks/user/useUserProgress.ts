@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 export function useUserProgress(
-  userId: string | null,
+  userEmail: string | null,
   initialCompletedDayIds?: string[],
 ) {
   const [completedDayIds, setCompletedDayIds] = useState<string[]>(
@@ -9,12 +9,12 @@ export function useUserProgress(
   );
 
   useEffect(() => {
-    if (!userId) {
+    if (!userEmail) {
       setCompletedDayIds([]);
       return;
     }
     setCompletedDayIds(initialCompletedDayIds ?? []);
-  }, [userId, initialCompletedDayIds]);
+  }, [userEmail, initialCompletedDayIds]);
 
   const isDayCompleted = useCallback(
     (dayId: string) => completedDayIds.includes(dayId),
@@ -25,7 +25,15 @@ export function useUserProgress(
     setCompletedDayIds((prev) =>
       prev.includes(dayId) ? prev : [...prev, dayId],
     );
-  }, []);
+
+    if (userEmail) {
+      fetch(`/api/users/${encodeURIComponent(userEmail)}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dayId }),
+      }).catch((err) => console.error("Failed to save progress:", err));
+    }
+  }, [userEmail]);
 
   const clearProgress = useCallback(() => {
     setCompletedDayIds([]);

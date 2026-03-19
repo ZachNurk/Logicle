@@ -19,7 +19,7 @@ import { useAxioms } from "./useAxioms";
  * Composes proof nodes + axioms state. Use this when you need to both read and
  * update both states (e.g. apply an axiom and add the result to givens).
  */
-export function useProofSession(userId: string | null) {
+export function useProofSession(userId: string | null, onVictory?: (dayId: string) => void) {
   const {
     nodes,
     solutionNode,
@@ -147,6 +147,8 @@ export function useProofSession(userId: string | null) {
       if (sameNode(result, solutionNode)) {
         alert("You won!");
         setVictory(true);
+        const dayId = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
+        onVictory?.(dayId);
       }
 
       if (nodes.some((n) => sameNode(n, result))) {

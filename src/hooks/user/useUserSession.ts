@@ -4,7 +4,7 @@ import { useUserProgress } from "./useUserProgress";
 export function useUserSession() {
   const auth = useAuth();
   const progress = useUserProgress(
-    auth.currentUser?.id ?? null,
+    auth.currentUser?.email ?? null,
     auth.currentUser?.completedDayIds,
   );
 

@@ -25,9 +25,10 @@ export function useAuth() {
 
   // Single place to apply a logged-in user. When we later need to fetch
   // progress/streak from the DB after login, add those calls here.
-  //TODO store streak info in localstorage as well
-  const applyAuthenticatedUser = (user: AuthUser) => {
-    setCurrentUser(user);
+  const applyAuthenticatedUser = async (user: AuthUser) => {
+    const res = await fetch(`/api/users/${user.email}/progress`);
+    const data = await res.json();
+    setCurrentUser({ ...user, completedDayIds: data.completedDayIds });
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
     setAuthStatus("loggedIn");
   };

@@ -7,9 +7,9 @@
 import { useProofSession } from "../hooks/proof/useProofSession";
 import type { CSSProperties } from "react";
 import { useUserSession } from "../hooks/user/useUserSession";
-import PuzzleScreen from "./PuzzleScreen";
-import LoginScreen from "./LoginScreen";
-import CreateAccountScreen from "./CreateAccountScreen";
+import PuzzleScreen from "../screens/PuzzleScreen";
+import LoginScreen from "../screens/LoginScreen";
+import CreateAccountScreen from "../screens/CreateAccountScreen";
 
 /**
  * Main App
@@ -33,6 +33,7 @@ export default function App() {
     showCreateAccount,
     showLogin,
     logout,
+    markDayCompleted,
   } = useUserSession();
 
   const {
@@ -47,7 +48,7 @@ export default function App() {
     victory,
     selectedSide,
     setSide,
-  } = useProofSession(currentUser?.id ?? null);
+  } = useProofSession(currentUser?.id ?? null, markDayCompleted);
 
   type Screen =
     | "loading"
@@ -86,6 +87,7 @@ export default function App() {
           selectedSide={selectedSide}
           setSide={setSide}
           logOut={logout}
+          currentUser={currentUser}
         />
       );
     case "loginScreen":
