@@ -1,5 +1,6 @@
 import type { CSSProperties, FormEvent } from "react";
 import AuthSubmitButton from "../components/AuthSubmitButton";
+import { Colors } from "../constants/theme";
 
 type LoginScreenProps = {
   email: string;
@@ -75,7 +76,7 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: "#f8f8f8",
+    background: Colors.background,
     padding: "24px",
   },
   loginCard: {
@@ -86,7 +87,7 @@ const styles: Record<string, CSSProperties> = {
     gap: "8px",
     border: "1px solid #ddd",
     borderRadius: "12px",
-    background: "#fff",
+    background: Colors.surface1,
     padding: "20px",
     boxSizing: "border-box",
   },

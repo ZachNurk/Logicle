@@ -1,14 +1,15 @@
 TODOs:
 
 
-If already beat puzzle, auto shows stats and completed puzzle
 
-Hash PWS and more security.
+
 Implement Top Bar
-Store days completed on user info
+How to play pop-up
 More Unit Testing
 More System Testing
 Endless mode
+More puzzles
+
 
 Make sure you limit where your accounts can log in from, make sure you're using TLS, don't grant accounts more permissions then they need
 

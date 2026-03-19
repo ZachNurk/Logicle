@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { AuthUser } from "../hooks/user/useAuth";
+import { Colors } from "../constants/theme";
 
 type StatsModalProps = {
   currentUser: AuthUser | null;
@@ -97,7 +98,7 @@ const styles: Record<string, CSSProperties> = {
   },
   box: {
     position: "relative",
-    background: "#fff",
+    background: Colors.background,
     borderRadius: "16px",
     padding: "32px",
     minWidth: "340px",
@@ -156,7 +157,7 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "6px",
     fontSize: "13px",
     fontWeight: 500,
-    background: "#f0f0f0",
+    background: Colors.surface2,
     color: "#333",
   },
   dayCellCompleted: {
@@ -186,7 +187,7 @@ const styles: Record<string, CSSProperties> = {
     height: "42px",
     border: "1px solid #ccc",
     borderRadius: "8px",
-    background: "#fff",
+    background: Colors.surface1,
     color: "#555",
     fontSize: "14px",
     fontWeight: 600,

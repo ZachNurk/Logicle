@@ -38,6 +38,7 @@ export default function ProofNodePanel({
           ))}
       </div>
 
+        
       <div style={styles.main}>
         <div style={styles.topSlotsMain}>
           {(givenArray ?? [])
@@ -106,11 +107,5 @@ const styles: Record<string, CSSProperties> = {
     cursor: "default",
     backgroundColor: Colors.lightPink,
     color: "black",
-  },
-  main: {
-    flex: 1,
-    border: "1px solid #eee",
-    borderRadius: "8px",
-    padding: "12px",
   },
 };

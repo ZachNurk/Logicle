@@ -111,7 +111,7 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "space-between",
     padding: "0 12px",
     borderBottom: "1px solid #ddd",
-    background: "#fff",
+    background: "#ffffff",
   },
   title: {
     margin: 0,
