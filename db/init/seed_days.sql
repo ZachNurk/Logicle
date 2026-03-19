@@ -1,6 +1,6 @@
 INSERT INTO days (id, title, nodes, solution)
 VALUES (
-  '2026-02-14',
+  '2026-03-19',
   '2-step proof example (Simp -> MP)',
   '[
     {

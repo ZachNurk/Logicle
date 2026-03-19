@@ -1,119 +1,81 @@
 /**
- * File handles the state of our app
- * Mostly UI Stuff
+ * Root component — responsible only for routing between screens.
+ * All state lives in useAppSession; access it via auth/progress/proof namespaces.
  * @file App.tsx
  */
 
-import { useProofSession } from "../hooks/proof/useProofSession";
 import type { CSSProperties } from "react";
-import { useUserSession } from "../hooks/user/useUserSession";
+import { useAppSession } from "../hooks/useAppSession";
 import PuzzleScreen from "../screens/PuzzleScreen";
 import LoginScreen from "../screens/LoginScreen";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 
-/**
- * Main App
- * Program is split into two primary panels: ProofNodePanel (left) and AxiomPanel (right).
- */
 export default function App() {
-  const {
-    authStatus,
-    authView,
-    email,
-    password,
-    isSigningIn,
-    loginError,
-    isCreatingAccount,
-    createAccountError,
-    currentUser,
-    setEmail,
-    setPassword,
-    handleLoginSubmit,
-    handleCreateAccountSubmit,
-    showCreateAccount,
-    showLogin,
-    logout,
-    markDayCompleted,
-  } = useUserSession();
-
-  const {
-    nodes,
-    solutionNode,
-    isLoading,
-    loadError,
-    toggleSelectedProofNode,
-    axioms,
-    toggleSelectedAxiom,
-    applyAxiom,
-    victory,
-    selectedSide,
-    setSide,
-  } = useProofSession(currentUser?.id ?? null, markDayCompleted);
+  const { auth, proof } = useAppSession();
 
   type Screen =
     | "loading"
     | "error"
-    | "victory"
     | "puzzle"
     | "loginScreen"
     | "createAccountScreen";
+
   const getScreen = (): Screen => {
-    if (isLoading) return "loading";
-    if (loadError) return "error";
-    if (victory) return "victory";
-    if (authStatus === "loggedIn") return "puzzle";
-    if (authStatus === "loggedOut" && authView === "createAccount") return "createAccountScreen";
-    if (authStatus === "loggedOut") return "loginScreen";
+    if (proof.isLoading) return "loading";
+    if (proof.loadError) return "error";
+    if (auth.authStatus === "loggedIn") return "puzzle";
+    if (auth.authStatus === "loggedOut" && auth.authView === "createAccount") return "createAccountScreen";
+    if (auth.authStatus === "loggedOut") return "loginScreen";
     return "error";
   };
-  const screen = getScreen();
 
-  switch (screen) {
+  switch (getScreen()) {
     case "loading":
       return <div style={styles.statusScreen}>Loading puzzle...</div>;
     case "error":
-      return <div style={styles.statusScreen}>Failed to load puzzle: {loadError}</div>;
-    case "victory":
-      return <div style={styles.winScreen}>You won!</div>;
+      return <div style={styles.statusScreen}>Failed to load puzzle: {proof.loadError}</div>;
     case "puzzle":
       return (
         <PuzzleScreen
-          nodes={nodes}
-          solutionNode={solutionNode}
-          toggleSelectedProofNode={toggleSelectedProofNode}
-          axioms={axioms}
-          toggleSelectedAxiom={toggleSelectedAxiom}
-          applyAxiom={applyAxiom}
-          selectedSide={selectedSide}
-          setSide={setSide}
-          logOut={logout}
-          currentUser={currentUser}
+          nodes={proof.nodes}
+          solutionNode={proof.solutionNode}
+          toggleSelectedProofNode={proof.toggleSelectedProofNode}
+          axioms={proof.axioms}
+          toggleSelectedAxiom={proof.toggleSelectedAxiom}
+          applyAxiom={proof.applyAxiom}
+          selectedSide={proof.selectedSide}
+          setSide={proof.setSide}
+          logOut={auth.logout}
+          currentUser={auth.currentUser}
+          victory={proof.victory}
+          deleteSelectedNode={proof.deleteSelectedNode}
+          resetNodes={proof.resetNodes}
         />
       );
     case "loginScreen":
       return (
         <LoginScreen
-          email={email}
-          password={password}
-          loginError={loginError}
-          isSigningIn={isSigningIn}
-          onEmailChange={setEmail}
-          onPasswordChange={setPassword}
-          onSubmit={handleLoginSubmit}
-          onCreateAccountClick={showCreateAccount}
+          email={auth.email}
+          password={auth.password}
+          loginError={auth.loginError}
+          isSigningIn={auth.isSigningIn}
+          onEmailChange={auth.setEmail}
+          onPasswordChange={auth.setPassword}
+          onSubmit={auth.handleLoginSubmit}
+          onCreateAccountClick={auth.showCreateAccount}
         />
       );
     case "createAccountScreen":
       return (
         <CreateAccountScreen
-          email={email}
-          password={password}
-          createAccountError={createAccountError}
-          isCreatingAccount={isCreatingAccount}
-          onEmailChange={setEmail}
-          onPasswordChange={setPassword}
-          onSubmit={handleCreateAccountSubmit}
-          onBackToLogin={showLogin}
+          email={auth.email}
+          password={auth.password}
+          createAccountError={auth.createAccountError}
+          isCreatingAccount={auth.isCreatingAccount}
+          onEmailChange={auth.setEmail}
+          onPasswordChange={auth.setPassword}
+          onSubmit={auth.handleCreateAccountSubmit}
+          onBackToLogin={auth.showLogin}
         />
       );
     default:
@@ -122,14 +84,6 @@ export default function App() {
 }
 
 const styles: Record<string, CSSProperties> = {
-  winScreen: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "24px",
-    fontWeight: 700,
-  },
   statusScreen: {
     minHeight: "100vh",
     display: "flex",

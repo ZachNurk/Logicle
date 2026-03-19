@@ -22,6 +22,9 @@ type PuzzleScreenProps = {
   setSide: (side: "left" | "right") => void;
   logOut: () => void;
   currentUser: AuthUser | null;
+  victory: boolean;
+  deleteSelectedNode: () => void;
+  resetNodes: () => void;
 };
 
 export default function PuzzleScreen({
@@ -35,13 +38,27 @@ export default function PuzzleScreen({
   setSide,
   logOut,
   currentUser,
+  victory,
+  deleteSelectedNode,
+  resetNodes,
 }: PuzzleScreenProps) {
   const [showStats, setShowStats] = useState(false);
 
   return (
     <div style={styles.page}>
-      {showStats && (
-        <StatsModal currentUser={currentUser} onClose={() => setShowStats(false)} />
+      {victory && (
+        <StatsModal
+          currentUser={currentUser}
+          title="You Won!"
+          onEndless={() => alert("Endless mode coming soon!")}
+          onLogout={logOut}
+        />
+      )}
+      {!victory && showStats && (
+        <StatsModal
+          currentUser={currentUser}
+          onClose={() => setShowStats(false)}
+        />
       )}
 
       <header style={styles.topBar}>
@@ -50,6 +67,7 @@ export default function PuzzleScreen({
         <div style={styles.rightActions}>
           <button style={styles.menuButton} onClick={() => setShowStats(true)}>Stats</button>
           <button style={styles.menuButton}>Settings</button>
+          <button style={styles.menuButton}>Endless</button>
           <button style={styles.menuButton} onClick={logOut}>Logout</button>
         </div>
       </header>
@@ -70,6 +88,8 @@ export default function PuzzleScreen({
               applyAxiom={applyAxiom}
               selectedSide={selectedSide}
               onSelectSide={setSide}
+              deleteSelectedNode={deleteSelectedNode}
+              resetNodes={resetNodes}
             />
           </div>
         </div>

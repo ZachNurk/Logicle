@@ -21,13 +21,13 @@ export function useUserProgress(
     [completedDayIds],
   );
 
-  const markDayCompleted = useCallback((dayId: string) => {
+  const markDayCompleted = useCallback(async (dayId: string) => {
     setCompletedDayIds((prev) =>
       prev.includes(dayId) ? prev : [...prev, dayId],
     );
 
     if (userEmail) {
-      fetch(`/api/users/${encodeURIComponent(userEmail)}/progress`, {
+      await fetch(`/api/users/${encodeURIComponent(userEmail)}/progress`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dayId }),

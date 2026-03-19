@@ -3,7 +3,7 @@
  * @file useProofSession.ts
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ProofNode } from "../../logic/ProofNode";
 import {
   sameNode,
@@ -19,7 +19,7 @@ import { useAxioms } from "./useAxioms";
  * Composes proof nodes + axioms state. Use this when you need to both read and
  * update both states (e.g. apply an axiom and add the result to givens).
  */
-export function useProofSession(userId: string | null, onVictory?: (dayId: string) => void) {
+export function useProofSession(userId: string | null, hasWonToday: boolean, onVictory?: (dayId: string) => void) {
   const {
     nodes,
     solutionNode,
@@ -28,10 +28,17 @@ export function useProofSession(userId: string | null, onVictory?: (dayId: strin
     setSolutionNode,
     toggleSelectedProofNode,
     addGivenNode,
+    deleteSelectedNode,
+    resetNodes,
   } = useProofNodes(userId);
   const { axioms, setAxioms, toggleSelectedAxiom } = useAxioms();
+
   const [victory, setVictory] = useState(false);
   const [selectedSide, setSelectedSide] = useState<"left" | "right" | "">("");
+
+  useEffect(() => {
+    setVictory(!!userId && hasWonToday);
+  }, [userId, hasWonToday]);
 
   const setSide = (side: "left" | "right") => {
     setSelectedSide(side);
@@ -145,7 +152,6 @@ export function useProofSession(userId: string | null, onVictory?: (dayId: strin
       }
 
       if (sameNode(result, solutionNode)) {
-        alert("You won!");
         setVictory(true);
         const dayId = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
         onVictory?.(dayId);
@@ -175,6 +181,8 @@ export function useProofSession(userId: string | null, onVictory?: (dayId: strin
     setSolutionNode,
     toggleSelectedProofNode,
     addGivenNode,
+    deleteSelectedNode,
+    resetNodes,
     axioms,
     toggleSelectedAxiom,
     setAxioms,

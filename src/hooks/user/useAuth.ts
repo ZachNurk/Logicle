@@ -131,12 +131,20 @@ export function useAuth() {
     setAuthView("login");
   };
 
+  const refreshUserProgress = async () => {
+    if (!currentUser?.email) return;
+    const res = await fetch(`/api/users/${encodeURIComponent(currentUser.email)}/progress`);
+    const data = await res.json();
+    setCurrentUser((prev) =>
+      prev ? { ...prev, completedDayIds: data.completedDayIds } : null,
+    );
+  };
+
   const logout = () => {
     setAuthStatus("loggedOut");
     setAuthView("login");
     setCurrentUser(null);
-    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
-    //TODO make nodes reset once logged out
+    localStorage.clear();
   };
 
   return {
@@ -156,5 +164,6 @@ export function useAuth() {
     showCreateAccount,
     showLogin,
     logout,
+    refreshUserProgress,
   };
 }

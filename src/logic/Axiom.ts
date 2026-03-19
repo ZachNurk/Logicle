@@ -46,10 +46,8 @@ export type Axiom = {
 };
 
 /** Throws if premises is not a valid And node with left and right. */
-function checkPremises(premises: AndNode) {
-  if (!isAndNode(premises) || !premises.left || !premises.right) {
-    throw new Error("Premises must be an And node with left and right.");
-  }
+function checkPremises(premises: AndNode): boolean {
+  return isAndNode(premises) && !!premises.left && !!premises.right;
 }
 
 /**
@@ -60,7 +58,7 @@ function checkPremises(premises: AndNode) {
  * @throws Error if premises are undefined
  */
 export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
 
@@ -85,7 +83,7 @@ export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]):
  * @throws Error if premises are undefined
  */
 export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
 
@@ -122,7 +120,7 @@ export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): 
  * @throws Error if premises are undefined
  */
 export function modusPonens(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
 
@@ -169,7 +167,7 @@ export function modusPonens(premises: AndNode, selected: ProofNode[]): ProofNode
  * @throws Error if premises are undefined
  */
 export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
 
@@ -205,8 +203,8 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
  * @throws Error if premises are undefined
  */
 export function simplification(premises: AndNode, side: "left" | "right") {
-  checkPremises(premises)
-  if (!side) throw new Error("no side selected!")
+  if (!checkPremises(premises)) return ERROR_NODE;
+  if (!side) return ERROR_NODE;
   if (side === "left") {
     return createResultNode(premises.left, [premises]);
   }
@@ -223,7 +221,7 @@ export function simplification(premises: AndNode, side: "left" | "right") {
  * @return returns the node result, ERROR_NODE if unsuccessful
  */
 export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
   if (!(isImplicationNode(a) && isImplicationNode(b))) {
@@ -241,7 +239,7 @@ export function constructiveDilemmaOr(premises: AndNode, selected: ProofNode[]):
  * @return returns a proofnode of the result, ERROR_NODE if invalid calculation
  */
 export function constructiveDilemmaAnd(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
   if (!(isImplicationNode(a) && isImplicationNode(b))) {
@@ -648,7 +646,7 @@ export function conditionalIdentityIff(original: ProofNode): ProofNode {
  * @param selected selected nodes used as parents for the result
  */
 export function implicationCommonConsequent(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
 
@@ -669,7 +667,7 @@ export function implicationCommonConsequent(premises: AndNode, selected: ProofNo
  * @param selected selected nodes used as parents for the result
  */
 export function implicationCommonAntecedent(premises: AndNode, selected: ProofNode[]): ProofNode {
-  checkPremises(premises);
+  if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
 

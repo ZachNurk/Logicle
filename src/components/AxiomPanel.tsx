@@ -18,6 +18,8 @@ type AxiomPanelProps = {
   ) => void;
   selectedSide: "" | "left" | "right";
   onSelectSide: (side: "left" | "right") => void;
+  deleteSelectedNode: () => void;
+  resetNodes: () => void;
 };
 
 export default function AxiomPanel({
@@ -26,9 +28,13 @@ export default function AxiomPanel({
   applyAxiom,
   selectedSide,
   onSelectSide,
+  deleteSelectedNode,
+  resetNodes,
 }: AxiomPanelProps) {
   const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const [deleteHovered, setDeleteHovered] = useState(false);
+  const [resetHovered, setResetHovered] = useState(false);
   const [additionLetter, setAdditionLetter] = useState("A");
   const [isChoosingAddition, setIsChoosingAddition] = useState(true);
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -192,6 +198,28 @@ export default function AxiomPanel({
           );
         })}
       </div>
+      <button
+        style={{
+          ...styles.deleteButton,
+          ...(deleteHovered ? styles.axiomButtonHover : {}),
+        }}
+        onClick={deleteSelectedNode}
+        onMouseEnter={() => setDeleteHovered(true)}
+        onMouseLeave={() => setDeleteHovered(false)}
+      >
+        Delete Selected Node
+      </button>
+      <button
+        style={{
+          ...styles.deleteButton,
+          ...(resetHovered ? styles.axiomButtonHover : {}),
+        }}
+        onClick={resetNodes}
+        onMouseEnter={() => setResetHovered(true)}
+        onMouseLeave={() => setResetHovered(false)}
+      >
+        Reset
+      </button>
     </div>
   );
 }
@@ -210,13 +238,16 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: "column",
     gap: "12px",
     alignItems: "stretch",
+    height: "100%",
   },
   gridContainer: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-    gridAutoRows: "minmax(52px, 1fr)",
+    gridAutoRows: "1fr",
     gap: "10px",
     padding: "0",
+    flex: 1,
+    minHeight: 0,
   },
   axiomCell: {
     position: "relative",
@@ -334,6 +365,19 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "4px",
     background: Colors.white,
     color: Colors.black,
+  },
+  deleteButton: {
+    width: "100%",
+    marginTop: "12px",
+    minHeight: "44px",
+    color: Colors.white,
+    cursor: "pointer",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    padding: "0.8em 2em",
+    background: Colors.black,
+    transition: "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    textAlign: "center",
   },
   axiomButtonHover: {
     color: Colors.black,
