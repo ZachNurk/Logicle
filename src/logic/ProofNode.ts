@@ -145,6 +145,8 @@ export type ProofNode = {
   context?: boolean;
   parents?: ProofNode[];
   relationship?: Relationship; // Only present on non-atomic nodes
+  /** Abbreviation of the axiom rule used to derive this node (e.g. "MP", "HS"). */
+  rule?: string;
 };
 
 export type BinaryNode = ProofNode & {

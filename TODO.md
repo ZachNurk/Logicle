@@ -9,6 +9,8 @@ More Unit Testing
 More System Testing
 Endless mode
 More puzzles
+Email Validation
+Forgot password
 
 
 Make sure you limit where your accounts can log in from, make sure you're using TLS, don't grant accounts more permissions then they need

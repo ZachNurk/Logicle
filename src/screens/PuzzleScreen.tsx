@@ -25,6 +25,7 @@ type PuzzleScreenProps = {
   victory: boolean;
   deleteSelectedNode: () => void;
   resetNodes: () => void;
+  invalidAxiomIds: string[];
 };
 
 export default function PuzzleScreen({
@@ -41,6 +42,7 @@ export default function PuzzleScreen({
   victory,
   deleteSelectedNode,
   resetNodes,
+  invalidAxiomIds,
 }: PuzzleScreenProps) {
   const [showStats, setShowStats] = useState(false);
 
@@ -90,6 +92,7 @@ export default function PuzzleScreen({
               onSelectSide={setSide}
               deleteSelectedNode={deleteSelectedNode}
               resetNodes={resetNodes}
+              invalidAxiomIds={invalidAxiomIds}
             />
           </div>
         </div>

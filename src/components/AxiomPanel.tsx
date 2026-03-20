@@ -20,6 +20,7 @@ type AxiomPanelProps = {
   onSelectSide: (side: "left" | "right") => void;
   deleteSelectedNode: () => void;
   resetNodes: () => void;
+  invalidAxiomIds: string[];
 };
 
 export default function AxiomPanel({
@@ -30,6 +31,7 @@ export default function AxiomPanel({
   onSelectSide,
   deleteSelectedNode,
   resetNodes,
+  invalidAxiomIds,
 }: AxiomPanelProps) {
   const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export default function AxiomPanel({
     <div style={{ ...styles.rulePanelContainer, ...styles.container }}>
       <div style={styles.gridContainer}>
         {axioms.map((axiom) => {
+          const isInvalid = invalidAxiomIds.includes(axiom.id);
           const showSidePicker = axiom.selected && axiom.applyType === "2";
           const showAddMenu = axiom.selected && axiom.id === "Add";
           return (
@@ -56,15 +59,15 @@ export default function AxiomPanel({
                 type="button"
                 style={{
                   ...styles.axiomButton,
-                  // raises tooltip and hover anim
-                  ...(hoveredButton === axiom.id || hoveredAxiomId === axiom.id
+                  ...(!isInvalid &&
+                  (hoveredButton === axiom.id || hoveredAxiomId === axiom.id)
                     ? {
                         ...styles.axiomButtonHover,
                         ...styles.axiomButtonRaised,
                       }
                     : {}),
                   ...(axiom.selected ? styles.axiomButtonActive : {}),
-                  ...(axiom.selected ? styles.axiomButtonActive : {}),
+                  ...(isInvalid ? styles.axiomButtonInvalid : {}),
                 }}
                 onClick={
                   axiom.applyType === "2"
@@ -79,7 +82,9 @@ export default function AxiomPanel({
                           applyAxiom(axiom);
                         }
                 }
-                onMouseEnter={() => setHoveredButton(axiom.id)}
+                onMouseEnter={() => {
+                  if (!isInvalid) setHoveredButton(axiom.id);
+                }}
                 onMouseLeave={() => setHoveredButton(null)}
               >
                 <span style={styles.axiomLabel}>{axiom.text}</span>
@@ -87,7 +92,9 @@ export default function AxiomPanel({
                   style={styles.infoDotWrapper}
                   role="presentation"
                   aria-hidden
-                  onMouseEnter={() => setHoveredAxiomId(axiom.id)}
+                  onMouseEnter={() => {
+                    if (!isInvalid) setHoveredAxiomId(axiom.id);
+                  }}
                   onMouseLeave={() => setHoveredAxiomId(null)}
                 >
                   <span style={styles.infoDot}>i</span>
@@ -277,6 +284,13 @@ const styles: Record<string, CSSProperties> = {
     color: Colors.black,
     background: Colors.white,
     boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+  axiomButtonInvalid: {
+    background: "#ef4444",
+    color: Colors.white,
+    animation: "horizontal-shaking 0.5s linear",
+    pointerEvents: "none",
+    cursor: "default",
   },
   axiomLabel: {
     display: "block",

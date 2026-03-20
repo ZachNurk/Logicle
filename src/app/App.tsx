@@ -50,6 +50,7 @@ export default function App() {
           victory={proof.victory}
           deleteSelectedNode={proof.deleteSelectedNode}
           resetNodes={proof.resetNodes}
+          invalidAxiomIds={proof.invalidAxiomIds}
         />
       );
     case "loginScreen":

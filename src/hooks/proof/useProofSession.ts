@@ -35,6 +35,8 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
 
   const [victory, setVictory] = useState(false);
   const [selectedSide, setSelectedSide] = useState<"left" | "right" | "">("");
+  /** Multiple axioms can be invalid at once; duplicates allowed so each error gets its own 1s timeout. */
+  const [invalidAxiomIds, setInvalidAxiomIds] = useState<string[]>([]);
 
   useEffect(() => {
     setVictory(!!userId && hasWonToday);
@@ -48,6 +50,21 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
     toggleSelectedAxiom("");
     setSelectedSide("");
   }, [toggleSelectedAxiom]);
+
+  /** Shake / red flash on this axiom for 1s; supports several axioms at once. */
+  const registerInvalidAxiom = useCallback((axiomId: string) => {
+    setInvalidAxiomIds((prev) => [...prev, axiomId]);
+    setAxioms((prev) =>
+      prev.map((a) => (a.id === axiomId ? { ...a, selected: false } : a)),
+    );
+    setTimeout(() => {
+      setInvalidAxiomIds((prev) => {
+        const i = prev.indexOf(axiomId);
+        if (i === -1) return prev;
+        return [...prev.slice(0, i), ...prev.slice(i + 1)];
+      });
+    }, 1000);
+  }, [setAxioms]);
 
   /** Apply a specific axiom. For type "2", pass side so we don't rely on state. */
   const applyAxiom = useCallback(
@@ -63,15 +80,13 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       const connective: "or" | "and" = "or";
 
       if (selectedNodes.length === 0) {
-        alert("Please select Node(s)");
-        clearAxiomSelection();
+        registerInvalidAxiom(axiom.id);
         return;
       }
 
       let prem: ProofNode | undefined;
       if (axiom.id === "Conj" && selectedNodes.length != 2) {
-        alert("Invalid operation. Must only select 2 nodes")
-        clearAxiomSelection();
+        registerInvalidAxiom(axiom.id);
         return;
       }
       if (selectedNodes.length > 2) return;
@@ -86,8 +101,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       }
 
       if (!prem) {
-        alert("Please select Node(s)");
-        clearAxiomSelection();
+        registerInvalidAxiom(axiom.id);
         return;
       }
 
@@ -147,7 +161,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       if (!result) throw new Error("Invalid result!!!");
 
       if (sameNode(result, ERROR_NODE)) {
-        alert("Invalid operation");
+        registerInvalidAxiom(axiom.id);
         return;
       }
 
@@ -165,12 +179,20 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
         return;
       }
 
-      addGivenNode(result);
+      addGivenNode({ ...result, rule: axiom.id });
       setAxioms((prev) =>
         prev.map((a) => (a.id === axiom.id ? { ...a, selected: false } : a)),
       );
     },
-    [nodes, addGivenNode, setAxioms, selectedSide, solutionNode, clearAxiomSelection],
+    [
+      nodes,
+      addGivenNode,
+      setAxioms,
+      selectedSide,
+      solutionNode,
+      clearAxiomSelection,
+      registerInvalidAxiom,
+    ],
   );
 
   return {
@@ -190,5 +212,6 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
     victory,
     selectedSide,
     setSide,
+    invalidAxiomIds,
   };
 }
