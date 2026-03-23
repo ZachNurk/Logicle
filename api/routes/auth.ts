@@ -43,7 +43,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/register", async (req, res) => {
   const { email, password } = req.body ?? {};
-
+  console.log("here");
   if (typeof email !== "string" || typeof password !== "string") {
     res.status(400).json({ error: "Email and password are required" });
     return;

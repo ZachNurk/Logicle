@@ -5,7 +5,7 @@
 
 import type { Axiom } from "../logic/Axiom";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Colors } from "../constants/theme";
 
 type AxiomPanelProps = {
@@ -40,6 +40,17 @@ export default function AxiomPanel({
   const [additionLetter, setAdditionLetter] = useState("A");
   const [isChoosingAddition, setIsChoosingAddition] = useState(true);
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const selectedAxiom = axioms.find((a) => a.selected);
+  const additionSelectRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    if (!selectedAxiom || selectedAxiom.id !== "Add" || !isChoosingAddition) return;
+    const id = window.requestAnimationFrame(() => {
+      additionSelectRef.current?.focus();
+    });
+    // if component re-renders before we get the focus on the scrollable, cancel
+    return () => window.cancelAnimationFrame(id);
+  }, [selectedAxiom, isChoosingAddition]);
 
   return (
     <div style={{ ...styles.rulePanelContainer, ...styles.container }}>
@@ -172,10 +183,17 @@ export default function AxiomPanel({
                     <label style={styles.additionLabel}>Add letter:</label>
                     {isChoosingAddition ? (
                       <select
+                        ref={additionSelectRef}
                         value={additionLetter}
                         onChange={(e) => {
                           setAdditionLetter(e.target.value);
                           setIsChoosingAddition(false);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            setIsChoosingAddition(false);
+                          }
                         }}
                         style={styles.additionSelect}
                         size={5}

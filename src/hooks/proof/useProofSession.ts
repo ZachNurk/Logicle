@@ -89,7 +89,10 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
         registerInvalidAxiom(axiom.id);
         return;
       }
-      if (selectedNodes.length > 2) return;
+      if (selectedNodes.length > 2) {
+        registerInvalidAxiom(axiom.id);
+        return;
+      }
       if (selectedNodes.length === 2) {
         const [left, right] = selectedNodes;
         prem = createAndNode(false, left, right);

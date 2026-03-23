@@ -643,7 +643,7 @@ export function conditionalIdentityIff(original: ProofNode): ProofNode {
 
 
 /**
- * Implication #32: [(p → r) ∧ (q → r)] → ((p ∨ q) → r)
+     * Implication #32: [(p → r) ∧ (q → r)] → ((p ∨ q) → r)
  * @param premises And node containing two implication nodes
  * @param selected selected nodes used as parents for the result
  */

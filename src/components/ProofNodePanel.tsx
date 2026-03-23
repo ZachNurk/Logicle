@@ -272,9 +272,9 @@ const styles: Record<string, CSSProperties> = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     height: "44px",
-    borderRadius: "5px",
-    border: "none",
     cursor: "pointer",
+    border: `2px solid ${Colors.black}`,
+    borderRadius: "100px"
   },
   starterButton: {
     backgroundColor: Colors.darkPink,
