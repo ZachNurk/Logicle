@@ -1,7 +1,8 @@
 TODOs:
 
 
-
+Addition node can use keyboard to select quickly in dropdown
+Conjunction doesnt show arrows/labels
 
 Implement Top Bar
 How to play pop-up

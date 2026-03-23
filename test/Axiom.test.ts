@@ -540,8 +540,6 @@ describe("Axioms", () => {
       const EXPECTED = "A ∨ (B ∨ C)"
   
       const ACTUAL = associativity(aOrBOrC)
-      console.log(ACTUAL.text)
-      console.log(EXPECTED)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   

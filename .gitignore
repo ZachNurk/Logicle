@@ -27,6 +27,9 @@ run-dev.bat
 # info for me
 /information
 
+# Optional local architecture notes (see docs/ARCHITECTURE.md for canonical doc)
+docs/ARCHITECTURE.local.md
+
 # docker/postgre stuff
 node_modules/
 .env

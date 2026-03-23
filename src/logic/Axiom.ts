@@ -83,7 +83,10 @@ export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]):
  * @throws Error if premises are undefined
  */
 export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
-  if (!checkPremises(premises)) return ERROR_NODE;
+  if (!checkPremises(premises)) {
+    return ERROR_NODE;
+  } 
+ 
   const a = premises.left;
   const b = premises.right;
 
@@ -107,8 +110,6 @@ export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): 
   } else if (sameNode(orNode.right, notNode.contains)) {
     return createResultNode(orNode.left, selected)
   }
-
-
   return ERROR_NODE;
 }
 
@@ -120,6 +121,7 @@ export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): 
  * @throws Error if premises are undefined
  */
 export function modusPonens(premises: AndNode, selected: ProofNode[]): ProofNode {
+  
   if (!checkPremises(premises)) return ERROR_NODE;
   const a = premises.left;
   const b = premises.right;
@@ -797,7 +799,7 @@ export const Axioms: Axiom[] = [
     description: "(A ∧ B) ≡ (B ∧ A)",
     description2: "(A ∨ B) ≡ (B ∨ A)",
     applyType: "4",
-    apply: andCommutativity,
+    apply: commutativity,
   } satisfies Axiom,
   {
     id: "Asso",

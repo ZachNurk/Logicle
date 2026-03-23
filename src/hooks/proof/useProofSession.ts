@@ -178,7 +178,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
         alert("Duplicate node!");
         return;
       }
-
+      //TODO maybe refactor so rule is a field in the node types so we dont have to do this lazy fix
       addGivenNode({ ...result, rule: axiom.id });
       setAxioms((prev) =>
         prev.map((a) => (a.id === axiom.id ? { ...a, selected: false } : a)),
