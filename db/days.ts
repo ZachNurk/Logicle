@@ -7,7 +7,7 @@ import { pool } from "./db";
 
 export async function getDays() {
   const result = await pool.query(`
-    SELECT id, title, nodes, solution
+    SELECT id, nodes, solution
     FROM days
     ORDER BY id ASC
   `);
@@ -18,7 +18,7 @@ export async function getDays() {
 export async function getDayById(id: string) {
   const result = await pool.query(
     `
-    SELECT id, title, nodes, solution
+    SELECT id, nodes, solution
     FROM days
     WHERE id = $1
     `,

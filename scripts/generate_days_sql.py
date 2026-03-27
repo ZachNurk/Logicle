@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # Boilerplate generator for `days` upsert SQL.
-# Fill in `build_nodes_json()` / `build_solution_json()` with your real JSON when ready.
+# Fill in `build_nodes_json()` or wire prompts when ready.
 
 import json
+import uuid
 from pathlib import Path
 from enum import Enum
 from typing import Any, Iterable
 
-
+# App-side proof node kinds (mirrors TS relationship names); reserved for future use.
 class NodeType(str, Enum):
     NONE = "none"
     ATOM = "atom"
@@ -21,26 +22,19 @@ class NodeType(str, Enum):
 # ASCII in postfix: & AND, | OR, - NOT, < IFF, > implication
 LOGIC_OPERATOR_SYMBOLS = frozenset({"&", "|", "-", "<", ">"})
 
-_node_id_counter = 0
 
-
-def _reset_node_id_counter() -> None:
-    global _node_id_counter
-    _node_id_counter = 0
-
-
+# Return a fresh id for each proof node (embedded in JSON for the client).
 def _next_node_id() -> str:
-    global _node_id_counter
-    _node_id_counter += 1
-    return f"n{_node_id_counter}"
+    return str(uuid.uuid4())
 
 
-# Leetcode 150-style postfix over a char list; pops from the end.
-def parse_postfix(expr: str) -> str:
-    _reset_node_id_counter()
+# Parse a postfix logic expression into one root ProofNode dict.
+# Single-character atoms; binary ops & | > < ; unary -. Stack is Leetcode-150 style
+# (operands pushed, operators pop and combine). Empty or invalid input yields None.
+def parse_postfix(expr: str) -> dict[str, Any] | None:
     tokens = [ch for ch in expr if not ch.isspace()]
     if not tokens:
-        return ""
+        return None
 
     stack: list[dict[str, Any]] = []
     for c in tokens:
@@ -49,9 +43,17 @@ def parse_postfix(expr: str) -> str:
                 right = stack.pop()
                 left = stack.pop()
                 nid = _next_node_id()
+                left_text = str(left["text"])
+                right_text = str(right["text"])
+                # Atoms have no relationship; only compound nodes need extra parens when nested.
+                if left.get("relationship"):
+                    left_text = f"({left_text})"
+                if right.get("relationship"):
+                    right_text = f"({right_text})"
+
                 combined = {
                     "id": nid,
-                    "text": f'({left["text"]} ∧ {right["text"]})',
+                    "text": f"({left_text} ∧ {right_text})",
                     "selected": False,
                     "isStarter": True,
                     "parentIds": [],
@@ -93,8 +95,39 @@ def parse_postfix(expr: str) -> str:
                     "contains": operand,
                 }
                 stack.append(combined)
-            case "<" | ">":
-                raise NotImplementedError(f"Operator {c} is not implemented yet.")
+            
+            case ">":
+                right = stack.pop()
+                left = stack.pop()
+                nid = _next_node_id()
+                combined = {
+                    "id": nid,
+                    "text": f'({left["text"]} → {right["text"]})',
+                    "selected": False,
+                    "isStarter": True,
+                    "parentIds": [],
+                    "context": False,
+                    "relationship": "If",
+                    "left": left,
+                    "right": right,
+                }
+                stack.append(combined)
+            case "<":
+                right = stack.pop()
+                left = stack.pop()
+                nid = _next_node_id()
+                combined = {
+                    "id": nid,
+                    "text": f'({left["text"]} ↔ {right["text"]})',
+                    "selected": False,
+                    "isStarter": True,
+                    "parentIds": [],
+                    "context": False,
+                    "relationship": "Iff",
+                    "left": left,
+                    "right": right,
+                }
+                stack.append(combined)
             case _:
                 atom_id = c.lower()
                 nid = _next_node_id()
@@ -107,37 +140,51 @@ def parse_postfix(expr: str) -> str:
                     "context": True,
                 }
                 stack.append(atom_node)
-    return json.dumps(stack[-1], ensure_ascii=False) if stack else ""
+    return stack[-1] if stack else None
 
 
-def build_nodes_json(day_id: str) -> str:
-    node = ""
-    if not node:
-        return "<NODES_JSON_HERE>"
-    return parse_postfix(node)
+
+# Escape text for use inside a PostgreSQL single-quoted string ('' for ').
+def _sql_json_literal(json_text: str) -> str:
+    return json_text.replace("'", "''")
 
 
-def build_solution_json(day_id: str) -> str:
-    return "<SOLUTION_JSON_HERE>"
 
+# Build one INSERT ... ON CONFLICT upsert for `days`, nodes as a JSON array of roots.
+def make_insert(
+    day_id: str,
+    postfix_exprs: Iterable[str],
+    solution_expr: str | None,
+) -> str:
+    roots: list[dict[str, Any]] = []
+    for expr in postfix_exprs:
+        root = parse_postfix(expr)
+        if root is not None:
+            roots.append(root)
+    soln_root = parse_postfix(solution_expr) if solution_expr else None
+    nodes_json = json.dumps(roots, ensure_ascii=False)
+    solution_json = (
+        json.dumps(soln_root, ensure_ascii=False) if soln_root is not None else "{}"
+    )
 
-def make_insert(day_id: str) -> str:
-    nodes_json = build_nodes_json(day_id)
-    solution_json = build_solution_json(day_id)
+    nj = _sql_json_literal(nodes_json)
+    sj = _sql_json_literal(solution_json)
     return f"""INSERT INTO days (id, nodes, solution)
-VALUES ('{day_id}', '{nodes_json}'::jsonb, '{solution_json}'::jsonb)
+VALUES ('{day_id}', '{nj}'::jsonb, '{sj}'::jsonb)
 ON CONFLICT (id) DO UPDATE
 SET
   nodes = EXCLUDED.nodes,
   solution = EXCLUDED.solution;"""
 
 
+# Write SQL statements to disk, separated by blank lines.
 def write_sql_file(output_path: Path, statements: Iterable[str]) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     content = "\n\n".join(statements).strip() + "\n"
     output_path.write_text(content, encoding="utf-8")
 
 
+# Read primary key date string from stdin; None if empty.
 def prompt_day() -> str | None:
     day_id = input("Date (e.g. 3-20-21): ").strip()
     if not day_id:
@@ -145,24 +192,36 @@ def prompt_day() -> str | None:
     return day_id
 
 
+# Read one postfix expression line; None if empty.
 def prompt_node() -> str | None:
     node = input("Node: ").strip()
     if not node:
         return None
     return node
 
+def prompt_solution() -> str | None:
+    node = input("Solution: ").strip()
+    if not node:
+        return None
+    return node
 
+
+# Prompt for a day id and up to four postfix lines, then emit generated_days.sql.
 def main() -> None:
     day = prompt_day()
     if day is None:
         print("No rows entered. Nothing written.")
         return
+    postfix_exprs: list[str] = []
     for _ in range(4):
         node = prompt_node()
         if node is not None:
-            print(parse_postfix(node))
+            postfix_exprs.append(node)
+            root = parse_postfix(node)
+            print(json.dumps(root, ensure_ascii=False) if root else "")
+    soln = prompt_solution()
 
-    sql_statements = [make_insert(day)]
+    sql_statements = [make_insert(day, postfix_exprs, soln)]
     output_file = Path("db/init/generated_days.sql")
     write_sql_file(output_file, sql_statements)
     print(f"Wrote 1 statement to {output_file}")

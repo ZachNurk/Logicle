@@ -43,7 +43,7 @@ export function useProofNodes(userId: string | null) {
         const data = await res.json();
         //TODO remove this. This manually sets the day for testing
         const days = Array.isArray(data) ? data : (data?.days ?? []);
-        const firstDay = days[1];
+        const firstDay = days[2];
         const dayId: string = firstDay?.id ?? "unknown";
         const rawNodes = firstDay?.nodes ?? [];
         const starterNodes: ProofNode[] = rawNodes.map((n: any) =>

@@ -170,6 +170,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
 
       if (sameNode(result, solutionNode)) {
         setVictory(true);
+        //TODO maybe make this use the date from the puzzle?
         const dayId = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
         onVictory?.(dayId);
       }
