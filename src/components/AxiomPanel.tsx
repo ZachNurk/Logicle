@@ -193,6 +193,7 @@ export default function AxiomPanel({
                           if (e.key === "Enter") {
                             e.preventDefault();
                             setIsChoosingAddition(false);
+                        
                           }
                         }}
                         style={styles.additionSelect}
