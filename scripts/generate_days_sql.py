@@ -2,9 +2,10 @@
 # Boilerplate generator for `days` upsert SQL.
 # Fill in `build_nodes_json()` / `build_solution_json()` with your real JSON when ready.
 
+import json
 from pathlib import Path
 from enum import Enum
-from typing import Iterable
+from typing import Any, Iterable
 
 
 class NodeType(str, Enum):
@@ -34,27 +35,6 @@ def _next_node_id() -> str:
     return f"n{_node_id_counter}"
 
 
-def _node_json_block(
-    *,
-    node_id: str,
-    text: str,
-    relationship: str,
-    extra_lines: str,
-) -> str:
-    return (
-        "{\n"
-        f'  "id": "{node_id}",\n'
-        f'  "text": "{text}",\n'
-        '  "selected": false,\n'
-        '  "isStarter": true,\n'
-        '  "parentIds": [],\n'
-        '  "context": false,\n'
-        f'  "relationship": "{relationship}",\n'
-        f"{extra_lines}"
-        "}"
-    )
-
-
 # Leetcode 150-style postfix over a char list; pops from the end.
 def parse_postfix(expr: str) -> str:
     _reset_node_id_counter()
@@ -62,43 +42,40 @@ def parse_postfix(expr: str) -> str:
     if not tokens:
         return ""
 
-    def dfs() -> str:
-        if not tokens:
-            raise ValueError("invalid postfix: missing operand")
-        token = tokens.pop()
-
-        if token not in LOGIC_OPERATOR_SYMBOLS:
-            return token
-
-        if token == "-":
-            operand = dfs()
-            return f"¬{operand}"
-
-        right = dfs()
-        left = dfs()
-
-        if token == "&":
-            nid = _next_node_id()
-            return _node_json_block(
-                node_id=nid,
-                text=f"({left} ∧ {right})",
-                relationship="And",
-                extra_lines=(
-                    f'  "left": "{left}",\n'
-                    f'  "right": "{right}"\n'
-                ),
-            )
-        if token == "|":
-            return f"({left}∨{right})"
-        if token == "<":
-            return f"({left}↔{right})"
-        if token == ">":
-            return f"({left}→{right})"
-
-        combined = f"({left}{token}{right})"
-        return combined
-
-    return dfs()
+    stack: list[dict[str, Any]] = []
+    for c in tokens:
+        match c:
+            case "&":
+                right = stack.pop()
+                left = stack.pop()
+                nid = _next_node_id()
+                combined = {
+                    "id": nid,
+                    "text": f'({left["text"]} ∧ {right["text"]})',
+                    "selected": False,
+                    "isStarter": True,
+                    "parentIds": [],
+                    "context": False,
+                    "relationship": "And",
+                    "left": left,
+                    "right": right,
+                }
+                stack.append(combined)
+            case "-" | "|" | "<" | ">":
+                raise NotImplementedError(f"Operator {c} is not implemented yet.")
+            case _:
+                atom_id = c.lower()
+                nid = _next_node_id()
+                atom_node = {
+                    "id": nid,
+                    "text": c,
+                    "selected": False,
+                    "isStarter": True,
+                    "parentIds": [],
+                    "context": True,
+                }
+                stack.append(atom_node)
+    return json.dumps(stack[-1], ensure_ascii=False) if stack else ""
 
 
 def build_nodes_json(day_id: str) -> str:
