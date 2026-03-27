@@ -61,7 +61,23 @@ def parse_postfix(expr: str) -> str:
                     "right": right,
                 }
                 stack.append(combined)
-            case "-" | "|" | "<" | ">":
+            case "|":
+                right = stack.pop()
+                left = stack.pop()
+                nid = _next_node_id()
+                combined = {
+                    "id": nid,
+                    "text": f'({left["text"]} ∨ {right["text"]})',
+                    "selected": False,
+                    "isStarter": True,
+                    "parentIds": [],
+                    "context": False,
+                    "relationship": "Or",
+                    "left": left,
+                    "right": right,
+                }
+                stack.append(combined)
+            case "-"  | "<" | ">":
                 raise NotImplementedError(f"Operator {c} is not implemented yet.")
             case _:
                 atom_id = c.lower()
