@@ -90,8 +90,19 @@ export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): 
   const a = premises.left;
   const b = premises.right;
 
+  // (A V B) & -A
+  if ((isOrNode(a) && isNotNode(b)) && sameNode(a.left,b.contains)) {
+    return createResultNode(a.right, selected)
+  }
+  // (A V B) & -B
+  if ((isOrNode(a) && isNotNode(b)) && sameNode(a.right,b.contains)) {
+    return createResultNode(a.left, selected)
+  }
+
+
   let orNode
   let notNode
+
 
   if ((isOrNode(a) && isNotNode(b))) {
     orNode = a
