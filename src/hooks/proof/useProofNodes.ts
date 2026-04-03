@@ -43,12 +43,14 @@ export function useProofNodes(userId: string | null) {
         const data = await res.json();
         //TODO remove this. This manually sets the day for testing
         const days = Array.isArray(data) ? data : (data?.days ?? []);
-        const firstDay = days[2];
-        const dayId: string = firstDay?.id ?? "unknown";
-        const rawNodes = firstDay?.nodes ?? [];
+        const day = days[2];
+        // No separate "date" column — day ids in the DB are the calendar key (string).
+        const dayId: string = day?.id ?? "unknown";
+        const rawNodes = day?.nodes ?? [];
         const starterNodes: ProofNode[] = rawNodes.map((n: any) =>
           nodeFromDb(n),
         );
+
 
         // Restore any derived nodes the user created in a previous session.
         const saved = localStorage.getItem(nodesStorageKey(dayId));
@@ -60,7 +62,7 @@ export function useProofNodes(userId: string | null) {
           .filter((k) => k.startsWith("logicle_nodes_") && k !== keepKey)
           .forEach((k) => localStorage.removeItem(k));
 
-        const rawSolution = firstDay?.solution;
+        const rawSolution = day?.solution;
         setCurrentDayId(dayId);
         setNodes([...starterNodes, ...savedNodes]);
         setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
@@ -115,6 +117,7 @@ export function useProofNodes(userId: string | null) {
   return {
     nodes,
     solutionNode,
+    currentDayId,
     isLoading,
     loadError,
     setSolutionNode,

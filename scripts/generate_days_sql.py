@@ -2,6 +2,7 @@
 # Boilerplate generator for `days` upsert SQL.
 # Fill in `build_nodes_json()` or wire prompts when ready.
 
+import argparse
 import json
 import uuid
 from pathlib import Path
@@ -21,6 +22,9 @@ class NodeType(str, Enum):
 
 # ASCII in postfix: & AND, | OR, - NOT, < IFF, > implication
 LOGIC_OPERATOR_SYMBOLS = frozenset({"&", "|", "-", "<", ">"})
+
+# Repo root (parent of `scripts/`), for stable paths no matter the cwd.
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 # Return a fresh id for each proof node (embedded in JSON for the client).
@@ -161,6 +165,8 @@ def make_insert(
         root = parse_postfix(expr)
         if root is not None:
             roots.append(root)
+
+            
     soln_root = parse_postfix(solution_expr) if solution_expr else None
     nodes_json = json.dumps(roots, ensure_ascii=False)
     solution_json = (
@@ -177,11 +183,23 @@ SET
   solution = EXCLUDED.solution;"""
 
 
-# Write SQL statements to disk, separated by blank lines.
+# Write SQL statements to disk, separated by blank lines (replaces file).
 def write_sql_file(output_path: Path, statements: Iterable[str]) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     content = "\n\n".join(statements).strip() + "\n"
     output_path.write_text(content, encoding="utf-8")
+
+
+# Append SQL statements to an existing file (e.g. seed_days.sql). Adds a blank line before new content.
+def append_sql_file(output_path: Path, statements: Iterable[str]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    chunk = "\n\n".join(statements).strip() + "\n"
+    if output_path.exists() and output_path.stat().st_size > 0:
+        with output_path.open("a", encoding="utf-8") as f:
+            f.write("\n")
+            f.write(chunk)
+    else:
+        output_path.write_text(chunk, encoding="utf-8")
 
 
 # Read primary key date string from stdin; None if empty.
@@ -206,8 +224,24 @@ def prompt_solution() -> str | None:
     return node
 
 
-# Prompt for a day id and up to four postfix lines, then emit generated_days.sql.
+# Prompt for a day id and up to four postfix lines, then write SQL.
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Generate INSERT for days (nodes + solution) as SQL.",
+    )
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="Append to a seed file instead of overwriting generated_days.sql.",
+    )
+    parser.add_argument(
+        "--target",
+        type=Path,
+        default=None,
+        help="SQL file path for --append (default: db/init/seed_days.sql under repo root).",
+    )
+    args = parser.parse_args()
+
     day = prompt_day()
     if day is None:
         print("No rows entered. Nothing written.")
@@ -222,9 +256,14 @@ def main() -> None:
     soln = prompt_solution()
 
     sql_statements = [make_insert(day, postfix_exprs, soln)]
-    output_file = Path("db/init/generated_days.sql")
-    write_sql_file(output_file, sql_statements)
-    print(f"Wrote 1 statement to {output_file}")
+    if args.append:
+        target = (args.target if args.target is not None else REPO_ROOT / "db/init/seed_days.sql").resolve()
+        append_sql_file(target, sql_statements)
+        print(f"Appended 1 statement to {target}")
+    else:
+        output_file = REPO_ROOT / "scripts/db/init/generated_days.sql"
+        write_sql_file(output_file, sql_statements)
+        print(f"Wrote 1 statement to {output_file}")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
   const {
     nodes,
     solutionNode,
+    currentDayId,
     isLoading,
     loadError,
     setSolutionNode,
@@ -171,8 +172,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       if (sameNode(result, solutionNode)) {
         setVictory(true);
         //TODO maybe make this use the date from the puzzle?
-        const dayId = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
-        onVictory?.(dayId);
+        onVictory?.(currentDayId ?? "unknown");
       }
 
       if (nodes.some((n) => sameNode(n, result))) {
@@ -202,6 +202,7 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
   return {
     nodes,
     solutionNode,
+    currentDayId,
     isLoading,
     loadError,
     setSolutionNode,
