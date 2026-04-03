@@ -101,10 +101,7 @@ export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): 
     notNode = a
     orNode = b
   }
-  else {
-    return ERROR_NODE;
-  }
-
+  // TODO fix this because we have case with -QVR and Q not yielding R
   if ((sameNode(orNode.left, notNode.contains))) {
     return createResultNode(orNode.right, selected)
   } else if (sameNode(orNode.right, notNode.contains)) {
@@ -731,7 +728,7 @@ export const Axioms: Axiom[] = [
     id: "DS",
     text: "Disjunctive Syllogism",
     selected: false,
-    description: "[(A ∨ B) ∧ ¬(A)] → B",
+    description: "[(A ∨ B) ∧ ¬A] → B",
     applyType: "1",
     apply: disjunctiveSyllogism,
   } satisfies Axiom,
@@ -846,7 +843,7 @@ export const Axioms: Axiom[] = [
     apply: deMorgan,
   } satisfies Axiom,
   {
-    id: "CI",
+    id: "C (→)",
     text: "Conditional Identity (→)",
     selected: false,
     description: "(A → B) ≡ (¬A ∨ B)",
@@ -855,7 +852,7 @@ export const Axioms: Axiom[] = [
     apply: conditionalIdentityImplication,
   } satisfies Axiom,
   {
-    id: "31",
+    id: "CI (↔)",
     text: "Conditional Identity (↔)",
     selected: false,
     description: "A ↔ B ≡ (A → B) ∧ (B → A)",

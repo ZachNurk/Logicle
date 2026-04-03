@@ -1,0 +1,40 @@
+2026-03-22:
+P --> Q 1
+R --> S 2
+P & R 3
+Goal:
+Q & S
+Soln:
+P | Simp 1 | 4
+R | Simp 2 | 5
+Q | MP 1,4 | 6
+S | MP 2,5 | 7
+Q & S | Conj
+Simp 3 to P 
+Simp 3 to R
+MP P and 1
+MP R and 2
+Conj ^^
+
+2026-03-23:
+
+Puzzle 4
+
+Premises
+	1.	(P ↔ Q) | pq<
+	2.	(Q → R) | qr>
+	3.	¬R | r-
+
+Goal
+
+¬P
+
+Solution
+	4.	(P → Q) ∧ (Q → P) | pq>qp>&
+→ from 1 (Conditional Identity ↔)
+	5.	(P → Q) | pq>
+→ from 4 (Simplification)
+	6.	(P → R) | pr>
+→ from 5,2 (HS)
+	7.	¬P | p-
+→ from 6,3 (MT)
