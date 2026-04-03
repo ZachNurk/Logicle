@@ -65,6 +65,15 @@ export function isNotNode(node: ProofNode): node is NotNode {
 }
 
 /**
+ * True if one node is ¬ and the other is its operand (matched by {@link sameNode}), in either order.
+ */
+export function areNegationsOfEachOther(a: ProofNode, b: ProofNode): boolean {
+  if (isNotNode(a) && sameNode(a.contains, b)) return true;
+  if (isNotNode(b) && sameNode(b.contains, a)) return true;
+  return false;
+}
+
+/**
  * Function determines if given node is an And Node
  * @param n is the node to check
  * @return returns true if its an and node, false if not

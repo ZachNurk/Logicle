@@ -7,6 +7,7 @@
 import type { ProofNode } from "./ProofNode";
 import {
   sameNode,
+  areNegationsOfEachOther,
   isImplicationNode,
   ERROR_NODE,
   isNotNode,
@@ -85,39 +86,25 @@ export function hypotheticalSyllogism(premises: AndNode, selected: ProofNode[]):
 export function disjunctiveSyllogism(premises: AndNode, selected: ProofNode[]): ProofNode {
   if (!checkPremises(premises)) {
     return ERROR_NODE;
-  } 
- 
+  }
+
   const a = premises.left;
   const b = premises.right;
 
-  // (A V B) & -A
-  if ((isOrNode(a) && isNotNode(b)) && sameNode(a.left,b.contains)) {
-    return createResultNode(a.right, selected)
+  // Conjunction is commutative: (A ∨ B) with the other conjunct ruling out one disjunct.
+  if (isOrNode(a)) {
+    const or = a;
+    const other = b;
+    if (areNegationsOfEachOther(or.left, other)) return createResultNode(or.right, selected);
+    if (areNegationsOfEachOther(or.right, other)) return createResultNode(or.left, selected);
   }
-  // (A V B) & -B
-  if ((isOrNode(a) && isNotNode(b)) && sameNode(a.right,b.contains)) {
-    return createResultNode(a.left, selected)
+  if (isOrNode(b)) {
+    const or = b;
+    const other = a;
+    if (areNegationsOfEachOther(or.left, other)) return createResultNode(or.right, selected);
+    if (areNegationsOfEachOther(or.right, other)) return createResultNode(or.left, selected);
   }
 
-
-  let orNode
-  let notNode
-
-
-  if ((isOrNode(a) && isNotNode(b))) {
-    orNode = a
-    notNode = b
-  }
-  else if ((isNotNode(a) && isOrNode(b))) {
-    notNode = a
-    orNode = b
-  }
-  // TODO fix this because we have case with -QVR and Q not yielding R
-  if ((sameNode(orNode.left, notNode.contains))) {
-    return createResultNode(orNode.right, selected)
-  } else if (sameNode(orNode.right, notNode.contains)) {
-    return createResultNode(orNode.left, selected)
-  }
   return ERROR_NODE;
 }
 
@@ -198,8 +185,8 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
     return ERROR_NODE;
   }
 
-  if (sameNode(premise.contains, implication.right)) {
-  return createNotNode(false, implication.left, selected);
+  if (areNegationsOfEachOther(premise, implication.right)) {
+    return createNotNode(false, implication.left, selected);
   }
   return ERROR_NODE;
 
