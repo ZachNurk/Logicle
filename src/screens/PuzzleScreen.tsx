@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AxiomPanel from "../components/AxiomPanel";
 import ProofNodePanel from "../components/ProofNodePanel";
 import StatsModal from "../components/StatsModal";
@@ -27,6 +27,9 @@ type PuzzleScreenProps = {
   deleteSelectedNode: () => void;
   resetNodes: () => void;
   invalidAxiomIds: string[];
+  /** From auth after successful create-account; PuzzleScreen opens How to Play once then clears. */
+  openHowToPlayAfterSignup?: boolean;
+  onHowToPlayAfterSignupConsumed?: () => void;
 };
 
 export default function PuzzleScreen({
@@ -44,9 +47,21 @@ export default function PuzzleScreen({
   deleteSelectedNode,
   resetNodes,
   invalidAxiomIds,
+  openHowToPlayAfterSignup = false,
+  onHowToPlayAfterSignupConsumed,
 }: PuzzleScreenProps) {
   const [showStats, setShowStats] = useState(false);
-  const [showHowToPlay, setHowToPlay] = useState(false);
+  /** Seed from signup flag so we don't rely on an effect that clears before Strict Mode's remount. */
+  const [showHowToPlay, setHowToPlay] = useState(openHowToPlayAfterSignup);
+
+  useEffect(() => {
+    if (openHowToPlayAfterSignup) setHowToPlay(true);
+  }, [openHowToPlayAfterSignup]);
+
+  const closeHowToPlay = () => {
+    setHowToPlay(false);
+    if (openHowToPlayAfterSignup) onHowToPlayAfterSignupConsumed?.();
+  };
 
   return (
     <div style={styles.page}>
@@ -65,10 +80,7 @@ export default function PuzzleScreen({
         />
       )}
       {!victory && showHowToPlay && (
-        <HowToPlayModal
-          currentUser={currentUser}
-          onClose={() => setHowToPlay(false)}
-        />
+        <HowToPlayModal currentUser={currentUser} onClose={closeHowToPlay} />
       )}
 
 

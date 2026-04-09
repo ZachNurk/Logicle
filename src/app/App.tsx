@@ -51,6 +51,8 @@ export default function App() {
           deleteSelectedNode={proof.deleteSelectedNode}
           resetNodes={proof.resetNodes}
           invalidAxiomIds={proof.invalidAxiomIds}
+          openHowToPlayAfterSignup={auth.openHowToPlayAfterSignup}
+          onHowToPlayAfterSignupConsumed={auth.clearHowToPlayAfterSignup}
         />
       );
     case "loginScreen":

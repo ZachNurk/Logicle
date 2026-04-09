@@ -8,6 +8,7 @@ More System Testing
 Endless mode
 More puzzles
 Email Validation
+Sign in with google
 Forgot password
 
 DB security:

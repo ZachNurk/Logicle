@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type AuthStatus = "loading" | "loggedOut" | "loggedIn";
 export type AuthView = "login" | "createAccount";
@@ -15,6 +15,8 @@ const AUTH_USER_STORAGE_KEY = "logicle_auth_user";
 export function useAuth() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
   const [authView, setAuthView] = useState<AuthView>("login");
+  /** True until PuzzleScreen consumes it — set only after successful register. */
+  const [openHowToPlayAfterSignup, setOpenHowToPlayAfterSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -107,7 +109,8 @@ export function useAuth() {
 
       const user = data?.user as AuthUser | undefined;
       if (user) {
-        applyAuthenticatedUser(user);
+        await applyAuthenticatedUser(user);
+        setOpenHowToPlayAfterSignup(true);
       }
 
       setAuthView("login");
@@ -144,8 +147,13 @@ export function useAuth() {
     setAuthStatus("loggedOut");
     setAuthView("login");
     setCurrentUser(null);
+    setOpenHowToPlayAfterSignup(false);
     localStorage.clear();
   };
+
+  const clearHowToPlayAfterSignup = useCallback(() => {
+    setOpenHowToPlayAfterSignup(false);
+  }, []);
 
   return {
     authStatus,
@@ -165,5 +173,7 @@ export function useAuth() {
     showLogin,
     logout,
     refreshUserProgress,
+    openHowToPlayAfterSignup,
+    clearHowToPlayAfterSignup,
   };
 }
