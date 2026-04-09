@@ -196,6 +196,8 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       solutionNode,
       clearAxiomSelection,
       registerInvalidAxiom,
+      onVictory,
+      currentDayId,
     ],
   );
 

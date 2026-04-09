@@ -28,7 +28,9 @@ export function useAuth() {
   // Single place to apply a logged-in user. When we later need to fetch
   // progress/streak from the DB after login, add those calls here.
   const applyAuthenticatedUser = async (user: AuthUser) => {
-    const res = await fetch(`/api/users/${user.email}/progress`);
+    const res = await fetch(
+      `/api/users/${encodeURIComponent(user.email)}/progress`,
+    );
     const data = await res.json();
     setCurrentUser({ ...user, completedDayIds: data.completedDayIds });
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
@@ -143,13 +145,13 @@ export function useAuth() {
     );
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setAuthStatus("loggedOut");
     setAuthView("login");
     setCurrentUser(null);
     setOpenHowToPlayAfterSignup(false);
     localStorage.clear();
-  };
+  }, []);
 
   const clearHowToPlayAfterSignup = useCallback(() => {
     setOpenHowToPlayAfterSignup(false);

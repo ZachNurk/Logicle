@@ -18,6 +18,7 @@ export function useAppSession() {
   const progress = useUserProgress(
     auth.currentUser?.email ?? null,
     auth.currentUser?.completedDayIds,
+    auth.logout,
   );
 
   const today = new Date().toLocaleDateString("en-CA");

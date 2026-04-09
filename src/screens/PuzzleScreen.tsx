@@ -96,7 +96,6 @@ export default function PuzzleScreen({
         <h1 style={styles.title}>Logicle</h1>
         <div style={styles.rightActions}>
           <button style={styles.menuButton} onClick={() => setShowStats(true)}>Stats</button>
-          <button style={styles.menuButton}>Settings</button>
           <button style={styles.menuButton}>Endless</button>
           <button style={styles.menuButton} onClick={logOut}>Logout</button>
         </div>

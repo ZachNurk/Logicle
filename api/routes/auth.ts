@@ -27,7 +27,8 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    const user = await getUserByEmail(email.trim());
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await getUserByEmail(normalizedEmail);
 
     if (!user || !(await comparePassword(password, user.password))) {
       res.status(401).json({ error: "Invalid email or password" });
@@ -43,7 +44,6 @@ router.post("/login", async (req, res) => {
 
 router.post("/register", async (req, res) => {
   const { email, password } = req.body ?? {};
-  console.log("here");
   if (typeof email !== "string" || typeof password !== "string") {
     res.status(400).json({ error: "Email and password are required" });
     return;

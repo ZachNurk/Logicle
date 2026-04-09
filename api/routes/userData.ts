@@ -3,12 +3,17 @@ import { addCompletedDay, getUserDays } from "../../db/userProgress.ts";
 
 const router = Router();
 
+/** Match `users.email` (register lowercases); avoids FK misses from casing. */
+function normalizeEmailParam(raw: string): string {
+  return decodeURIComponent(raw).trim().toLowerCase();
+}
+
 /**
  * Get all completed day IDs for a user
  * GET /api/users/:email/progress
  */
 router.get("/:email/progress", async (req, res) => {
-  const { email } = req.params;
+  const email = normalizeEmailParam(req.params.email);
 
   try {
     const completedDayIds = await getUserDays(email);
@@ -24,7 +29,7 @@ router.get("/:email/progress", async (req, res) => {
  * POST /api/users/:email/progress
  */
 router.post("/:email/progress", async (req, res) => {
-  const { email } = req.params;
+  const email = normalizeEmailParam(req.params.email);
   const { dayId } = req.body ?? {};
 
   if (typeof dayId !== "string" || !dayId.trim()) {

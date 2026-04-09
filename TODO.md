@@ -10,6 +10,7 @@ More puzzles
 Email Validation
 Sign in with google
 Forgot password
+Switch to HTTPS
 
 DB security:
 Make sure you limit where your accounts can log in from, make sure you're using TLS, don't grant accounts more permissions then they need
