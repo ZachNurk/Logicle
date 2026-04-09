@@ -232,6 +232,83 @@ SET
   nodes = EXCLUDED.nodes,
   solution = EXCLUDED.solution;
 
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-26','[{"id":"n1","text":"¬(A ∨ B)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"n1_inner","text":"A ∨ B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"a","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"C → B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"c","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b2","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"(¬C ∨ D) → E","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"n3_left","text":"¬C ∨ D","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"nc","text":"¬C","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"c2","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"d","text":"D","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"e","text":"E","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"E","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-27','[{"id":"n1","text":"(P ∨ Q) ∧ (Q → R)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"And","left":{"id":"n1_left","text":"P ∨ Q","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"p","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"q","text":"Q","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"n1_right","text":"Q → R","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"q2","text":"Q","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"r","text":"R","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"¬P","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"p2","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"R → S","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"r2","text":"R","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"s","text":"S","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"S","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-28','[{"id":"n1","text":"P ↔ Q","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Iff","left":{"id":"p","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"q","text":"Q","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n2","text":"Q → R","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"q2","text":"Q","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"r","text":"R","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"¬R","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"r2","text":"R","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"¬P","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false,"relationship":"Not","contains":{"id":"p2","text":"P","selected":false,"isStarter":false,"parentIds":[],"context":true}}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-29','[{"id":"n1","text":"(A → B) ∧ (C → D)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"And","left":{"id":"n1_left","text":"A → B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"a","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"n1_right","text":"C → D","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"c","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"d","text":"D","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"¬B ∨ C","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"nb","text":"¬B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"b2","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"c2","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":false}]'::jsonb,'{"id":"n4","text":"D","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-30','[{"id":"n1","text":"¬(A ∨ B)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"n1_inner","text":"A ∨ B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"a","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"C → B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"c","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b2","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"D ∨ C","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"d","text":"D","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"c2","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"D","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-31','[{"id":"n1","text":"(M → N) ∧ (O → P)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"And","left":{"id":"n1_left","text":"M → N","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"m","text":"M","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"n","text":"N","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"n1_right","text":"O → P","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"o","text":"O","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"p","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"¬N ∨ O","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"nn","text":"¬N","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"n2_inner","text":"N","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"o2","text":"O","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"M","selected":false,"isStarter":true,"parentIds":[],"context":false}]'::jsonb,'{"id":"n4","text":"P","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-04-01','[{"id":"n1","text":"¬(M ∨ N)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"n1_inner","text":"M ∨ N","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"m","text":"M","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"n","text":"N","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"P → N","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"p","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"n2_inner","text":"N","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"Q ∨ P","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"q","text":"Q","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"p2","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"Q","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-04-02','[{"id":"n1","text":"X ↔ Y","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Iff","left":{"id":"x","text":"X","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"y","text":"Y","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n2","text":"Y ↔ Z","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Iff","left":{"id":"y2","text":"Y","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"z","text":"Z","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"X","selected":false,"isStarter":true,"parentIds":[],"context":false}]'::jsonb,'{"id":"n4","text":"Z","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-04-03','[{"id":"n1","text":"(A ∨ B) ∧ (B → C)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"And","left":{"id":"n1_left","text":"A ∨ B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"a","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"n1_right","text":"B → C","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"b2","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"c","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"¬A","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"a2","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"C → D","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"c2","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"d","text":"D","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"D","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-04-04','[{"id":"n1","text":"¬(L ∨ M)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"n1_inner","text":"L ∨ M","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"l","text":"L","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"m","text":"M","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"N → M","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"n","text":"N","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"m2","text":"M","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"O → P","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"o","text":"O","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"p","text":"P","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n4","text":"N ∨ O","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"n2","text":"N","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"o2","text":"O","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n5","text":"P","selected":false,"isStarter":false,"parentIds":["n1","n2","n3","n4"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-04-05','[{"id":"n1","text":"(H → I) ∧ (J → K)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"And","left":{"id":"n1_left","text":"H → I","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"h","text":"H","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"i","text":"I","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"n1_right","text":"J → K","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"j","text":"J","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"k","text":"K","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"¬I ∨ J","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"ni","text":"¬I","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"i2","text":"I","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"j2","text":"J","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"H","selected":false,"isStarter":true,"parentIds":[],"context":false}]'::jsonb,'{"id":"n4","text":"K","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
+  solution = EXCLUDED.solution;
+
 
 
 
