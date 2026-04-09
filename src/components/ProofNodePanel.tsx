@@ -13,6 +13,9 @@ import { Colors } from "../constants/theme";
 
 type Arrow = { x1: number; y1: number; x2: number; y2: number; rule?: string };
 
+/** Num of pixels up arrows should be placed from calculated bottom */
+const ARROW_OFFSET = 5
+
 /** Assigns each node a layer index. Starters = 0, derived = max(parent layers) + 1. */
 function computeLayers(nodes: ProofNode[]): Map<string, number> {
   const layerOf = new Map<string, number>();
@@ -92,7 +95,7 @@ export default function ProofNodePanel({
 
         const parentRect = parentEl.getBoundingClientRect();
         const parentX = parentRect.left + parentRect.width / 2 - containerRect.left;
-        const parentY = parentRect.bottom - containerRect.top;
+        const parentY = parentRect.bottom - containerRect.top - ARROW_OFFSET;
 
         next.push({ x1: parentX, y1: parentY, x2: childX, y2: childY, rule: node.rule });
       }
@@ -142,12 +145,10 @@ export default function ProofNodePanel({
             refY="3"
             orient="auto"
           >
-            <polygon points="0 0, 8 3, 0 6" fill="#aaa" />
+            <polygon points="0 0, 8 3, 0 6" fill="#000" />
           </marker>
         </defs>
         {arrows.map((a, i) => {
-          const midX = (a.x1 + a.x2) / 2;
-          const midY = (a.y1 + a.y2) / 2;
           return (
             <g key={i}>
               <line
@@ -155,36 +156,11 @@ export default function ProofNodePanel({
                 y1={a.y1}
                 x2={a.x2}
                 y2={a.y2}
-                stroke="#aaa"
+                stroke="#000"
                 strokeWidth={1.5}
                 strokeDasharray="4 3"
                 markerEnd="url(#arrowhead)"
               />
-              {a.rule && (
-                <>
-                  <rect
-                    x={midX - 14}
-                    y={midY - 9}
-                    width={28}
-                    height={16}
-                    rx={4}
-                    fill="#f0ede8"
-                    stroke="#ccc"
-                    strokeWidth={1}
-                  />
-                  <text
-                    x={midX}
-                    y={midY + 4}
-                    textAnchor="middle"
-                    fontSize={10}
-                    fontWeight="600"
-                    fill="#555"
-                    fontFamily="monospace"
-                  >
-                    {a.rule}
-                  </text>
-                </>
-              )}
             </g>
           );
         })}
