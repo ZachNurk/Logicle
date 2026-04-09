@@ -13,8 +13,11 @@ import { Colors } from "../constants/theme";
 
 type Arrow = { x1: number; y1: number; x2: number; y2: number; rule?: string };
 
-/** Num of pixels up arrows should be placed from calculated bottom */
-const ARROW_OFFSET = 5
+/** Pixels up from parent bottom where the stroke starts */
+const ARROW_OFFSET = 5;
+/** Arrowhead triangle: tip at line end, base this far back (matches ~8×6 marker) */
+const ARROW_HEAD_LEN = 8;
+const ARROW_HEAD_HALF = 5;
 
 /** Assigns each node a layer index. Starters = 0, derived = max(parent layers) + 1. */
 function computeLayers(nodes: ProofNode[]): Map<string, number> {
@@ -134,72 +137,76 @@ export default function ProofNodePanel({
 
   return (
     <div ref={containerRef} style={styles.container}>
-      {/* SVG arrow overlay */}
-      <svg style={styles.arrowOverlay} aria-hidden>
-        <defs>
-          <marker
-            id="arrowhead"
-            markerWidth="8"
-            markerHeight="6"
-            refX="8"
-            refY="3"
-            orient="auto"
+      {/* Dashed lines under nodes (z-index 0) */}
+      <svg style={styles.arrowLinesOverlay} aria-hidden>
+        {arrows.map((a, i) => (
+          <line
+            key={i}
+            x1={a.x1}
+            y1={a.y1}
+            x2={a.x2}
+            y2={a.y2}
+            stroke="#000"
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            opacity={0.75}
+          />
+        ))}
+      </svg>
+
+      {/* Nodes between lines and arrowheads */}
+      <div style={styles.nodesColumn}>
+        {layers.map((layerNodes, layerIdx) => (
+          <div key={layerIdx} style={styles.layer}>
+            {layerNodes.map((node) => (
+              <button
+                key={node.id}
+                ref={setRef(node.id)}
+                onClick={() => toggleSelected(node.id)}
+                style={{
+                  ...styles.nodeButton,
+                  ...(node.isStarter ? styles.starterButton : styles.derivedButton),
+                  ...(node.selected ? styles.selectedButton : {}),
+                }}
+              >
+                {node.text}
+              </button>
+            ))}
+          </div>
+        ))}
+
+        <div style={styles.solutionRow}>
+          <button
+            ref={setRef(solutionNode.id)}
+            disabled
+            style={{
+              ...styles.nodeButton,
+              ...styles.solutionButton,
+              ...(winningNode ? styles.solutionReached : {}),
+            }}
           >
-            <polygon points="0 0, 8 3, 0 6" fill="#000" />
-          </marker>
-        </defs>
+            {solutionNode.text}
+          </button>
+        </div>
+      </div>
+
+      {/* Arrowheads on top (z-index 2) so they paint above buttons */}
+      <svg style={styles.arrowHeadsOverlay} aria-hidden>
         {arrows.map((a, i) => {
+          const dx = a.x2 - a.x1;
+          const dy = a.y2 - a.y1;
+          const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+          const pts = `0,0 -${ARROW_HEAD_LEN},-${ARROW_HEAD_HALF} -${ARROW_HEAD_LEN},${ARROW_HEAD_HALF}`;
           return (
-            <g key={i}>
-              <line
-                x1={a.x1}
-                y1={a.y1}
-                x2={a.x2}
-                y2={a.y2}
-                stroke="#000"
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-                markerEnd="url(#arrowhead)"
-              />
+            <g
+              key={i}
+              transform={`translate(${a.x2} ${a.y2}) rotate(${angleDeg})`}
+            >
+              <polygon points={pts} fill="#000" opacity={0.75} />
             </g>
           );
         })}
       </svg>
-
-      {/* One row per derivation layer */}
-      {layers.map((layerNodes, layerIdx) => (
-        <div key={layerIdx} style={styles.layer}>
-          {layerNodes.map((node) => (
-            <button
-              key={node.id}
-              ref={setRef(node.id)}
-              onClick={() => toggleSelected(node.id)}
-              style={{
-                ...styles.nodeButton,
-                ...(node.isStarter ? styles.starterButton : styles.derivedButton),
-                ...(node.selected ? styles.selectedButton : {}),
-              }}
-            >
-              {node.text}
-            </button>
-          ))}
-        </div>
-      ))}
-
-      {/* Solution node pinned at the bottom */}
-      <div style={styles.solutionRow}>
-        <button
-          ref={setRef(solutionNode.id)}
-          disabled
-          style={{
-            ...styles.nodeButton,
-            ...styles.solutionButton,
-            ...(winningNode ? styles.solutionReached : {}),
-          }}
-        >
-          {solutionNode.text}
-        </button>
-      </div>
     </div>
   );
 }
@@ -215,16 +222,34 @@ const styles: Record<string, CSSProperties> = {
     padding: "16px",
     display: "flex",
     flexDirection: "column",
-    gap: "20px",
     overflowY: "auto",
   },
-  arrowOverlay: {
+  arrowLinesOverlay: {
     position: "absolute",
     inset: 0,
     width: "100%",
     height: "100%",
+    zIndex: 0,
     pointerEvents: "none",
     overflow: "visible",
+  },
+  arrowHeadsOverlay: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 2,
+    pointerEvents: "none",
+    overflow: "visible",
+  },
+  nodesColumn: {
+    position: "relative",
+    zIndex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    flex: 1,
+    minHeight: 0,
   },
   layer: {
     display: "flex",
@@ -250,7 +275,8 @@ const styles: Record<string, CSSProperties> = {
     height: "44px",
     cursor: "pointer",
     border: `2px solid ${Colors.black}`,
-    borderRadius: "100px"
+    borderRadius: "100px",
+    fontWeight: "bold"
   },
   starterButton: {
     backgroundColor: Colors.darkPink,

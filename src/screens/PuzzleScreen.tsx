@@ -3,6 +3,7 @@ import { useState } from "react";
 import AxiomPanel from "../components/AxiomPanel";
 import ProofNodePanel from "../components/ProofNodePanel";
 import StatsModal from "../components/StatsModal";
+import HowToPlayModal from "../components/HowToPlayModal";
 import type { Axiom } from "../logic/Axiom";
 import type { ProofNode } from "../logic/ProofNode";
 import type { AuthUser } from "../hooks/user/useAuth";
@@ -45,6 +46,7 @@ export default function PuzzleScreen({
   invalidAxiomIds,
 }: PuzzleScreenProps) {
   const [showStats, setShowStats] = useState(false);
+  const [showHowToPlay, setHowToPlay] = useState(false);
 
   return (
     <div style={styles.page}>
@@ -62,9 +64,23 @@ export default function PuzzleScreen({
           onClose={() => setShowStats(false)}
         />
       )}
+      {!victory && showHowToPlay && (
+        <HowToPlayModal
+          currentUser={currentUser}
+          onClose={() => setHowToPlay(false)}
+        />
+      )}
+
 
       <header style={styles.topBar}>
-        <button style={styles.menuButton}>?</button>
+        <button
+          type="button"
+          style={styles.howToPlayButton}
+          onClick={() => setHowToPlay(true)}
+          aria-label="How to play"
+        >
+          ?
+        </button>
         <h1 style={styles.title}>Logicle</h1>
         <div style={styles.rightActions}>
           <button style={styles.menuButton} onClick={() => setShowStats(true)}>Stats</button>
@@ -135,6 +151,22 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "8px",
     cursor: "pointer",
     fontSize: "14px",
+  },
+  howToPlayButton: {
+    width: "36px",
+    height: "36px",
+    padding: 0,
+    border: "3px solid #000",
+    borderRadius: "50%",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: "18px",
+    fontWeight: 600,
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
   },
   contentWrap: {
     flex: 1,

@@ -1,9 +1,6 @@
 TODOs:
 
 
-Addition node can use keyboard to select quickly in dropdown
-Conjunction doesnt show arrows/labels
-
 Implement Top Bar
 How to play pop-up
 More Unit Testing
@@ -13,7 +10,7 @@ More puzzles
 Email Validation
 Forgot password
 
-
+DB security:
 Make sure you limit where your accounts can log in from, make sure you're using TLS, don't grant accounts more permissions then they need
 
 And like also common sense for me is make your your node has a firewall with every port blocked except what you're using to access it
