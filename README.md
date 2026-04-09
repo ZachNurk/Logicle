@@ -12,7 +12,7 @@ Daily logic puzzle: derive the goal statement using given facts and inference ru
 **1. Clone and install**
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/ZachNurk/Logicle/
 cd Logicle
 npm install
 ```
