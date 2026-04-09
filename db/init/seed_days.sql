@@ -197,11 +197,11 @@ SET
   nodes = EXCLUDED.nodes,
   solution = EXCLUDED.solution;
 
-INSERT INTO days (id, nodes, solution)
-VALUES ('2026-03-21', '[{"id": "7bb8c482-302c-49d3-a127-4d1061c3ab91", "text": "¬(A ∧ B)", "selected": false, "isStarter": true, "parentIds": [], "context": false, "relationship": "Not", "contains": {"id": "c4cac052-a442-46cb-afd8-4f538c1ced74", "text": "(A ∧ B)", "selected": false, "isStarter": true, "parentIds": [], "context": false, "relationship": "And", "left": {"id": "491cfd6a-9272-4129-aad6-d27083fe939a", "text": "A", "selected": false, "isStarter": true, "parentIds": [], "context": true}, "right": {"id": "bc24598c-252f-4202-b44c-dc012f02524e", "text": "B", "selected": false, "isStarter": true, "parentIds": [], "context": true}}}, {"id": "6fc3bdff-c41b-4c23-a1b2-0d199880939b", "text": "(B → A)", "selected": false, "isStarter": true, "parentIds": [], "context": false, "relationship": "If", "left": {"id": "f5fca70f-c4d9-4bf1-be28-ada0c04f1ab7", "text": "B", "selected": false, "isStarter": true, "parentIds": [], "context": true}, "right": {"id": "3ca8b83d-753b-46b7-9fec-783722be07dc", "text": "A", "selected": false, "isStarter": true, "parentIds": [], "context": true}}]'::jsonb, '{"id": "eb4e274c-47f3-4dc3-9d55-64dad855fe90", "text": "B", "selected": false, "isStarter": true, "parentIds": [], "context": true}'::jsonb)
-ON CONFLICT (id) DO UPDATE
-SET
-  nodes = EXCLUDED.nodes,
+INSERT INTO days (id, nodes, solution) 
+VALUES ('2026-03-21','[{"id":"n1","text":"¬(A ∨ B)","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"n1_inner","text":"A ∨ B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"a","text":"A","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}}},{"id":"n2","text":"C → B","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"c","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true},"right":{"id":"b2","text":"B","selected":false,"isStarter":true,"parentIds":[],"context":true}},{"id":"n3","text":"(¬C ∨ D) → E","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"If","left":{"id":"n3_left","text":"¬C ∨ D","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Or","left":{"id":"nc","text":"¬C","selected":false,"isStarter":true,"parentIds":[],"context":false,"relationship":"Not","contains":{"id":"c2","text":"C","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"d","text":"D","selected":false,"isStarter":true,"parentIds":[],"context":true}},"right":{"id":"e","text":"E","selected":false,"isStarter":true,"parentIds":[],"context":true}}]'::jsonb,'{"id":"n4","text":"E","selected":false,"isStarter":false,"parentIds":["n1","n2","n3"],"context":false}'::jsonb) 
+ON CONFLICT (id) DO UPDATE 
+SET 
+  nodes = EXCLUDED.nodes, 
   solution = EXCLUDED.solution;
 
 INSERT INTO days (id, nodes, solution)

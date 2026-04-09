@@ -1,10 +1,6 @@
 TODOs:
 
 
-Implement Top Bar
-How to play pop-up
-More Unit Testing
-More System Testing
 Endless mode
 More puzzles
 Email Validation

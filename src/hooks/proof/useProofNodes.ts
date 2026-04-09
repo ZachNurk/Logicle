@@ -43,7 +43,7 @@ export function useProofNodes(userId: string | null) {
         const data = await res.json();
         //TODO remove this. This manually sets the day for testing
         const days = Array.isArray(data) ? data : (data?.days ?? []);
-        const day = days[days.length - 1];
+        const day = days[2];
         // No separate "date" column — day ids in the DB are the calendar key (string).
         const dayId: string = day?.id ?? "unknown";
         const rawNodes = day?.nodes ?? [];

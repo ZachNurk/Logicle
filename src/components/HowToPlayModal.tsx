@@ -31,7 +31,8 @@ export default function HowToPlayModal({
             Select facts on the left (one or two, depending on the rule).
           </li>
           <li style={styles.listItem}>
-            Pick a rule on the right to derive a new fact.
+            Pick a rule on the right to derive a new fact. 
+            <br></br>(Hover the i to see rule info)
           </li>
           <li style={styles.listItem}>
             Win when something you derive matches the goal exactly.
