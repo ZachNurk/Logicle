@@ -15,6 +15,16 @@ export async function getDays() {
   return result.rows;
 }
 
+export async function getRandomDay() {
+  const result = await pool.query(`
+    SELECT id, nodes, solution
+    FROM days
+    ORDER BY random()
+    LIMIT 1
+  `);
+  return result.rows[0] ?? null;
+}
+
 export async function getDayById(id: string) {
   const result = await pool.query(
     `

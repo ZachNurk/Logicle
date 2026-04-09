@@ -19,7 +19,13 @@ import { useAxioms } from "./useAxioms";
  * Composes proof nodes + axioms state. Use this when you need to both read and
  * update both states (e.g. apply an axiom and add the result to givens).
  */
-export function useProofSession(userId: string | null, hasWonToday: boolean, onVictory?: (dayId: string) => void) {
+export function useProofSession(
+  userId: string | null,
+  hasWonToday: boolean,
+  onVictory?: (dayId: string) => void,
+  puzzleSource: "daily" | "endless" = "daily",
+  onEndlessSolve?: (newScore: number) => void,
+) {
   const {
     nodes,
     solutionNode,
@@ -31,7 +37,9 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
     addGivenNode,
     deleteSelectedNode,
     resetNodes,
-  } = useProofNodes(userId);
+    advanceEndlessPuzzle,
+    endlessSolves,
+  } = useProofNodes(userId, puzzleSource);
   const { axioms, setAxioms, toggleSelectedAxiom } = useAxioms();
 
   const [victory, setVictory] = useState(false);
@@ -40,8 +48,12 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
   const [invalidAxiomIds, setInvalidAxiomIds] = useState<string[]>([]);
 
   useEffect(() => {
-    setVictory(!!userId && hasWonToday);
-  }, [userId, hasWonToday]);
+    if (puzzleSource === "daily") {
+      setVictory(!!userId && hasWonToday);
+    } else {
+      setVictory(false);
+    }
+  }, [userId, hasWonToday, puzzleSource]);
 
   const setSide = (side: "left" | "right") => {
     setSelectedSide(side);
@@ -51,6 +63,13 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
     toggleSelectedAxiom("");
     setSelectedSide("");
   }, [toggleSelectedAxiom]);
+
+  /** New endless puzzle: clear axiom UI */
+  useEffect(() => {
+    if (puzzleSource !== "endless") return;
+    clearAxiomSelection();
+    setInvalidAxiomIds([]);
+  }, [currentDayId, puzzleSource, clearAxiomSelection]);
 
   /** Shake / red flash on this axiom for 1s; supports several axioms at once. */
   const registerInvalidAxiom = useCallback((axiomId: string) => {
@@ -170,8 +189,13 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       }
 
       if (sameNode(result, solutionNode)) {
+        if (puzzleSource === "endless") {
+          const nextScore = endlessSolves + 1;
+          onEndlessSolve?.(nextScore);
+          advanceEndlessPuzzle();
+          return;
+        }
         setVictory(true);
-        //TODO maybe make this use the date from the puzzle?
         onVictory?.(currentDayId ?? "unknown");
       }
 
@@ -198,6 +222,10 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
       registerInvalidAxiom,
       onVictory,
       currentDayId,
+      puzzleSource,
+      advanceEndlessPuzzle,
+      endlessSolves,
+      onEndlessSolve,
     ],
   );
 
@@ -220,5 +248,6 @@ export function useProofSession(userId: string | null, hasWonToday: boolean, onV
     selectedSide,
     setSide,
     invalidAxiomIds,
+    endlessSolves,
   };
 }

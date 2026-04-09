@@ -47,6 +47,13 @@ export default function StatsModal({ currentUser, onClose, title = "Your Stats",
           <span style={styles.statValue}>{currentUser?.completedDayIds?.length ?? 0}</span>
         </div>
 
+        <div style={styles.statRow}>
+          <span style={styles.statLabel}>Best endless run</span>
+          <span style={styles.statValue}>
+            {currentUser?.bestEndlessScore ?? 0}
+          </span>
+        </div>
+
         <p style={styles.monthLabel}>
           {MONTH_NAMES[now.getMonth()]} {now.getFullYear()}
         </p>

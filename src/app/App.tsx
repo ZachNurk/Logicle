@@ -5,13 +5,20 @@
  */
 
 import type { CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import { useAppSession } from "../hooks/useAppSession";
 import PuzzleScreen from "../screens/PuzzleScreen";
+import EndlessScreen from "../screens/EndlessScreen";
 import LoginScreen from "../screens/LoginScreen";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 
 export default function App() {
-  const { auth, proof } = useAppSession();
+  const [gameMode, setGameMode] = useState<"daily" | "endless">("daily");
+  const { auth, progress, proof } = useAppSession(gameMode);
+
+  useEffect(() => {
+    if (auth.authStatus === "loggedOut") setGameMode("daily");
+  }, [auth.authStatus]);
 
   type Screen =
     | "loading"
@@ -29,30 +36,42 @@ export default function App() {
     return "error";
   };
 
+  const sharedGameProps = {
+    nodes: proof.nodes,
+    solutionNode: proof.solutionNode,
+    toggleSelectedProofNode: proof.toggleSelectedProofNode,
+    axioms: proof.axioms,
+    toggleSelectedAxiom: proof.toggleSelectedAxiom,
+    applyAxiom: proof.applyAxiom,
+    selectedSide: proof.selectedSide,
+    setSide: proof.setSide,
+    logOut: auth.logout,
+    currentUser: auth.currentUser,
+    deleteSelectedNode: proof.deleteSelectedNode,
+    resetNodes: proof.resetNodes,
+    invalidAxiomIds: proof.invalidAxiomIds,
+  };
+  const puzzleScreenProps = { ...sharedGameProps, victory: proof.victory };
+
   switch (getScreen()) {
     case "loading":
       return <div style={styles.statusScreen}>Loading puzzle...</div>;
     case "error":
       return <div style={styles.statusScreen}>Failed to load puzzle: {proof.loadError}</div>;
     case "puzzle":
-      return (
+      return gameMode === "endless" ? (
+        <EndlessScreen
+          {...sharedGameProps}
+          endlessSolves={proof.endlessSolves}
+          bestEndlessScore={progress.bestEndlessScore}
+          onBackToDaily={() => setGameMode("daily")}
+        />
+      ) : (
         <PuzzleScreen
-          nodes={proof.nodes}
-          solutionNode={proof.solutionNode}
-          toggleSelectedProofNode={proof.toggleSelectedProofNode}
-          axioms={proof.axioms}
-          toggleSelectedAxiom={proof.toggleSelectedAxiom}
-          applyAxiom={proof.applyAxiom}
-          selectedSide={proof.selectedSide}
-          setSide={proof.setSide}
-          logOut={auth.logout}
-          currentUser={auth.currentUser}
-          victory={proof.victory}
-          deleteSelectedNode={proof.deleteSelectedNode}
-          resetNodes={proof.resetNodes}
-          invalidAxiomIds={proof.invalidAxiomIds}
+          {...puzzleScreenProps}
           openHowToPlayAfterSignup={auth.openHowToPlayAfterSignup}
           onHowToPlayAfterSignupConsumed={auth.clearHowToPlayAfterSignup}
+          onOpenEndless={() => setGameMode("endless")}
         />
       );
     case "loginScreen":

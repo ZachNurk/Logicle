@@ -8,6 +8,8 @@ export type AuthUser = {
   id: string;
   email: string;
   completedDayIds?: string[];
+  /** Max puzzles solved in a single endless run (server-backed). */
+  bestEndlessScore?: number;
 };
 
 const AUTH_USER_STORAGE_KEY = "logicle_auth_user";
@@ -32,7 +34,12 @@ export function useAuth() {
       `/api/users/${encodeURIComponent(user.email)}/progress`,
     );
     const data = await res.json();
-    setCurrentUser({ ...user, completedDayIds: data.completedDayIds });
+    setCurrentUser({
+      ...user,
+      completedDayIds: data.completedDayIds,
+      bestEndlessScore:
+        typeof data.bestEndlessScore === "number" ? data.bestEndlessScore : 0,
+    });
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
     setAuthStatus("loggedIn");
   };
@@ -141,7 +148,16 @@ export function useAuth() {
     const res = await fetch(`/api/users/${encodeURIComponent(currentUser.email)}/progress`);
     const data = await res.json();
     setCurrentUser((prev) =>
-      prev ? { ...prev, completedDayIds: data.completedDayIds } : null,
+      prev
+        ? {
+            ...prev,
+            completedDayIds: data.completedDayIds,
+            bestEndlessScore:
+              typeof data.bestEndlessScore === "number"
+                ? data.bestEndlessScore
+                : (prev.bestEndlessScore ?? 0),
+          }
+        : null,
     );
   };
 

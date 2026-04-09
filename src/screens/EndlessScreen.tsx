@@ -1,15 +1,15 @@
 import type { CSSProperties } from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AxiomPanel from "../components/AxiomPanel";
 import ProofNodePanel from "../components/ProofNodePanel";
 import StatsModal from "../components/StatsModal";
 import HowToPlayModal from "../components/HowToPlayModal";
-import EndlessIntroModal from "../components/EndlessIntroModal";
+import LeaveEndlessModal from "../components/LeaveEndlessModal";
 import type { Axiom } from "../logic/Axiom";
 import type { ProofNode } from "../logic/ProofNode";
 import type { AuthUser } from "../hooks/user/useAuth";
 
-type PuzzleScreenProps = {
+type EndlessScreenProps = {
   nodes: ProofNode[];
   solutionNode: ProofNode;
   toggleSelectedProofNode: (id: string) => void;
@@ -24,18 +24,18 @@ type PuzzleScreenProps = {
   setSide: (side: "left" | "right") => void;
   logOut: () => void;
   currentUser: AuthUser | null;
-  victory: boolean;
   deleteSelectedNode: () => void;
   resetNodes: () => void;
   invalidAxiomIds: string[];
-  /** From auth after successful create-account; PuzzleScreen opens How to Play once then clears. */
-  openHowToPlayAfterSignup?: boolean;
-  onHowToPlayAfterSignupConsumed?: () => void;
-  /** Opens endless mode (same session hooks; navigation only until endless data loads separately). */
-  onOpenEndless?: () => void;
+  /** Puzzles solved this endless session */
+  endlessSolves: number;
+  /** Best single-run endless score (persisted) */
+  bestEndlessScore: number;
+  /** Return to the daily puzzle screen */
+  onBackToDaily: () => void;
 };
 
-export default function PuzzleScreen({
+export default function EndlessScreen({
   nodes,
   solutionNode,
   toggleSelectedProofNode,
@@ -46,53 +46,35 @@ export default function PuzzleScreen({
   setSide,
   logOut,
   currentUser,
-  victory,
   deleteSelectedNode,
   resetNodes,
   invalidAxiomIds,
-  openHowToPlayAfterSignup = false,
-  onHowToPlayAfterSignupConsumed,
-  onOpenEndless,
-}: PuzzleScreenProps) {
+  endlessSolves,
+  bestEndlessScore,
+  onBackToDaily,
+}: EndlessScreenProps) {
   const [showStats, setShowStats] = useState(false);
-  const [showEndlessIntro, setShowEndlessIntro] = useState(false);
-  /** Seed from signup flag so we don't rely on an effect that clears before Strict Mode's remount. */
-  const [showHowToPlay, setHowToPlay] = useState(openHowToPlayAfterSignup);
-
-  useEffect(() => {
-    if (openHowToPlayAfterSignup) setHowToPlay(true);
-  }, [openHowToPlayAfterSignup]);
-
-  const closeHowToPlay = () => {
-    setHowToPlay(false);
-    if (openHowToPlayAfterSignup) onHowToPlayAfterSignupConsumed?.();
-  };
+  const [showHowToPlay, setHowToPlay] = useState(false);
+  const [showLeaveDailyConfirm, setShowLeaveDailyConfirm] = useState(false);
 
   return (
     <div style={styles.page}>
-      {victory && (
-        <StatsModal
-          currentUser={currentUser}
-          title="You Won!"
-          onEndless={() => setShowEndlessIntro(true)}
-          onLogout={logOut}
-        />
-      )}
-      {!victory && showStats && (
+      {showStats && (
         <StatsModal
           currentUser={currentUser}
           onClose={() => setShowStats(false)}
         />
       )}
-      {!victory && showHowToPlay && (
-        <HowToPlayModal currentUser={currentUser} onClose={closeHowToPlay} />
+      {showHowToPlay && (
+        <HowToPlayModal currentUser={currentUser} onClose={() => setHowToPlay(false)} />
       )}
-      {showEndlessIntro && (
-        <EndlessIntroModal
-          onClose={() => setShowEndlessIntro(false)}
-          onStart={() => {
-            setShowEndlessIntro(false);
-            onOpenEndless?.();
+      {showLeaveDailyConfirm && (
+        <LeaveEndlessModal
+          endlessSolves={endlessSolves}
+          onClose={() => setShowLeaveDailyConfirm(false)}
+          onConfirm={() => {
+            setShowLeaveDailyConfirm(false);
+            onBackToDaily();
           }}
         />
       )}
@@ -106,22 +88,37 @@ export default function PuzzleScreen({
         >
           ?
         </button>
-        <h1 style={styles.title}>Logicle</h1>
+        <h1 style={styles.title}>Endless</h1>
         <div style={styles.rightActions}>
-          <button style={styles.menuButton} onClick={() => setShowStats(true)}>Stats</button>
+          <button style={styles.menuButton} onClick={() => setShowStats(true)}>
+            Stats
+          </button>
           <button
             type="button"
             style={styles.menuButton}
-            onClick={() => setShowEndlessIntro(true)}
+            onClick={() => setShowLeaveDailyConfirm(true)}
           >
-            Endless
+            Daily
           </button>
-          <button style={styles.menuButton} onClick={logOut}>Logout</button>
+          <button style={styles.menuButton} onClick={logOut}>
+            Logout
+          </button>
         </div>
       </header>
 
       <div style={styles.contentWrap}>
-        <div style={styles.split}>
+        <div style={styles.mainColumn}>
+          <div style={styles.endlessCounterRow} aria-live="polite">
+            <div style={styles.endlessCounter}>
+              <span style={styles.endlessCounterLabel}>Solved this run</span>
+              <span style={styles.endlessCounterValue}>{endlessSolves}</span>
+            </div>
+            <div style={styles.endlessCounter}>
+              <span style={styles.endlessCounterLabel}>Best</span>
+              <span style={styles.endlessCounterValue}>{bestEndlessScore}</span>
+            </div>
+          </div>
+          <div style={styles.split}>
           <div style={styles.panel}>
             <ProofNodePanel
               givenArray={nodes}
@@ -140,6 +137,7 @@ export default function PuzzleScreen({
               resetNodes={resetNodes}
               invalidAxiomIds={invalidAxiomIds}
             />
+          </div>
           </div>
         </div>
       </div>
@@ -205,11 +203,42 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     padding: "24px",
   },
+  mainColumn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
+    width: "100%",
+    maxWidth: "1200px",
+  },
+  endlessCounterRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    justifyContent: "center",
+    gap: "24px 32px",
+    fontSize: "15px",
+    color: "#333",
+  },
+  endlessCounter: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: "10px",
+  },
+  endlessCounterLabel: {
+    fontWeight: 600,
+    letterSpacing: "0.02em",
+  },
+  endlessCounterValue: {
+    fontSize: "22px",
+    fontWeight: 700,
+    fontVariantNumeric: "tabular-nums",
+    minWidth: "2ch",
+  },
   split: {
     display: "flex",
     gap: "12px",
     width: "100%",
-    maxWidth: "1200px",
     justifyContent: "center",
     alignItems: "stretch",
   },

@@ -1,5 +1,9 @@
 import { Router } from "express";
 import { addCompletedDay, getUserDays } from "../../db/userProgress.ts";
+import {
+  getBestEndlessScore,
+  updateBestEndlessScoreIfHigher,
+} from "../../db/users.ts";
 
 const router = Router();
 
@@ -16,8 +20,11 @@ router.get("/:email/progress", async (req, res) => {
   const email = normalizeEmailParam(req.params.email);
 
   try {
-    const completedDayIds = await getUserDays(email);
-    res.status(200).json({ completedDayIds });
+    const [completedDayIds, bestEndlessScore] = await Promise.all([
+      getUserDays(email),
+      getBestEndlessScore(email),
+    ]);
+    res.status(200).json({ completedDayIds, bestEndlessScore });
   } catch (error) {
     console.error("Get progress error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -54,6 +61,38 @@ router.post("/:email/progress", async (req, res) => {
       });
       return;
     }
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+/**
+ * Update best endless run score (only increases)
+ * POST /api/users/:email/best-endless
+ */
+router.post("/:email/best-endless", async (req, res) => {
+  const email = normalizeEmailParam(req.params.email);
+  const raw = req.body?.score;
+  const score =
+    typeof raw === "number" && Number.isFinite(raw)
+      ? Math.floor(raw)
+      : typeof raw === "string" && raw.trim() !== ""
+        ? Math.floor(Number(raw))
+        : NaN;
+
+  if (!Number.isFinite(score) || score < 0) {
+    res.status(400).json({ error: "score must be a non-negative integer" });
+    return;
+  }
+
+  try {
+    const bestEndlessScore = await updateBestEndlessScoreIfHigher(email, score);
+    if (bestEndlessScore === null) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.status(200).json({ ok: true, bestEndlessScore });
+  } catch (error: unknown) {
+    console.error("Best endless score error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
