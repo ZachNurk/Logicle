@@ -25,7 +25,7 @@ export default function LoginScreen({
 }: LoginScreenProps) {
   return (
     <div style={styles.loginPage}>
-      <form style={styles.loginCard} onSubmit={onSubmit}>
+      <form style={styles.loginCard} noValidate onSubmit={onSubmit}>
         <h1 style={styles.loginTitle}>Logicle</h1>
         <p style={styles.loginSubtitle}>Sign in to start your puzzle.</p>
 

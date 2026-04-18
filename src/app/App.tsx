@@ -47,6 +47,7 @@ export default function App() {
     setSide: proof.setSide,
     logOut: auth.logout,
     currentUser: auth.currentUser,
+    completedDayIds: progress.completedDayIds,
     deleteSelectedNode: proof.deleteSelectedNode,
     resetNodes: proof.resetNodes,
     invalidAxiomIds: proof.invalidAxiomIds,
@@ -63,7 +64,6 @@ export default function App() {
         <EndlessScreen
           {...sharedGameProps}
           endlessSolves={proof.endlessSolves}
-          bestEndlessScore={progress.bestEndlessScore}
           onBackToDaily={() => setGameMode("daily")}
         />
       ) : (

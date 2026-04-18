@@ -24,7 +24,6 @@ export function useProofSession(
   hasWonToday: boolean,
   onVictory?: (dayId: string) => void,
   puzzleSource: "daily" | "endless" = "daily",
-  onEndlessSolve?: (newScore: number) => void,
 ) {
   const {
     nodes,
@@ -55,9 +54,42 @@ export function useProofSession(
     }
   }, [userId, hasWonToday, puzzleSource]);
 
-  const setSide = (side: "left" | "right") => {
-    setSelectedSide(side);
-  };
+  /** Daily puzzle is finished — no further edits to nodes or axioms. */
+  const dailyPuzzleLocked = puzzleSource === "daily" && victory;
+
+  const setSide = useCallback(
+    (side: "left" | "right") => {
+      if (dailyPuzzleLocked) return;
+      setSelectedSide(side);
+    },
+    [dailyPuzzleLocked],
+  );
+
+  const toggleSelectedProofNodeLocked = useCallback(
+    (id: string) => {
+      if (dailyPuzzleLocked) return;
+      toggleSelectedProofNode(id);
+    },
+    [toggleSelectedProofNode, dailyPuzzleLocked],
+  );
+
+  const toggleSelectedAxiomLocked = useCallback(
+    (id: string) => {
+      if (dailyPuzzleLocked) return;
+      toggleSelectedAxiom(id);
+    },
+    [toggleSelectedAxiom, dailyPuzzleLocked],
+  );
+
+  const deleteSelectedNodeLocked = useCallback(() => {
+    if (dailyPuzzleLocked) return;
+    deleteSelectedNode();
+  }, [deleteSelectedNode, dailyPuzzleLocked]);
+
+  const resetNodesLocked = useCallback(() => {
+    if (dailyPuzzleLocked) return;
+    resetNodes();
+  }, [resetNodes, dailyPuzzleLocked]);
 
   const clearAxiomSelection = useCallback(() => {
     toggleSelectedAxiom("");
@@ -94,6 +126,7 @@ export function useProofSession(
       additionText?: string,
     ) => {
       if (!axiom.apply) return;
+      if (dailyPuzzleLocked) return;
 
       const selectedNodes = nodes.filter((n) => n.selected);
       const addition = createNode(additionText ?? "DUMMY", false, undefined, false);
@@ -190,8 +223,6 @@ export function useProofSession(
 
       if (sameNode(result, solutionNode)) {
         if (puzzleSource === "endless") {
-          const nextScore = endlessSolves + 1;
-          onEndlessSolve?.(nextScore);
           advanceEndlessPuzzle();
           return;
         }
@@ -224,8 +255,7 @@ export function useProofSession(
       currentDayId,
       puzzleSource,
       advanceEndlessPuzzle,
-      endlessSolves,
-      onEndlessSolve,
+      dailyPuzzleLocked,
     ],
   );
 
@@ -236,12 +266,12 @@ export function useProofSession(
     isLoading,
     loadError,
     setSolutionNode,
-    toggleSelectedProofNode,
+    toggleSelectedProofNode: toggleSelectedProofNodeLocked,
     addGivenNode,
-    deleteSelectedNode,
-    resetNodes,
+    deleteSelectedNode: deleteSelectedNodeLocked,
+    resetNodes: resetNodesLocked,
     axioms,
-    toggleSelectedAxiom,
+    toggleSelectedAxiom: toggleSelectedAxiomLocked,
     setAxioms,
     applyAxiom,
     victory,

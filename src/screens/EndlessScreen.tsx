@@ -24,13 +24,12 @@ type EndlessScreenProps = {
   setSide: (side: "left" | "right") => void;
   logOut: () => void;
   currentUser: AuthUser | null;
+  completedDayIds: string[];
   deleteSelectedNode: () => void;
   resetNodes: () => void;
   invalidAxiomIds: string[];
-  /** Puzzles solved this endless session */
+  /** Puzzles solved this endless session (local session state only) */
   endlessSolves: number;
-  /** Best single-run endless score (persisted) */
-  bestEndlessScore: number;
   /** Return to the daily puzzle screen */
   onBackToDaily: () => void;
 };
@@ -46,11 +45,11 @@ export default function EndlessScreen({
   setSide,
   logOut,
   currentUser,
+  completedDayIds,
   deleteSelectedNode,
   resetNodes,
   invalidAxiomIds,
   endlessSolves,
-  bestEndlessScore,
   onBackToDaily,
 }: EndlessScreenProps) {
   const [showStats, setShowStats] = useState(false);
@@ -62,6 +61,7 @@ export default function EndlessScreen({
       {showStats && (
         <StatsModal
           currentUser={currentUser}
+          completedDayIds={completedDayIds}
           onClose={() => setShowStats(false)}
         />
       )}
@@ -112,10 +112,6 @@ export default function EndlessScreen({
             <div style={styles.endlessCounter}>
               <span style={styles.endlessCounterLabel}>Solved this run</span>
               <span style={styles.endlessCounterValue}>{endlessSolves}</span>
-            </div>
-            <div style={styles.endlessCounter}>
-              <span style={styles.endlessCounterLabel}>Best</span>
-              <span style={styles.endlessCounterValue}>{bestEndlessScore}</span>
             </div>
           </div>
           <div style={styles.split}>

@@ -34,7 +34,6 @@ export default function CreateAccountScreen({
         </label>
         <input
           id="create-email"
-          type="email"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
           style={styles.input}

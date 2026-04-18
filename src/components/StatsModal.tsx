@@ -1,9 +1,16 @@
 import type { CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import type { AuthUser } from "../hooks/user/useAuth";
 import { Colors } from "../constants/theme";
+import { formatLocalDateKey, normalizeDayId } from "../utils/dateKeys";
 
 type StatsModalProps = {
   currentUser: AuthUser | null;
+  /**
+   * Prefer passing this from `useUserProgress` so the calendar updates as soon as
+   * a day is marked complete; `currentUser.completedDayIds` can lag until refresh.
+   */
+  completedDayIds?: string[];
   onClose?: () => void;
   title?: string;
   onEndless?: () => void;
@@ -19,72 +26,129 @@ function getMonthDays(year: number, month: number): Date[] {
   return days;
 }
 
-function toDateKey(date: Date): string {
-  return date.toLocaleDateString("en-CA"); // YYYY-MM-DD
-}
+const MIN_STATS_YEAR = 2025;
 
 const MONTH_NAMES = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-export default function StatsModal({ currentUser, onClose, title = "Your Stats", onEndless, onLogout }: StatsModalProps) {
+export default function StatsModal({
+  currentUser,
+  completedDayIds: completedDayIdsProp,
+  onClose,
+  title = "Your Stats",
+  onEndless,
+  onLogout,
+}: StatsModalProps) {
   const now = new Date();
-  const days = getMonthDays(now.getFullYear(), now.getMonth());
-  const completedSet = new Set(currentUser?.completedDayIds ?? []);
-  const today = toDateKey(now);
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const [viewYear, setViewYear] = useState(() =>
+    Math.max(MIN_STATS_YEAR, currentYear),
+  );
+  const completedDayIds =
+    completedDayIdsProp ?? currentUser?.completedDayIds ?? [];
+  const completedSet = useMemo(
+    () => new Set(completedDayIds.map(normalizeDayId)),
+    [completedDayIds],
+  );
+  const today = formatLocalDateKey(now);
 
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.box} onClick={(e) => e.stopPropagation()}>
         {onClose && (
-          <button style={styles.closeButton} onClick={onClose}>✕</button>
+          <button type="button" style={styles.closeButton} onClick={onClose}>
+            ✕
+          </button>
         )}
         <h2 style={styles.title}>{title}</h2>
 
         <div style={styles.statRow}>
           <span style={styles.statLabel}>Puzzles completed</span>
-          <span style={styles.statValue}>{currentUser?.completedDayIds?.length ?? 0}</span>
-        </div>
-
-        <div style={styles.statRow}>
-          <span style={styles.statLabel}>Best endless run</span>
           <span style={styles.statValue}>
-            {currentUser?.bestEndlessScore ?? 0}
+            {completedDayIds.length}
           </span>
         </div>
 
-        <p style={styles.monthLabel}>
-          {MONTH_NAMES[now.getMonth()]} {now.getFullYear()}
-        </p>
+        <div style={styles.yearNavRow}>
+          <div style={styles.yearNavSideLeft}>
+            {viewYear > MIN_STATS_YEAR ? (
+              <button
+                type="button"
+                style={styles.yearNavArrow}
+                onClick={() =>
+                  setViewYear((y) => Math.max(MIN_STATS_YEAR, y - 1))
+                }
+                aria-label="Previous year"
+              >
+                ←
+              </button>
+            ) : null}
+          </div>
+          <span style={styles.yearNavYear}>{viewYear}</span>
+          <div style={styles.yearNavSideRight}>
+            {viewYear < currentYear ? (
+              <button
+                type="button"
+                style={styles.yearNavArrow}
+                onClick={() => setViewYear((y) => Math.min(y + 1, currentYear))}
+                aria-label="Next year"
+              >
+                →
+              </button>
+            ) : null}
+          </div>
+        </div>
 
-        <div style={styles.grid}>
-          {days.map((day) => {
-            const key = toDateKey(day);
-            const completed = completedSet.has(key);
-            const isToday = key === today;
+        <div style={styles.twelveMonthScroll}>
+          <div style={styles.twelveMonthGrid}>
+          {MONTH_NAMES.map((name, m) => {
+            const days = getMonthDays(viewYear, m);
+            const isCurrentMonth =
+              viewYear === currentYear && m === currentMonth;
             return (
               <div
-                key={key}
+                key={`${viewYear}-${name}`}
                 style={{
-                  ...styles.dayCell,
-                  ...(completed ? styles.dayCellCompleted : {}),
-                  ...(isToday ? styles.dayCellToday : {}),
+                  ...styles.miniMonthCard,
+                  ...(isCurrentMonth ? styles.miniMonthCardCurrent : {}),
                 }}
               >
-                {day.getDate()}
+                <div style={styles.miniMonthTitle}>{name}</div>
+                <div style={styles.miniMonthGrid}>
+                  {days.map((day) => {
+                    const key = formatLocalDateKey(day);
+                    const completed = completedSet.has(normalizeDayId(key));
+                    const isToday = key === today;
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          ...styles.miniDayCell,
+                          ...(completed ? styles.miniDayCellCompleted : {}),
+                          ...(isToday ? styles.miniDayCellToday : {}),
+                        }}
+                      >
+                        {day.getDate()}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
+          </div>
         </div>
 
         {onEndless && (
-          <button style={styles.endlessButton} onClick={onEndless}>
+          <button type="button" style={styles.endlessButton} onClick={onEndless}>
             Play Endless Mode
           </button>
         )}
         {onLogout && (
-          <button style={styles.logoutButton} onClick={onLogout}>
+          <button type="button" style={styles.logoutButton} onClick={onLogout}>
             Log Out
           </button>
         )}
@@ -102,14 +166,18 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     zIndex: 100,
+    padding: "16px",
+    boxSizing: "border-box",
   },
   box: {
     position: "relative",
     background: Colors.background,
     borderRadius: "16px",
-    padding: "32px",
-    minWidth: "340px",
+    padding: "28px 28px 32px",
+    maxWidth: "980px",
+    width: "100%",
     boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+    boxSizing: "border-box",
   },
   closeButton: {
     position: "absolute",
@@ -123,7 +191,7 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1,
   },
   title: {
-    margin: "0 0 24px 0",
+    margin: "0 0 20px 0",
     fontSize: "20px",
     fontWeight: 700,
   },
@@ -133,7 +201,7 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     padding: "12px 0",
     borderBottom: "1px solid #eee",
-    marginBottom: "20px",
+    marginBottom: "16px",
   },
   statLabel: {
     fontSize: "15px",
@@ -143,41 +211,109 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "22px",
     fontWeight: 700,
   },
-  monthLabel: {
-    margin: "0 0 10px 0",
-    fontSize: "13px",
-    fontWeight: 600,
-    color: "#888",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
+  yearNavRow: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "14px",
+    minHeight: "40px",
   },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-    gap: "6px",
+  yearNavSideLeft: {
+    flex: "1 1 0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
-  dayCell: {
-    height: "36px",
+  yearNavSideRight: {
+    flex: "1 1 0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+  },
+  yearNavArrow: {
+    width: "40px",
+    height: "40px",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    background: Colors.surface1,
+    fontSize: "18px",
+    lineHeight: 1,
+    cursor: "pointer",
+    color: "#111",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: "6px",
-    fontSize: "13px",
-    fontWeight: 500,
+    padding: 0,
+  },
+  yearNavYear: {
+    flex: "0 0 auto",
+    fontSize: "16px",
+    fontWeight: 700,
+    color: "#333",
+    minWidth: "64px",
+    textAlign: "center",
+  },
+  twelveMonthScroll: {
+    width: "100%",
+    overflowX: "auto",
+    paddingBottom: "4px",
+  },
+  twelveMonthGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: "14px 16px",
+    alignItems: "start",
+    minWidth: "720px",
+  },
+  miniMonthCard: {
+    background: Colors.surface1,
+    border: "1px solid #d8d4ce",
+    borderRadius: "8px",
+    padding: "10px 10px 12px",
+    minWidth: 0,
+  },
+  miniMonthCardCurrent: {
+    borderColor: "#111",
+    boxShadow: "0 0 0 1px #111",
+  },
+  miniMonthTitle: {
+    fontSize: "12px",
+    fontWeight: 700,
+    color: "#333",
+    marginBottom: "8px",
+    letterSpacing: "0.02em",
+  },
+  miniMonthGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+    gap: "4px",
+  },
+  miniDayCell: {
+    aspectRatio: "1",
+    minHeight: "22px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "2px",
+    fontSize: "10px",
+    fontWeight: 600,
     background: Colors.surface2,
     color: "#333",
+    border: "1px solid #c8c4be",
+    boxSizing: "border-box",
   },
-  dayCellCompleted: {
+  miniDayCellCompleted: {
     background: "#22c55e",
     color: "#fff",
-    fontWeight: 700,
+    borderColor: "#16a34a",
   },
-  dayCellToday: {
-    outline: "2px solid #333",
-    outlineOffset: "-2px",
+  miniDayCellToday: {
+    outline: "2px solid #111",
+    outlineOffset: "-1px",
   },
   endlessButton: {
-    marginTop: "20px",
+    marginTop: "24px",
     width: "100%",
     height: "42px",
     border: "none",

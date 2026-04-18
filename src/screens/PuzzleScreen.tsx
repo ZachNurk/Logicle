@@ -24,6 +24,8 @@ type PuzzleScreenProps = {
   setSide: (side: "left" | "right") => void;
   logOut: () => void;
   currentUser: AuthUser | null;
+  /** From `useUserProgress` — keeps stats calendar in sync when a day is completed. */
+  completedDayIds: string[];
   victory: boolean;
   deleteSelectedNode: () => void;
   resetNodes: () => void;
@@ -46,6 +48,7 @@ export default function PuzzleScreen({
   setSide,
   logOut,
   currentUser,
+  completedDayIds,
   victory,
   deleteSelectedNode,
   resetNodes,
@@ -56,12 +59,18 @@ export default function PuzzleScreen({
 }: PuzzleScreenProps) {
   const [showStats, setShowStats] = useState(false);
   const [showEndlessIntro, setShowEndlessIntro] = useState(false);
+  /** After winning the daily, auto stats can be closed; manual Stats still works. */
+  const [winStatsDismissed, setWinStatsDismissed] = useState(false);
   /** Seed from signup flag so we don't rely on an effect that clears before Strict Mode's remount. */
   const [showHowToPlay, setHowToPlay] = useState(openHowToPlayAfterSignup);
 
   useEffect(() => {
     if (openHowToPlayAfterSignup) setHowToPlay(true);
   }, [openHowToPlayAfterSignup]);
+
+  useEffect(() => {
+    if (!victory) setWinStatsDismissed(false);
+  }, [victory]);
 
   const closeHowToPlay = () => {
     setHowToPlay(false);
@@ -70,17 +79,20 @@ export default function PuzzleScreen({
 
   return (
     <div style={styles.page}>
-      {victory && (
+      {victory && !winStatsDismissed && (
         <StatsModal
           currentUser={currentUser}
+          completedDayIds={completedDayIds}
           title="You Won!"
+          onClose={() => setWinStatsDismissed(true)}
           onEndless={() => setShowEndlessIntro(true)}
           onLogout={logOut}
         />
       )}
-      {!victory && showStats && (
+      {showStats && (!victory || winStatsDismissed) && (
         <StatsModal
           currentUser={currentUser}
+          completedDayIds={completedDayIds}
           onClose={() => setShowStats(false)}
         />
       )}
@@ -100,7 +112,11 @@ export default function PuzzleScreen({
       <header style={styles.topBar}>
         <button
           type="button"
-          style={styles.howToPlayButton}
+          style={{
+            ...styles.howToPlayButton,
+            ...(victory ? styles.howToPlayButtonDisabled : {}),
+          }}
+          disabled={victory}
           onClick={() => setHowToPlay(true)}
           aria-label="How to play"
         >
@@ -121,7 +137,13 @@ export default function PuzzleScreen({
       </header>
 
       <div style={styles.contentWrap}>
-        <div style={styles.split}>
+        <div
+          style={{
+            ...styles.split,
+            ...(victory ? styles.splitLocked : {}),
+          }}
+          aria-hidden={victory}
+        >
           <div style={styles.panel}>
             <ProofNodePanel
               givenArray={nodes}
@@ -198,6 +220,10 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "center",
     boxSizing: "border-box",
   },
+  howToPlayButtonDisabled: {
+    opacity: 0.35,
+    cursor: "not-allowed",
+  },
   contentWrap: {
     flex: 1,
     display: "flex",
@@ -212,6 +238,10 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: "1200px",
     justifyContent: "center",
     alignItems: "stretch",
+  },
+  splitLocked: {
+    pointerEvents: "none",
+    userSelect: "none",
   },
   panel: {
     flex: "0 0 520px",

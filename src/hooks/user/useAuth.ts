@@ -8,11 +8,10 @@ export type AuthUser = {
   id: string;
   email: string;
   completedDayIds?: string[];
-  /** Max puzzles solved in a single endless run (server-backed). */
-  bestEndlessScore?: number;
 };
 
 const AUTH_USER_STORAGE_KEY = "logicle_auth_user";
+
 
 export function useAuth() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
@@ -37,12 +36,21 @@ export function useAuth() {
     setCurrentUser({
       ...user,
       completedDayIds: data.completedDayIds,
-      bestEndlessScore:
-        typeof data.bestEndlessScore === "number" ? data.bestEndlessScore : 0,
     });
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
     setAuthStatus("loggedIn");
   };
+
+
+const validateEmail =(email: string): boolean => {
+  return (
+    String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      ) !== null
+  );
+}
 
   // Check if user is already logged in locally 
   useEffect(() => {
@@ -72,6 +80,11 @@ export function useAuth() {
     setLoginError(null);
     setIsSigningIn(true);
 
+    if (!validateEmail(email)) {
+      setLoginError("Invalid email.");
+      setIsSigningIn(false);
+      return;
+    }
     try {
       const res = await fetch("/api/login", {
         method: "POST",
@@ -104,6 +117,12 @@ export function useAuth() {
     setCreateAccountError(null);
     setIsCreatingAccount(true);
 
+    if (!validateEmail(email)) {
+      setCreateAccountError("Invalid email.");
+      setIsCreatingAccount(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -135,11 +154,16 @@ export function useAuth() {
   const showCreateAccount = () => {
     setLoginError(null);
     setCreateAccountError(null);
+    setEmail("");
+    setPassword("");
     setAuthView("createAccount");
   };
 
   const showLogin = () => {
+    setLoginError(null);
     setCreateAccountError(null);
+    setEmail("");
+    setPassword("");
     setAuthView("login");
   };
 
@@ -152,10 +176,6 @@ export function useAuth() {
         ? {
             ...prev,
             completedDayIds: data.completedDayIds,
-            bestEndlessScore:
-              typeof data.bestEndlessScore === "number"
-                ? data.bestEndlessScore
-                : (prev.bestEndlessScore ?? 0),
           }
         : null,
     );

@@ -12,18 +12,17 @@
 import { useAuth } from "./user/useAuth";
 import { useUserProgress } from "./user/useUserProgress";
 import { useProofSession } from "./proof/useProofSession";
+import { formatLocalDateKey } from "../utils/dateKeys";
 
 export function useAppSession(puzzleSource: "daily" | "endless" = "daily") {
   const auth = useAuth();
   const progress = useUserProgress(
     auth.currentUser?.email ?? null,
     auth.currentUser?.completedDayIds,
-    auth.currentUser?.bestEndlessScore ?? 0,
     auth.logout,
-    auth.refreshUserProgress,
   );
 
-  const today = new Date().toLocaleDateString("en-CA");
+  const today = formatLocalDateKey(new Date());
   const hasWonToday = progress.completedDayIds.includes(today);
 
   const proof = useProofSession(
@@ -36,11 +35,6 @@ export function useAppSession(puzzleSource: "daily" | "endless" = "daily") {
         }
       : undefined,
     puzzleSource,
-    puzzleSource === "endless"
-      ? (score) => {
-          void progress.updateBestEndlessIfHigher(score);
-        }
-      : undefined,
   );
 
   return { auth, progress, proof };

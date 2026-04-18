@@ -13,6 +13,8 @@ async function comparePassword(plain: string, hashed: string): Promise<boolean> 
   return bcrypt.compare(plain, hashed);
 }
 
+
+
 router.post("/login", async (req, res) => {
   const { email, password } = req.body ?? {};
 

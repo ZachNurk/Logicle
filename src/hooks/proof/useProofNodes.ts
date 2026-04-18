@@ -7,6 +7,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
 
+/** Pause before loading the next endless puzzle so the solved state is visible. */
+const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 500;
+
 function nodesStorageKey(dayId: string, source: "daily" | "endless") {
   return source === "endless"
     ? `logicle_nodes_endless_${dayId}`
@@ -22,19 +25,41 @@ export function useProofNodes(
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentDayId, setCurrentDayId] = useState<string | null>(null);
-  /** Bump to load another random puzzle in endless mode */
-  const [endlessRound, setEndlessRound] = useState(0);
-  /** How many endless puzzles solved this session (incremented when advancing after a win). */
+  /**
+   * Endless only: session solve count and refetch trigger (same value bumps the load effect
+   * when advancing after a win).
+   */
   const [endlessSolves, setEndlessSolves] = useState(0);
 
   const prevPuzzleSourceRef = useRef(puzzleSource);
+  const advanceEndlessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const clearAdvanceEndlessTimeout = useCallback(() => {
+    if (advanceEndlessTimeoutRef.current !== null) {
+      clearTimeout(advanceEndlessTimeoutRef.current);
+      advanceEndlessTimeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (prevPuzzleSourceRef.current === "endless" && puzzleSource === "daily") {
-      setEndlessRound(0);
+      clearAdvanceEndlessTimeout();
       setEndlessSolves(0);
     }
     prevPuzzleSourceRef.current = puzzleSource;
-  }, [puzzleSource]);
+  }, [puzzleSource, clearAdvanceEndlessTimeout]);
+
+  useEffect(() => {
+    if (puzzleSource !== "endless") {
+      clearAdvanceEndlessTimeout();
+    }
+  }, [puzzleSource, clearAdvanceEndlessTimeout]);
+
+  useEffect(() => {
+    return () => clearAdvanceEndlessTimeout();
+  }, [clearAdvanceEndlessTimeout]);
 
   useEffect(() => {
     // No user yet — reset to blank state and stop loading.
@@ -74,7 +99,20 @@ export function useProofNodes(
           const data = await res.json();
           const days = Array.isArray(data) ? data : (data?.days ?? []);
           // Latest day by id (dates sort lexicographically as YYYY-MM-DD)
-          day = days[days.length - 1] ?? days[0] ?? {};
+          // 2026-03-19
+
+          const firstDay = new Date("2026-03-19");
+          const today = new Date();
+
+          const diffMs = today.getTime() - firstDay.getTime()
+          const msPerDay = 1000 * 60 * 60 * 24;
+
+          const dayIndex = Math.round(diffMs / msPerDay) - 1
+
+          day = days[dayIndex] 
+          console.log(dayIndex)
+          console.log(day)
+          console.log(today)
         }
 
         const dayId: string = day?.id ?? "unknown";
@@ -106,13 +144,16 @@ export function useProofNodes(
         setIsLoading(false);
       }
     })();
-  }, [userId, puzzleSource, endlessRound]);
+  }, [userId, puzzleSource, endlessSolves]);
 
   const advanceEndlessPuzzle = useCallback(() => {
     if (puzzleSource !== "endless") return;
-    setEndlessSolves((n) => n + 1);
-    setEndlessRound((n) => n + 1);
-  }, [puzzleSource]);
+    clearAdvanceEndlessTimeout();
+    advanceEndlessTimeoutRef.current = setTimeout(() => {
+      advanceEndlessTimeoutRef.current = null;
+      setEndlessSolves((n) => n + 1);
+    }, ENDLESS_ADVANCE_AFTER_SOLVE_MS);
+  }, [puzzleSource, clearAdvanceEndlessTimeout]);
 
   // Persist derived nodes (non-starter) whenever they change.
   useEffect(() => {

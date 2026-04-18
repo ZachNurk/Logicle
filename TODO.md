@@ -1,8 +1,6 @@
 TODOs:
 
 
-Endless mode
-More puzzles
 Email Validation
 Sign in with google
 Forgot password
