@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
+import { generateEndlessPuzzle } from "../../logic/ReverseAxiom";
 
 /** Pause before loading the next endless puzzle so the solved state is visible. */
 const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 500;
@@ -51,20 +52,24 @@ export function useProofNodes(
 
   const applyLoadedDay = useCallback(
     (day: DayPayload, source: "daily" | "endless") => {
-      const dayId: string = day?.id ?? "unknown";
+      const dayId: string | null =
+        source === "endless" ? null : (day?.id ?? "unknown");
       const rawNodes = day?.nodes ?? [];
       const starterNodes: ProofNode[] = (Array.isArray(rawNodes) ? rawNodes : []).map(
         (n: any) => nodeFromDb(n),
       );
 
-      const storageKey = nodesStorageKey(dayId, source);
-      const saved = localStorage.getItem(storageKey);
-      const savedNodes: ProofNode[] = saved ? JSON.parse(saved) : [];
+      let savedNodes: ProofNode[] = [];
+      if (source === "daily") {
+        const storageKey = nodesStorageKey(dayId ?? "unknown", source);
+        const saved = localStorage.getItem(storageKey);
+        savedNodes = saved ? JSON.parse(saved) : [];
 
-      const prefix = source === "endless" ? "logicle_nodes_endless_" : "logicle_nodes_";
-      Object.keys(localStorage)
-        .filter((k) => k.startsWith(prefix) && k !== storageKey)
-        .forEach((k) => localStorage.removeItem(k));
+        const prefix = "logicle_nodes_";
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith(prefix) && k !== storageKey)
+          .forEach((k) => localStorage.removeItem(k));
+      }
 
       const rawSolution = day?.solution;
       setCurrentDayId(dayId);
@@ -73,10 +78,6 @@ export function useProofNodes(
     },
     [],
   );
-
-  const generateEndlessPuzzle = useCallback(async (): Promise<DayPayload> => {
-    throw new Error("Endless puzzle generator not implemented");
-  }, []);
 
   useEffect(() => {
     if (prevPuzzleSourceRef.current === "endless" && puzzleSource === "daily") {
@@ -116,7 +117,7 @@ export function useProofNodes(
         let day: DayPayload;
 
         if (puzzleSource === "endless") {
-          day = await generateEndlessPuzzle();
+          day = generateEndlessPuzzle();
         } else {
           const res = await fetch("/api/days");
           if (!res.ok) {
@@ -150,7 +151,7 @@ export function useProofNodes(
         setIsLoading(false);
       }
     })();
-  }, [userId, puzzleSource, applyLoadedDay, generateEndlessPuzzle]);
+  }, [userId, puzzleSource, applyLoadedDay]);
 
   const advanceEndlessPuzzle = useCallback(() => {
     if (puzzleSource !== "endless") return;
@@ -161,7 +162,7 @@ export function useProofNodes(
         setIsLoading(true);
         setLoadError(null);
         try {
-          const day = await generateEndlessPuzzle();
+          const day = generateEndlessPuzzle();
           applyLoadedDay(day, "endless");
           setEndlessSolves((n) => n + 1);
         } catch (error) {
@@ -175,10 +176,11 @@ export function useProofNodes(
         }
       })();
     }, ENDLESS_ADVANCE_AFTER_SOLVE_MS);
-  }, [puzzleSource, clearAdvanceEndlessTimeout, applyLoadedDay, generateEndlessPuzzle]);
+  }, [puzzleSource, clearAdvanceEndlessTimeout, applyLoadedDay]);
 
   // Persist derived nodes (non-starter) whenever they change.
   useEffect(() => {
+    if (puzzleSource === "endless") return;
     if (!currentDayId || isLoading) return;
     const derived = nodes.filter((n) => !n.isStarter);
     localStorage.setItem(

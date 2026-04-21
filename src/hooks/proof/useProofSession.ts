@@ -101,7 +101,7 @@ export function useProofSession(
     if (puzzleSource !== "endless") return;
     clearAxiomSelection();
     setInvalidAxiomIds([]);
-  }, [currentDayId, puzzleSource, clearAxiomSelection]);
+  }, [endlessSolves, puzzleSource, clearAxiomSelection]);
 
   /** Shake / red flash on this axiom for 1s; supports several axioms at once. */
   const registerInvalidAxiom = useCallback((axiomId: string) => {
