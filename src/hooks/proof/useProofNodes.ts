@@ -10,6 +10,12 @@ import type { ProofNode } from "../../logic/ProofNode";
 /** Pause before loading the next endless puzzle so the solved state is visible. */
 const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 500;
 
+type DayPayload = {
+  id?: string;
+  nodes?: unknown;
+  solution?: unknown;
+};
+
 function nodesStorageKey(dayId: string, source: "daily" | "endless") {
   return source === "endless"
     ? `logicle_nodes_endless_${dayId}`
@@ -41,6 +47,35 @@ export function useProofNodes(
       clearTimeout(advanceEndlessTimeoutRef.current);
       advanceEndlessTimeoutRef.current = null;
     }
+  }, []);
+
+  const applyLoadedDay = useCallback(
+    (day: DayPayload, source: "daily" | "endless") => {
+      const dayId: string = day?.id ?? "unknown";
+      const rawNodes = day?.nodes ?? [];
+      const starterNodes: ProofNode[] = (Array.isArray(rawNodes) ? rawNodes : []).map(
+        (n: any) => nodeFromDb(n),
+      );
+
+      const storageKey = nodesStorageKey(dayId, source);
+      const saved = localStorage.getItem(storageKey);
+      const savedNodes: ProofNode[] = saved ? JSON.parse(saved) : [];
+
+      const prefix = source === "endless" ? "logicle_nodes_endless_" : "logicle_nodes_";
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith(prefix) && k !== storageKey)
+        .forEach((k) => localStorage.removeItem(k));
+
+      const rawSolution = day?.solution;
+      setCurrentDayId(dayId);
+      setNodes([...starterNodes, ...savedNodes]);
+      setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
+    },
+    [],
+  );
+
+  const generateEndlessPuzzle = useCallback(async (): Promise<DayPayload> => {
+    throw new Error("Endless puzzle generator not implemented");
   }, []);
 
   useEffect(() => {
@@ -78,18 +113,10 @@ export function useProofNodes(
     // effect is dependent on userId because logout deletes created nodes
     (async () => {
       try {
-        let day: {
-          id?: string;
-          nodes?: unknown;
-          solution?: unknown;
-        };
+        let day: DayPayload;
 
         if (puzzleSource === "endless") {
-          const res = await fetch("/api/days/random");
-          if (!res.ok) {
-            throw new Error(`Failed to load random puzzle: ${res.status}`);
-          }
-          day = await res.json();
+          day = await generateEndlessPuzzle();
         } else {
           const res = await fetch("/api/days");
           if (!res.ok) {
@@ -110,32 +137,11 @@ export function useProofNodes(
           const dayIndex = Math.round(diffMs / msPerDay) - 1
 
           day = days[dayIndex] 
-          console.log(dayIndex)
-          console.log(day)
-          console.log(today)
+          //TODO remove me ^
+    
         }
 
-        const dayId: string = day?.id ?? "unknown";
-        const rawNodes = day?.nodes ?? [];
-        const starterNodes: ProofNode[] = (Array.isArray(rawNodes)
-          ? rawNodes
-          : []
-        ).map((n: any) => nodeFromDb(n));
-
-        const storageKey = nodesStorageKey(dayId, puzzleSource);
-        const saved = localStorage.getItem(storageKey);
-        const savedNodes: ProofNode[] = saved ? JSON.parse(saved) : [];
-
-        const prefix =
-          puzzleSource === "endless" ? "logicle_nodes_endless_" : "logicle_nodes_";
-        Object.keys(localStorage)
-          .filter((k) => k.startsWith(prefix) && k !== storageKey)
-          .forEach((k) => localStorage.removeItem(k));
-
-        const rawSolution = day?.solution;
-        setCurrentDayId(dayId);
-        setNodes([...starterNodes, ...savedNodes]);
-        setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
+        applyLoadedDay(day, puzzleSource);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to load days";
@@ -144,16 +150,32 @@ export function useProofNodes(
         setIsLoading(false);
       }
     })();
-  }, [userId, puzzleSource, endlessSolves]);
+  }, [userId, puzzleSource, applyLoadedDay, generateEndlessPuzzle]);
 
   const advanceEndlessPuzzle = useCallback(() => {
     if (puzzleSource !== "endless") return;
     clearAdvanceEndlessTimeout();
     advanceEndlessTimeoutRef.current = setTimeout(() => {
       advanceEndlessTimeoutRef.current = null;
-      setEndlessSolves((n) => n + 1);
+      (async () => {
+        setIsLoading(true);
+        setLoadError(null);
+        try {
+          const day = await generateEndlessPuzzle();
+          applyLoadedDay(day, "endless");
+          setEndlessSolves((n) => n + 1);
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to generate endless puzzle";
+          setLoadError(message);
+        } finally {
+          setIsLoading(false);
+        }
+      })();
     }, ENDLESS_ADVANCE_AFTER_SOLVE_MS);
-  }, [puzzleSource, clearAdvanceEndlessTimeout]);
+  }, [puzzleSource, clearAdvanceEndlessTimeout, applyLoadedDay, generateEndlessPuzzle]);
 
   // Persist derived nodes (non-starter) whenever they change.
   useEffect(() => {

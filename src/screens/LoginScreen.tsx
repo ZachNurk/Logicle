@@ -6,10 +6,13 @@ type LoginScreenProps = {
   email: string;
   password: string;
   loginError: string | null;
+  forgotPasswordMessage: string | null;
   isSigningIn: boolean;
+  isSendingForgotPassword: boolean;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onForgotPasswordClick: () => void;
   onCreateAccountClick: () => void;
 };
 
@@ -17,10 +20,13 @@ export default function LoginScreen({
   email,
   password,
   loginError,
+  forgotPasswordMessage,
   isSigningIn,
+  isSendingForgotPassword,
   onEmailChange,
   onPasswordChange,
   onSubmit,
+  onForgotPasswordClick,
   onCreateAccountClick,
 }: LoginScreenProps) {
   return (
@@ -54,6 +60,22 @@ export default function LoginScreen({
           placeholder="********"
           required
         />
+
+        <button
+          type="button"
+          style={{
+            ...styles.forgotPasswordButton,
+            ...(isSendingForgotPassword ? { opacity: 0.65, cursor: "not-allowed" } : {}),
+          }}
+          onClick={onForgotPasswordClick}
+          disabled={isSendingForgotPassword}
+        >
+          {isSendingForgotPassword ? "Sending…" : "Forgot password?"}
+        </button>
+
+        {forgotPasswordMessage ? (
+          <div style={styles.forgotPasswordSuccess}>{forgotPasswordMessage}</div>
+        ) : null}
 
         {loginError ? <div style={styles.loginError}>{loginError}</div> : null}
 
@@ -115,6 +137,23 @@ const styles: Record<string, CSSProperties> = {
   },
   loginError: {
     color: "#b00020",
+    fontSize: "13px",
+    fontWeight: 600,
+  },
+  forgotPasswordButton: {
+    alignSelf: "flex-start",
+    marginTop: "4px",
+    padding: 0,
+    border: "none",
+    background: "transparent",
+    color: "#2563eb",
+    fontSize: "13px",
+    fontWeight: 500,
+    textDecoration: "underline",
+    cursor: "pointer",
+  },
+  forgotPasswordSuccess: {
+    color: "#0d7a3e",
     fontSize: "13px",
     fontWeight: 600,
   },

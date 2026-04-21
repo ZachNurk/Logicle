@@ -80,10 +80,13 @@ export default function App() {
           email={auth.email}
           password={auth.password}
           loginError={auth.loginError}
+          forgotPasswordMessage={auth.forgotPasswordMessage}
           isSigningIn={auth.isSigningIn}
+          isSendingForgotPassword={auth.isSendingForgotPassword}
           onEmailChange={auth.setEmail}
           onPasswordChange={auth.setPassword}
           onSubmit={auth.handleLoginSubmit}
+          onForgotPasswordClick={auth.handleForgotPassword}
           onCreateAccountClick={auth.showCreateAccount}
         />
       );

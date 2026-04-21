@@ -1,10 +1,10 @@
 TODOs:
 
-
-Email Validation
-Sign in with google
-Forgot password
+Reset password email setup
+Puzzle generator that uses a DFS search with randomization
 Switch to HTTPS
+Secure DB
+Ship to vercel s
 
 DB security:
 Make sure you limit where your accounts can log in from, make sure you're using TLS, don't grant accounts more permissions then they need

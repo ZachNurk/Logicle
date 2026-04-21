@@ -21,6 +21,8 @@ export function useAuth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSendingForgotPassword, setIsSendingForgotPassword] = useState(false);
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [createAccountError, setCreateAccountError] = useState<string | null>(null);
@@ -75,9 +77,42 @@ const validateEmail =(email: string): boolean => {
     }
   }, []);
 
+  const handleForgotPassword = useCallback(async () => {
+    setForgotPasswordMessage(null);
+    setLoginError(null);
+    if (!validateEmail(email)) {
+      setForgotPasswordMessage(null);
+      setLoginError("Enter a valid email to reset your password.");
+      return;
+    }
+    setIsSendingForgotPassword(true);
+    try {
+      const res = await fetch("/api/forgotPassword", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Could not send reset email");
+      }
+      setForgotPasswordMessage(
+        typeof data?.data === "string" ? data.data : "Check your email for a reset code.",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not send reset email";
+      setForgotPasswordMessage(null);
+      setLoginError(message);
+    } finally {
+      setIsSendingForgotPassword(false);
+    }
+  }, [email]);
+
   const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoginError(null);
+    setForgotPasswordMessage(null);
     setIsSigningIn(true);
 
     if (!validateEmail(email)) {
@@ -153,6 +188,7 @@ const validateEmail =(email: string): boolean => {
 
   const showCreateAccount = () => {
     setLoginError(null);
+    setForgotPasswordMessage(null);
     setCreateAccountError(null);
     setEmail("");
     setPassword("");
@@ -161,6 +197,7 @@ const validateEmail =(email: string): boolean => {
 
   const showLogin = () => {
     setLoginError(null);
+    setForgotPasswordMessage(null);
     setCreateAccountError(null);
     setEmail("");
     setPassword("");
@@ -199,6 +236,8 @@ const validateEmail =(email: string): boolean => {
     email,
     password,
     isSigningIn,
+    isSendingForgotPassword,
+    forgotPasswordMessage,
     loginError,
     isCreatingAccount,
     createAccountError,
@@ -206,6 +245,7 @@ const validateEmail =(email: string): boolean => {
     setEmail,
     setPassword,
     handleLoginSubmit,
+    handleForgotPassword,
     handleCreateAccountSubmit,
     showCreateAccount,
     showLogin,
