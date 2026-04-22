@@ -223,6 +223,10 @@ export function useProofSession(
 
       if (sameNode(result, solutionNode)) {
         if (puzzleSource === "endless") {
+          addGivenNode(result);
+          setAxioms((prev) =>
+            prev.map((a) => (a.id === axiom.id ? { ...a, selected: false } : a)),
+          );
           advanceEndlessPuzzle();
           return;
         }

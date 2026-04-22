@@ -20,9 +20,8 @@ export default function EndlessIntroModal({
         <h2 style={styles.title}>Endless mode</h2>
 
         <p style={styles.lead}>
-          You’ll get random puzzles from the archive, one after another. There’s
-          no daily win screen—when you solve a puzzle, another loads
-          automatically.
+          You’ll get randomly generated puzzles, one after another. There’s no
+          daily win screen—when you solve a puzzle, another loads automatically.
         </p>
 
         <ul style={styles.list}>
@@ -58,9 +57,9 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     background: Colors.background,
     borderRadius: "16px",
-    padding: "32px",
-    minWidth: "340px",
-    maxWidth: "440px",
+    padding: "40px",
+    minWidth: "420px",
+    maxWidth: "560px",
     boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
   },
   closeButton: {
@@ -76,19 +75,19 @@ const styles: Record<string, CSSProperties> = {
   },
   title: {
     margin: "0 0 16px 0",
-    fontSize: "20px",
+    fontSize: "28px",
     fontWeight: 700,
   },
   lead: {
     margin: "0 0 16px 0",
-    fontSize: "15px",
+    fontSize: "18px",
     lineHeight: 1.5,
     color: "#333",
   },
   list: {
     margin: "0 0 20px 0",
     paddingLeft: "20px",
-    fontSize: "15px",
+    fontSize: "17px",
     lineHeight: 1.55,
     color: "#333",
   },
@@ -97,12 +96,12 @@ const styles: Record<string, CSSProperties> = {
   },
   startButton: {
     width: "100%",
-    height: "42px",
+    height: "48px",
     border: "none",
     borderRadius: "8px",
     background: "#111",
     color: "#fff",
-    fontSize: "14px",
+    fontSize: "17px",
     fontWeight: 600,
     cursor: "pointer",
   },

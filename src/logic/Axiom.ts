@@ -294,8 +294,7 @@ export function doubleNegation(original: ProofNode): ProofNode {
     return ERROR_NODE
   }
   const inner = original.contains.contains;
-  const result = { ...inner, text: checkParentheses(inner) };
-  return createResultNode(result as typeof inner, [original]);
+  return createResultNode(inner, [original]);
 }
 
 /**

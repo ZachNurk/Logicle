@@ -34,7 +34,7 @@ import {
 } from "../src/logic/ProofNode";
 import type { ProofNode, NotNode, OrNode, AndNode } from "../src/logic/ProofNode";
 import type { ImplicationNode } from "../src/logic/ProofNode";
-import { revHS } from "../src/logic/ReverseAxiom";
+import { generateEndlessPuzzle, generateSolutionNode, revHS } from "../src/logic/ReverseAxiom";
 
 const A: ProofNode = createNode("A", true, undefined);
 const B: ProofNode = createNode("B", true, undefined);
@@ -47,12 +47,27 @@ describe("ReverseAxiom", () => {
   it("revHS accepts iff input (non-error path)", () => {
     const iff = createIffNode(false, A, B, undefined, true); // A-->B
 
-    const result = revHS(iff);
+    const result = revHS(iff, new Set<string>(), new Set<ProofNode>());
     expect(result).not.toEqual(ERROR_NODE);
   });
-
-  
-
-  
- 
+  it("logs 10 generated solution nodes", () => {
+    for (let i = 0; i < 10; i += 1) {
+      // Intentional debug output while tuning generator distribution.
+      // eslint-disable-next-line no-console
+      console.log(generateSolutionNode(new Set<string>(), new Set<ProofNode>()).text);
+    }
+    expect(true).toBe(true);
+  });
+  it("Test", () => {
+    const nodes = generateEndlessPuzzle().nodes ?? [];
+    for (const node of nodes) {
+      // eslint-disable-next-line no-console
+      console.log(node.text);
+    }
+    expect(true).toBe(true);
+  })
 });
+
+
+
+

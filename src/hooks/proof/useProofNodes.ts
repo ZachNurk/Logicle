@@ -9,7 +9,7 @@ import type { ProofNode } from "../../logic/ProofNode";
 import { generateEndlessPuzzle } from "../../logic/ReverseAxiom";
 
 /** Pause before loading the next endless puzzle so the solved state is visible. */
-const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 500;
+const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 1000;
 
 type DayPayload = {
   id?: string;
