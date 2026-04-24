@@ -253,7 +253,7 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     gap: "16px",
     width: "100%",
-    maxWidth: "1200px",
+    maxWidth: "1360px",
   },
   endlessCounterRow: {
     display: "flex",
@@ -287,10 +287,10 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "stretch",
   },
   panel: {
-    flex: "0 0 520px",
-    height: "680px",
-    minHeight: "680px",
-    maxWidth: "520px",
+    flex: "0 0 600px",
+    height: "760px",
+    minHeight: "760px",
+    maxWidth: "600px",
     display: "flex",
     boxSizing: "border-box",
   },

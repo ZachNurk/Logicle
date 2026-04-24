@@ -268,7 +268,7 @@ const styles: Record<string, CSSProperties> = {
   },
   gridContainer: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gridAutoRows: "1fr",
     gap: "10px",
     padding: "0",
