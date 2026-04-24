@@ -168,8 +168,8 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
   const a = premises.left;
   const b = premises.right;
 
-  let premise: NotNode | ProofNode | undefined;
-  let implication: ImplicationNode | ProofNode | undefined;
+  let premise
+  let implication
 
   if ((isNotNode(a) || isAtomNode(a)) && isImplicationNode(b)) {
     premise = a;

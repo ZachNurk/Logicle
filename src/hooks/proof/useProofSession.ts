@@ -234,13 +234,6 @@ export function useProofSession(
         onVictory?.(currentDayId ?? "unknown");
       }
 
-      if (nodes.some((n) => sameNode(n, result))) {
-        setAxioms((prev) =>
-          prev.map((a) => (a.id === axiom.id ? { ...a, selected: false } : a)),
-        );
-        alert("Duplicate node!");
-        return;
-      }
       //TODO maybe refactor so rule is a field in the node types so we dont have to do this lazy fix
       addGivenNode(result);
       setAxioms((prev) =>
