@@ -8,6 +8,7 @@ import LeaveEndlessModal from "../components/LeaveEndlessModal";
 import type { Axiom } from "../logic/Axiom";
 import type { ProofNode } from "../logic/ProofNode";
 import type { AuthUser } from "../hooks/user/useAuth";
+import { Colors } from "../constants/theme";
 
 type EndlessScreenProps = {
   nodes: ProofNode[];
@@ -55,6 +56,9 @@ export default function EndlessScreen({
   const [showStats, setShowStats] = useState(false);
   const [showHowToPlay, setHowToPlay] = useState(false);
   const [showLeaveDailyConfirm, setShowLeaveDailyConfirm] = useState(false);
+  const [hoveredMenuButton, setHoveredMenuButton] = useState<
+    "info" | "stats" | "daily" | "logout" | null
+  >(null);
 
   return (
     <div style={styles.page}>
@@ -82,25 +86,51 @@ export default function EndlessScreen({
       <header style={styles.topBar}>
         <button
           type="button"
-          style={styles.howToPlayButton}
+          style={{
+            ...styles.howToPlayButton,
+            ...(hoveredMenuButton === "info" ? styles.menuButtonPinkHover : {}),
+          }}
           onClick={() => setHowToPlay(true)}
+          onMouseEnter={() => setHoveredMenuButton("info")}
+          onMouseLeave={() => setHoveredMenuButton(null)}
           aria-label="How to play"
         >
           ?
         </button>
         <h1 style={styles.title}>Endless</h1>
         <div style={styles.rightActions}>
-          <button style={styles.menuButton} onClick={() => setShowStats(true)}>
+          <button
+            style={{
+              ...styles.menuButton,
+              ...(hoveredMenuButton === "stats" ? styles.menuButtonPinkHover : {}),
+            }}
+            onClick={() => setShowStats(true)}
+            onMouseEnter={() => setHoveredMenuButton("stats")}
+            onMouseLeave={() => setHoveredMenuButton(null)}
+          >
             Stats
           </button>
           <button
             type="button"
-            style={styles.menuButton}
+            style={{
+              ...styles.menuButton,
+              ...(hoveredMenuButton === "daily" ? styles.menuButtonPinkHover : {}),
+            }}
             onClick={() => setShowLeaveDailyConfirm(true)}
+            onMouseEnter={() => setHoveredMenuButton("daily")}
+            onMouseLeave={() => setHoveredMenuButton(null)}
           >
             Daily
           </button>
-          <button style={styles.menuButton} onClick={logOut}>
+          <button
+            style={{
+              ...styles.menuButton,
+              ...(hoveredMenuButton === "logout" ? styles.menuButtonRedHover : {}),
+            }}
+            onClick={logOut}
+            onMouseEnter={() => setHoveredMenuButton("logout")}
+            onMouseLeave={() => setHoveredMenuButton(null)}
+          >
             Logout
           </button>
         </div>
@@ -169,20 +199,36 @@ const styles: Record<string, CSSProperties> = {
     gap: "8px",
   },
   menuButton: {
-    border: "none",
-    background: "transparent",
+    border: "1px solid #000",
+    background: "#000",
+    color: "#fff",
     padding: "8px 10px",
-    borderRadius: "8px",
+    borderRadius: "4px",
     cursor: "pointer",
     fontSize: "14px",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+  },
+  menuButtonPinkHover: {
+    color: "#000",
+    transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
+    boxShadow: "0.25rem 0.25rem #000",
+  },
+  menuButtonRedHover: {
+    color: "#fff",
+    transform: "translate(-2px, -2px)",
+    background: "#ef4444",
+    boxShadow: "0.25rem 0.25rem #000",
   },
   howToPlayButton: {
     width: "36px",
     height: "36px",
     padding: 0,
-    border: "3px solid #000",
-    borderRadius: "50%",
-    background: "transparent",
+    border: "1px solid #000",
+    borderRadius: "4px",
+    background: "#000",
+    color: "#fff",
     cursor: "pointer",
     fontSize: "18px",
     fontWeight: 600,
@@ -191,6 +237,8 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     boxSizing: "border-box",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
   },
   contentWrap: {
     flex: 1,

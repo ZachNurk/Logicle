@@ -23,12 +23,12 @@ export default function AuthSubmitButton({
 const styles: Record<string, CSSProperties> = {
   button: {
     marginTop: "8px",
-    height: "42px",
+    height: "52px",
     border: "none",
     borderRadius: "8px",
     background: "#111",
     color: "#fff",
-    fontSize: "14px",
+    fontSize: "17px",
     fontWeight: 600,
     cursor: "pointer",
   },

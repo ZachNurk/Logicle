@@ -115,7 +115,7 @@ function chooseInvOperation(
     //TODO see if node is already in the set
     // functions return false if operation is not possible
     if (isImplicationNode(node)) {
-       const rule = IMPLICATION_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
+        const rule = IMPLICATION_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
         rule(node);
     } else {
         const rule = ATOM_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
@@ -214,6 +214,16 @@ export function revHS(
     curNodes.add(nodeB)
 }
 
+/** Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q */
+export function revDS(node: ProofNode) {
+    curNodes.delete(node)
+    const joiner = generateAtom();
+    const negJoiner = createNotNode(false,joiner,undefined,true)
+    const nodeA = createOrNode(false,joiner,node,undefined,true)
+    curNodes.add(negJoiner)
+    curNodes.add(nodeA)
+}
+
 /**from P and (P -> Q), infer Q */
 export function revMP(node: ProofNode) {
     curNodes.delete(node)
@@ -234,15 +244,6 @@ export function revMT(node: ProofNode) {
     curNodes.add(negJoiner)
     curNodes.add(nodeB)
     
-}
-/** Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q */
-export function revDS(node: ProofNode) {
-    curNodes.delete(node)
-    const joiner = generateAtom();
-    const negJoiner = createNotNode(false,joiner,undefined,true)
-    const nodeA = createOrNode(false,joiner,node,undefined,true)
-    curNodes.add(negJoiner)
-    curNodes.add(nodeA)
 }
 
 

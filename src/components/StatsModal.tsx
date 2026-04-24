@@ -41,6 +41,9 @@ export default function StatsModal({
   onEndless,
   onLogout,
 }: StatsModalProps) {
+  const [endlessHovered, setEndlessHovered] = useState(false);
+  const [logoutHovered, setLogoutHovered] = useState(false);
+  const [hoveredYearNav, setHoveredYearNav] = useState<"left" | "right" | null>(null);
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
@@ -64,9 +67,12 @@ export default function StatsModal({
           </button>
         )}
         <h2 style={styles.title}>{title}</h2>
+        {currentUser?.email && (
+          <div style={styles.userEmail}>{currentUser.email}</div>
+        )}
 
         <div style={styles.statRow}>
-          <span style={styles.statLabel}>Puzzles completed</span>
+          <span style={styles.statLabel}>Puzzles completed:</span>
           <span style={styles.statValue}>
             {completedDayIds.length}
           </span>
@@ -77,10 +83,15 @@ export default function StatsModal({
             {viewYear > MIN_STATS_YEAR ? (
               <button
                 type="button"
-                style={styles.yearNavArrow}
+                style={{
+                  ...styles.yearNavArrow,
+                  ...(hoveredYearNav === "left" ? styles.yearNavArrowHover : {}),
+                }}
                 onClick={() =>
                   setViewYear((y) => Math.max(MIN_STATS_YEAR, y - 1))
                 }
+                onMouseEnter={() => setHoveredYearNav("left")}
+                onMouseLeave={() => setHoveredYearNav(null)}
                 aria-label="Previous year"
               >
                 ←
@@ -92,8 +103,13 @@ export default function StatsModal({
             {viewYear < currentYear ? (
               <button
                 type="button"
-                style={styles.yearNavArrow}
+                style={{
+                  ...styles.yearNavArrow,
+                  ...(hoveredYearNav === "right" ? styles.yearNavArrowHover : {}),
+                }}
                 onClick={() => setViewYear((y) => Math.min(y + 1, currentYear))}
+                onMouseEnter={() => setHoveredYearNav("right")}
+                onMouseLeave={() => setHoveredYearNav(null)}
                 aria-label="Next year"
               >
                 →
@@ -143,12 +159,31 @@ export default function StatsModal({
         </div>
 
         {onEndless && (
-          <button type="button" style={styles.endlessButton} onClick={onEndless}>
+          <button
+            type="button"
+            style={{
+              ...styles.endlessButton,
+              ...(endlessHovered ? styles.endlessButtonHover : {}),
+            }}
+            onClick={onEndless}
+            onMouseEnter={() => setEndlessHovered(true)}
+            onMouseLeave={() => setEndlessHovered(false)}
+          >
             Play Endless Mode
           </button>
         )}
+
         {onLogout && (
-          <button type="button" style={styles.logoutButton} onClick={onLogout}>
+          <button
+            type="button"
+            style={{
+              ...styles.logoutButton,
+              ...(logoutHovered ? styles.logoutButtonHover : {}),
+            }}
+            onClick={onLogout}
+            onMouseEnter={() => setLogoutHovered(true)}
+            onMouseLeave={() => setLogoutHovered(false)}
+          >
             Log Out
           </button>
         )}
@@ -173,9 +208,11 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     background: Colors.background,
     borderRadius: "16px",
-    padding: "28px 28px 32px",
-    maxWidth: "980px",
-    width: "100%",
+    padding: "24px 24px 28px",
+    maxWidth: "860px",
+    width: "calc(100% - 32px)",
+    maxHeight: "90vh",
+    overflowY: "auto",
     boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
     boxSizing: "border-box",
   },
@@ -191,24 +228,31 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1,
   },
   title: {
-    margin: "0 0 20px 0",
+    margin: "0 0 6px 0",
     fontSize: "20px",
     fontWeight: 700,
   },
+  userEmail: {
+    marginBottom: "16px",
+    fontSize: "20px",
+    color: "#555",
+    overflowWrap: "anywhere",
+  },
   statRow: {
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
+    gap: "8px",
     padding: "12px 0",
     borderBottom: "1px solid #eee",
     marginBottom: "16px",
   },
   statLabel: {
-    fontSize: "15px",
+    fontSize: "25px",
     color: "#444",
   },
   statValue: {
-    fontSize: "22px",
+    fontSize: "25px",
     fontWeight: 700,
   },
   yearNavRow: {
@@ -234,17 +278,25 @@ const styles: Record<string, CSSProperties> = {
   yearNavArrow: {
     width: "40px",
     height: "40px",
-    border: "1px solid #ccc",
-    borderRadius: "8px",
-    background: Colors.surface1,
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    background: Colors.black,
     fontSize: "18px",
     lineHeight: 1,
     cursor: "pointer",
-    color: "#111",
+    color: Colors.white,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: 0,
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+  },
+  yearNavArrowHover: {
+    color: Colors.black,
+    transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
   yearNavYear: {
     flex: "0 0 auto",
@@ -262,15 +314,15 @@ const styles: Record<string, CSSProperties> = {
   twelveMonthGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-    gap: "14px 16px",
+    gap: "10px 12px",
     alignItems: "start",
-    minWidth: "720px",
+    minWidth: "640px",
   },
   miniMonthCard: {
     background: Colors.surface1,
     border: "1px solid #d8d4ce",
     borderRadius: "8px",
-    padding: "10px 10px 12px",
+    padding: "8px 8px 10px",
     minWidth: 0,
   },
   miniMonthCardCurrent: {
@@ -315,25 +367,43 @@ const styles: Record<string, CSSProperties> = {
   endlessButton: {
     marginTop: "24px",
     width: "100%",
-    height: "42px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#111",
-    color: "#fff",
-    fontSize: "14px",
+    minHeight: "50px",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    padding: "0.8em 2em",
+    background: Colors.black,
+    color: Colors.white,
+    fontSize: "17px",
     fontWeight: 600,
     cursor: "pointer",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    textAlign: "center",
+  },
+  endlessButtonHover: {
+    color: Colors.black,
+    transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
   logoutButton: {
     marginTop: "8px",
     width: "100%",
     height: "42px",
-    border: "1px solid #ccc",
-    borderRadius: "8px",
-    background: Colors.surface1,
-    color: "#555",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    background: Colors.white,
+    color: Colors.black,
     fontSize: "14px",
     fontWeight: 600,
     cursor: "pointer",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+  },
+  logoutButtonHover: {
+    color: Colors.white,
+    transform: "translate(-2px, -2px)",
+    background: "#ef4444",
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
 };

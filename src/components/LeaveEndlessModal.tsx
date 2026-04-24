@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useState } from "react";
 import { Colors } from "../constants/theme";
 
 type LeaveEndlessModalProps = {
@@ -13,6 +14,8 @@ export default function LeaveEndlessModal({
   onConfirm,
   endlessSolves,
 }: LeaveEndlessModalProps) {
+  const [hoveredButton, setHoveredButton] = useState<"cancel" | "confirm" | null>(null);
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.box} onClick={(e) => e.stopPropagation()}>
@@ -28,10 +31,28 @@ export default function LeaveEndlessModal({
         </p>
 
         <div style={styles.actions}>
-          <button type="button" style={styles.cancelButton} onClick={onClose}>
+          <button
+            type="button"
+            style={{
+              ...styles.actionButton,
+              ...(hoveredButton === "cancel" ? styles.actionButtonPinkHover : {}),
+            }}
+            onClick={onClose}
+            onMouseEnter={() => setHoveredButton("cancel")}
+            onMouseLeave={() => setHoveredButton(null)}
+          >
             Stay in endless
           </button>
-          <button type="button" style={styles.confirmButton} onClick={onConfirm}>
+          <button
+            type="button"
+            style={{
+              ...styles.actionButton,
+              ...(hoveredButton === "confirm" ? styles.actionButtonRedHover : {}),
+            }}
+            onClick={onConfirm}
+            onMouseEnter={() => setHoveredButton("confirm")}
+            onMouseLeave={() => setHoveredButton(null)}
+          >
             Go to daily
           </button>
         </div>
@@ -87,24 +108,28 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "flex-end",
     flexWrap: "wrap",
   },
-  cancelButton: {
+  actionButton: {
     padding: "12px 18px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    background: Colors.surface1,
-    color: "#333",
+    borderRadius: "4px",
+    border: `1px solid ${Colors.black}`,
+    background: Colors.black,
+    color: Colors.white,
     fontSize: "17px",
     fontWeight: 600,
     cursor: "pointer",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
   },
-  confirmButton: {
-    padding: "10px 16px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#111",
-    color: "#fff",
-    fontSize: "14px",
-    fontWeight: 600,
-    cursor: "pointer",
+  actionButtonPinkHover: {
+    color: Colors.black,
+    transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+  actionButtonRedHover: {
+    color: Colors.white,
+    transform: "translate(-2px, -2px)",
+    background: "#ef4444",
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
 };

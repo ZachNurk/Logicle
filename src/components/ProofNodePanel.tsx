@@ -59,6 +59,7 @@ export default function ProofNodePanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [arrows, setArrows] = useState<Arrow[]>([]);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   const setRef = useCallback(
     (id: string) => (el: HTMLButtonElement | null) => {
@@ -167,7 +168,10 @@ export default function ProofNodePanel({
                   ...styles.nodeButton,
                   ...(node.isStarter ? styles.starterButton : styles.derivedButton),
                   ...(node.selected ? styles.selectedButton : {}),
+                  ...(hoveredNodeId === node.id && !node.selected ? styles.nodeButtonHover : {}),
                 }}
+                onMouseEnter={() => setHoveredNodeId(node.id)}
+                onMouseLeave={() => setHoveredNodeId(null)}
               >
                 {node.text}
               </button>
@@ -276,7 +280,14 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
     border: `2px solid ${Colors.black}`,
     borderRadius: "100px",
-    fontWeight: "bold"
+    fontWeight: "bold",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+  },
+  nodeButtonHover: {
+    backgroundColor: Colors.lightPink,
+    transform: "translate(-2px, -2px)",
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
   starterButton: {
     backgroundColor: Colors.darkPink,
@@ -285,11 +296,13 @@ const styles: Record<string, CSSProperties> = {
     backgroundColor: Colors.mediumPink,
   },
   selectedButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: Colors.white,
+    transform: "translate(-2px, -2px)",
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
   solutionButton: {
     cursor: "default",
-    backgroundColor: Colors.lightPink,
+    backgroundColor: Colors.darkPink,
     color: "black",
   },
   solutionReached: {

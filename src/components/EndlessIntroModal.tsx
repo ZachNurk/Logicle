@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useState } from "react";
 import { Colors } from "../constants/theme";
 
 type EndlessIntroModalProps = {
@@ -11,6 +12,8 @@ export default function EndlessIntroModal({
   onClose,
   onStart,
 }: EndlessIntroModalProps) {
+  const [startHovered, setStartHovered] = useState(false);
+
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.box} onClick={(e) => e.stopPropagation()}>
@@ -35,7 +38,16 @@ export default function EndlessIntroModal({
           </li>
         </ul>
 
-        <button type="button" style={styles.startButton} onClick={onStart}>
+        <button
+          type="button"
+          style={{
+            ...styles.startButton,
+            ...(startHovered ? styles.startButtonHover : {}),
+          }}
+          onClick={onStart}
+          onMouseEnter={() => setStartHovered(true)}
+          onMouseLeave={() => setStartHovered(false)}
+        >
           Start endless
         </button>
       </div>
@@ -96,13 +108,23 @@ const styles: Record<string, CSSProperties> = {
   },
   startButton: {
     width: "100%",
-    height: "48px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#111",
-    color: "#fff",
+    minHeight: "48px",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    padding: "0.8em 2em",
+    background: Colors.black,
+    color: Colors.white,
     fontSize: "17px",
     fontWeight: 600,
     cursor: "pointer",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    textAlign: "center",
+  },
+  startButtonHover: {
+    color: Colors.black,
+    transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
 };
