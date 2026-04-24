@@ -31,6 +31,7 @@ const ALPHABET: string[] = [
   
 type AlphabetSet = Set<string>;
 type NodesSet = Set<ProofNode>;
+type ReverseRule = (node: ProofNode) => void | boolean;
 let curAlphabet: AlphabetSet = new Set<string>();
 let curNodes: NodesSet = new Set<ProofNode>();
 const NEGATION_PROBABILITY = 0.1;
@@ -43,6 +44,8 @@ const AND_PROBABILITY = 0.2;
 const MAX_STEP_DEPTH = 7;
 const MIN_STEP_DEPTH = 3;
 const MAX_GIVEN_SIZE = 4;
+const ATOM_RULES: ReverseRule[] = [revMP, revMT];
+const IMPLICATION_RULES: ReverseRule[] = [revHS,revMP,revMT];
 
 /** Function selects a relationship from our list using the probabilities */
 function chooseRelationship() {
@@ -111,15 +114,12 @@ function chooseInvOperation(
     //TODO if chose op is error, try another op. 
     //TODO see if node is already in the set
     // functions return false if operation is not possible
-    if (isImplicationNode(node) && Math.random() < 0.5) {
-        revHS(node)
+    if (isImplicationNode(node)) {
+       const rule = IMPLICATION_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
+        rule(node);
     } else {
-        if (Math.random() < 0.5) {
-            revMP(node)
-        } else {
-            revMT(node)
-        }
-        
+        const rule = ATOM_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
+        rule(node);
     }
     return ERROR_NODE
 }
@@ -198,6 +198,7 @@ function generateAtom(): ProofNode {
   return atom;
 }
 
+//TODO maybe shuffle isndie indivudal nodes whenc reating?
 /** [(p → q) ∧ (q → r)] → (p → r) */
 export function revHS(
   node: ProofNode,
@@ -233,6 +234,15 @@ export function revMT(node: ProofNode) {
     curNodes.add(negJoiner)
     curNodes.add(nodeB)
     
+}
+/** Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q */
+export function revDS(node: ProofNode) {
+    curNodes.delete(node)
+    const joiner = generateAtom();
+    const negJoiner = createNotNode(false,joiner,undefined,true)
+    const nodeA = createOrNode(false,joiner,node,undefined,true)
+    curNodes.add(negJoiner)
+    curNodes.add(nodeA)
 }
 
 
