@@ -2,7 +2,7 @@ TODOs:
 
 Reset password email setup
 Puzzle generator that uses a DFS search with randomization
-Switch to HTTPS
+Make daily puzzles better
 Secure DB
 Ship to vercel s
 

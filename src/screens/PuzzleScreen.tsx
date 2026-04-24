@@ -96,7 +96,7 @@ export default function PuzzleScreen({
           onClose={() => setShowStats(false)}
         />
       )}
-      {!victory && showHowToPlay && (
+      {showHowToPlay && (
         <HowToPlayModal currentUser={currentUser} onClose={closeHowToPlay} />
       )}
       {showEndlessIntro && (
@@ -112,11 +112,7 @@ export default function PuzzleScreen({
       <header style={styles.topBar}>
         <button
           type="button"
-          style={{
-            ...styles.howToPlayButton,
-            ...(victory ? styles.howToPlayButtonDisabled : {}),
-          }}
-          disabled={victory}
+          style={styles.howToPlayButton}
           onClick={() => setHowToPlay(true)}
           aria-label="How to play"
         >
@@ -219,10 +215,6 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     boxSizing: "border-box",
-  },
-  howToPlayButtonDisabled: {
-    opacity: 0.35,
-    cursor: "not-allowed",
   },
   contentWrap: {
     flex: 1,
