@@ -206,6 +206,16 @@ export function createNotNode(
   parents?: ProofNode[],
   isStarter?: boolean,
 ): NotNode {
+  if (isNotNode(contains)) {
+    return {
+      ...contains.contains,
+      id: crypto.randomUUID(),
+      selected,
+      isStarter: isStarter ?? false,
+      context: false,
+      parents: parents ?? [],
+    } as NotNode;
+  }
   const text = `¬${checkParentheses(contains)}`;
   return {
     id: crypto.randomUUID(),
@@ -216,7 +226,7 @@ export function createNotNode(
     relationship: "Not",
     contains,
     parents: parents ?? [],
-  };
+  } as NotNode;
 }
 
 export function createImplicationNode(

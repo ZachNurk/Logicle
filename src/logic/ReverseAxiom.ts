@@ -31,6 +31,8 @@ const ALPHABET: string[] = [
   
 type AlphabetSet = Set<string>;
 type NodesSet = Set<ProofNode>;
+let curAlphabet: AlphabetSet = new Set<string>();
+let curNodes: NodesSet = new Set<ProofNode>();
 const NEGATION_PROBABILITY = 0.1;
 const IF_PROBABILITY = 0.2;
 const NOT_PROBABILITY = 0.15;
@@ -67,15 +69,15 @@ function chooseRelationship() {
  */
 export function generateEndlessPuzzle(): EndlessPuzzlePayload {
 //   throw new Error("Endless puzzle generator not implemented");
-    const curAlphabet: AlphabetSet = new Set<string>();
-    const curNodes: NodesSet = new Set<ProofNode>();
+    curAlphabet = new Set<string>();
+    curNodes = new Set<ProofNode>();
     let payLoad: EndlessPuzzlePayload = {
       id: undefined,
       nodes: Array<ProofNode>(),
       solution: ERROR_NODE,
     };
 
-    payLoad.solution = generateSolutionNode(curAlphabet, curNodes)
+    payLoad.solution = generateSolutionNode()
     const numSteps = Math.floor(Math.random() * (MAX_STEP_DEPTH - MIN_STEP_DEPTH + 1)) + MIN_STEP_DEPTH;
 
     for (var i = 0; i < numSteps; i++) {
@@ -84,11 +86,20 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
         const curStepSet = new Set(curNodes);
      
         for (const node of curStepSet) {
-            chooseInvOperation(node, curAlphabet, curNodes)
+            chooseInvOperation(node)
         }
     }
-    for (const node of curNodes) {
-        payLoad.nodes.push(node)
+    payLoad.nodes = Array.from(curNodes).map((node) => ({
+        ...node,
+        selected: false,
+        isStarter: true,
+        context: false,
+        parents: [],
+      }));
+    // Shuffle
+    for (let i = payLoad.nodes.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [payLoad.nodes[i], payLoad.nodes[j]] = [payLoad.nodes[j], payLoad.nodes[i]];
     }
     return payLoad;
 
@@ -96,23 +107,24 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
 
 function chooseInvOperation(
   node: ProofNode,
-  curAlphabet: AlphabetSet,
-  curNodes: NodesSet,
 ): ProofNode {
     //TODO if chose op is error, try another op. 
     //TODO see if node is already in the set
     // functions return false if operation is not possible
     if (isImplicationNode(node) && Math.random() < 0.5) {
-        revHS(node, curAlphabet, curNodes)
+        revHS(node)
     } else {
-        revDN(node, curNodes)
+        if (Math.random() < 0.5) {
+            revMP(node)
+        } else {
+            revMT(node)
+        }
+        
     }
     return ERROR_NODE
 }
 
 export function generateSolutionNode(
-  curAlphabet: AlphabetSet,
-  curNodes: NodesSet,
 ): ProofNode {
     //  Relationship = "If" | "Not" | "And" | "Or" | "Iff" and also just by itself
     // Node should be a negation ~20% of the time
@@ -121,35 +133,35 @@ export function generateSolutionNode(
     switch (relationship) {
         case "If":
             {
-              const left = generateAtom(curAlphabet);
-              const right = generateAtom(curAlphabet);
+              const left = generateAtom();
+              const right = generateAtom();
               solutionNode = createImplicationNode(false, left, right, undefined, true);
             }
             break;
         case "Not":
-            solutionNode = createNotNode(false, generateAtom(curAlphabet), undefined, true)
+            solutionNode = createNotNode(false, generateAtom(), undefined, true)
             break;
         case "Atom":
-            solutionNode = generateAtom(curAlphabet)
+            solutionNode = generateAtom()
             break;
         case "Or":
             {
-              const left = generateAtom(curAlphabet);
-              const right = generateAtom(curAlphabet);
+              const left = generateAtom();
+              const right = generateAtom();
               solutionNode = createOrNode(false, left, right, undefined, true);
             }
             break;
         case "Iff":
             {
-              const left = generateAtom(curAlphabet);
-              const right = generateAtom(curAlphabet);
+              const left = generateAtom();
+              const right = generateAtom();
               solutionNode = createIffNode(false, left, right, undefined, true);
             }
             break;
         case "And":
             {
-              const left = generateAtom(curAlphabet);
-              const right = generateAtom(curAlphabet);
+              const left = generateAtom();
+              const right = generateAtom();
               solutionNode = createAndNode(false, left, right, undefined, true);
             }
             break;
@@ -162,7 +174,7 @@ export function generateSolutionNode(
  * Adds to the alphabet 
  * @returns G is the new atom
  */
-function generateAtom(curAlphabet: AlphabetSet): ProofNode {
+function generateAtom(): ProofNode {
   if (curAlphabet.size >= ALPHABET.length) {
     throw new Error("No letters left in alphabet set");
   }
@@ -181,7 +193,7 @@ function generateAtom(curAlphabet: AlphabetSet): ProofNode {
     context: false,
   } as ProofNode;
   if (Math.random() < NEGATION_PROBABILITY) {
-    return createNotNode(false, atom, undefined, false);
+    return createNotNode(false, atom, undefined, true);
   }
   return atom;
 }
@@ -189,21 +201,37 @@ function generateAtom(curAlphabet: AlphabetSet): ProofNode {
 /** [(p → q) ∧ (q → r)] → (p → r) */
 export function revHS(
   node: ProofNode,
-  curAlphabet: AlphabetSet,
-  curNodes: NodesSet,
 ) {
     if (!isImplicationNode(node)) return false;
     const nodeLeft = node.left
     const nodeRight = node.right
     curNodes.delete(node)
-    const joiner = generateAtom(curAlphabet);
+    const joiner = generateAtom();
     const nodeA: ProofNode = createImplicationNode(false,nodeLeft,joiner,undefined,true)
     const nodeB: ProofNode = createImplicationNode(false,joiner,nodeRight,undefined,true)
     curNodes.add(nodeA)
     curNodes.add(nodeB)
 }
-/** Double negation: ¬¬p ≡ p */
-function revDN(node: ProofNode, curNodes: NodesSet) {
+
+/**from P and (P -> Q), infer Q */
+export function revMP(node: ProofNode) {
     curNodes.delete(node)
-    curNodes.add(createNotNode(false,createNotNode(false,node,undefined,false),undefined,true))
+    const joiner = generateAtom();
+    const nodeA: ProofNode = joiner
+    const nodeB: ProofNode = createImplicationNode(false,joiner, node,undefined,true)
+    curNodes.add(nodeA)
+    curNodes.add(nodeB)
 }
+
+/** Modus Tollens: [¬q ∧ (p → q)] → ¬p */
+export function revMT(node: ProofNode) {
+    curNodes.delete(node)
+    const joiner = generateAtom();
+    const negJoiner = createNotNode(false,joiner, undefined, true)
+    const negOriginal = createNotNode(false,node)
+    const nodeB = createImplicationNode(false, negOriginal,joiner,undefined,true)
+    curNodes.add(negJoiner)
+    curNodes.add(nodeB)
+    
+}
+

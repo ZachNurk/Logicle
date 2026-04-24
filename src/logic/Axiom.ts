@@ -19,7 +19,6 @@ import {
   createResultNode,
   createOrNode,
   createAndNode,
-  checkParentheses,
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -282,19 +281,41 @@ export function conjunction(premises: AndNode, selected: ProofNode[]): ProofNode
 }
 
 /**
- * Double negation: ¬¬p ≡ p
- * @param original is the node to double negate
- * @return returns the node if correct operation, error node if not
+ * Absorption:
+ * - P ∨ (P ∧ Q) ≡ P
+ * - P ∧ (P ∨ Q) ≡ P
+ * (and symmetric variants where the repeated P is on the right side).
  */
-export function doubleNegation(original: ProofNode): ProofNode {
-  if (!isNotNode(original)) {
-    return ERROR_NODE
+export function absorption(original: ProofNode): ProofNode {
+  if (isOrNode(original)) {
+    if (isAndNode(original.right)) {
+      if (sameNode(original.left, original.right.left) || sameNode(original.left, original.right.right)) {
+        return createResultNode(original.left, [original]);
+      }
+    }
+    if (isAndNode(original.left)) {
+      if (sameNode(original.right, original.left.left) || sameNode(original.right, original.left.right)) {
+        return createResultNode(original.right, [original]);
+      }
+    }
+    return ERROR_NODE;
   }
-  if (!isNotNode(original.contains)) {
-    return ERROR_NODE
+
+  if (isAndNode(original)) {
+    if (isOrNode(original.right)) {
+      if (sameNode(original.left, original.right.left) || sameNode(original.left, original.right.right)) {
+        return createResultNode(original.left, [original]);
+      }
+    }
+    if (isOrNode(original.left)) {
+      if (sameNode(original.right, original.left.left) || sameNode(original.right, original.left.right)) {
+        return createResultNode(original.right, [original]);
+      }
+    }
+    return ERROR_NODE;
   }
-  const inner = original.contains.contains;
-  return createResultNode(inner, [original]);
+
+  return ERROR_NODE;
 }
 
 /**
@@ -779,12 +800,13 @@ export const Axioms: Axiom[] = [
     apply: conjunction,
   } satisfies Axiom,
   {
-    id: "DN",
-    text: "Double Negation",
+    id: "Abs",
+    text: "Absorption",
     selected: false,
-    description: "¬¬A ≡ A",
+    description: "A ∨ (A ∧ B) ≡ A",
+    description2: "A ∧ (A ∨ B) ≡ A",
     applyType: "4",
-    apply: doubleNegation,
+    apply: absorption,
   } satisfies Axiom,
   {
     id: "Comm",

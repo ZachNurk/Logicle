@@ -10,7 +10,6 @@ import {
   conjunction,
   constructiveDilemmaOr,
   constructiveDilemmaAnd,
-  doubleNegation,
   commutativity,
   associativity,
   distributivity,
@@ -47,14 +46,14 @@ describe("ReverseAxiom", () => {
   it("revHS accepts iff input (non-error path)", () => {
     const iff = createIffNode(false, A, B, undefined, true); // A-->B
 
-    const result = revHS(iff, new Set<string>(), new Set<ProofNode>());
+    const result = revHS(iff);
     expect(result).not.toEqual(ERROR_NODE);
   });
   it("logs 10 generated solution nodes", () => {
     for (let i = 0; i < 10; i += 1) {
       // Intentional debug output while tuning generator distribution.
       // eslint-disable-next-line no-console
-      console.log(generateSolutionNode(new Set<string>(), new Set<ProofNode>()).text);
+      console.log(generateSolutionNode().text);
     }
     expect(true).toBe(true);
   });

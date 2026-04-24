@@ -10,7 +10,7 @@ import {
   conjunction,
   constructiveDilemmaOr,
   constructiveDilemmaAnd,
-  doubleNegation,
+  absorption,
   commutativity,
   associativity,
   distributivity,
@@ -440,7 +440,8 @@ describe("Axioms", () => {
       const cConj = createAndNode(false, C, D, undefined)
       const EXPECTED = createAndNode(false, aConj, cConj, undefined)
 
-      const ACTUAL = conjunction(createAndNode(false, aConj,cConj));
+      const pair = createAndNode(false, aConj, cConj);
+      const ACTUAL = conjunction(pair, [aConj, cConj]);
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
   })
@@ -471,27 +472,15 @@ describe("Axioms", () => {
     })
   })
   
-  describe("Double negation", () => {
-    it("¬¬A yields A", () => {
-      const notA = createNotNode(false, A)
-      const notNotA = createNotNode(false, notA)
-      const EXPECTED = "A"
-  
-      const ACTUAL = doubleNegation(notNotA)
-      expect(ACTUAL.text === EXPECTED).toBe(true)
+  describe("Absorption", () => {
+    it("A ∨ (A ∧ B) yields A", () => {
+      const original = createOrNode(false, A, createAndNode(false, A, B))
+      expect(absorption(original).text).toBe("A")
     })
-  
-    it("¬¬(A ∧ B) yields (A ∧ B)", () => {
-      const aAndB = createAndNode(false, A, B)
-      const notAAndB = createNotNode(false, aAndB)
-      const notNotAAndB = createNotNode(false, notAAndB)
-      const EXPECTED = "(A ∧ B)"
-  
-      const ACTUAL = doubleNegation(notNotAAndB)
-      if (ACTUAL.text !== EXPECTED) {
-        console.log("doubleNegation result:", { id: ACTUAL.id, text: ACTUAL.text, isError: ACTUAL === ERROR_NODE });
-      }
-      expect(ACTUAL.text).toBe(EXPECTED)
+
+    it("A ∧ (A ∨ B) yields A", () => {
+      const original = createAndNode(false, A, createOrNode(false, A, B))
+      expect(absorption(original).text).toBe("A")
     })
   })
   
