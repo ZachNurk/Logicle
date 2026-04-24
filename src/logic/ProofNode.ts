@@ -74,6 +74,15 @@ export function areNegationsOfEachOther(a: ProofNode, b: ProofNode): boolean {
 }
 
 /**
+ * Function determines if given node is an Atom Node
+ * @param n is the node to check
+ * @return returns true if it has no logical relationship, false if not
+ */
+export function isAtomNode(node: ProofNode): node is AtomNode {
+  return !hasAnyRelationship(node);
+}
+
+/**
  * Function determines if given node is an And Node
  * @param n is the node to check
  * @return returns true if its an and node, false if not
@@ -156,6 +165,10 @@ export type ProofNode = {
   relationship?: Relationship; // Only present on non-atomic nodes
   /** Abbreviation of the axiom rule used to derive this node (e.g. "MP", "HS"). */
   rule?: string;
+};
+
+export type AtomNode = ProofNode & {
+  relationship?: undefined;
 };
 
 export type BinaryNode = ProofNode & {

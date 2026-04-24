@@ -19,6 +19,7 @@ import {
   createResultNode,
   createOrNode,
   createAndNode,
+  isAtomNode,
 } from "./ProofNode";
 import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
 
@@ -167,13 +168,13 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
   const a = premises.left;
   const b = premises.right;
 
-  let premise: NotNode | undefined;
-  let implication: ImplicationNode | undefined;
+  let premise: NotNode | ProofNode | undefined;
+  let implication: ImplicationNode | ProofNode | undefined;
 
-  if (isNotNode(a) && isImplicationNode(b)) {
+  if ((isNotNode(a) || isAtomNode(a)) && isImplicationNode(b)) {
     premise = a;
     implication = b;
-  } else if (isNotNode(b) && isImplicationNode(a)) {
+  } else if ((isNotNode(b) || isAtomNode(b)) && isImplicationNode(a)) {
     premise = b;
     implication = a;
   } else {
