@@ -44,8 +44,8 @@ const AND_PROBABILITY = 0.2;
 const MAX_STEP_DEPTH = 7;
 const MIN_STEP_DEPTH = 3;
 const MAX_GIVEN_SIZE = 4;
-const ATOM_RULES: ReverseRule[] = [revMP, revMT];
-const IMPLICATION_RULES: ReverseRule[] = [revHS,revMP,revMT];
+const ATOM_RULES: ReverseRule[] = [revMP, revMT, revSimp];
+const IMPLICATION_RULES: ReverseRule[] = [revHS,revMP,revMT, revSimp];
 
 /** Function selects a relationship from our list using the probabilities */
 function chooseRelationship() {
@@ -72,8 +72,8 @@ function chooseRelationship() {
  */
 export function generateEndlessPuzzle(): EndlessPuzzlePayload {
 //   throw new Error("Endless puzzle generator not implemented");
-    curAlphabet = new Set<string>();
-    curNodes = new Set<ProofNode>();
+    curAlphabet.clear()
+    curNodes.clear()
     let payLoad: EndlessPuzzlePayload = {
       id: undefined,
       nodes: Array<ProofNode>(),
@@ -90,6 +90,7 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
      
         for (const node of curStepSet) {
             chooseInvOperation(node)
+            if (curNodes.size === MAX_GIVEN_SIZE) break;
         }
     }
     payLoad.nodes = Array.from(curNodes).map((node) => ({
@@ -244,6 +245,14 @@ export function revMT(node: ProofNode) {
     curNodes.add(negJoiner)
     curNodes.add(nodeB)
     
+}
+
+/** * Simplification: (p ∧ q) → p */
+export function revSimp(node: ProofNode) {
+  curNodes.delete(node)
+  const joiner = generateAtom()
+  const nodeA = createAndNode(false, node, joiner, undefined, true)
+  curNodes.add(nodeA)
 }
 
 

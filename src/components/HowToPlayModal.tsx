@@ -35,6 +35,9 @@ export default function HowToPlayModal({
             <br></br>(Hover the i to see rule info)
           </li>
           <li style={styles.listItem}>
+            In rule info, <strong>∧</strong> means you need both facts selected.
+          </li>
+          <li style={styles.listItem}>
             Win when something you derive matches the goal exactly.
           </li>
         </ul>
