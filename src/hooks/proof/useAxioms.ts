@@ -4,7 +4,7 @@
  */
 
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Axiom } from "../../logic/Axiom";
 import { Axioms } from "../../logic/Axiom";
 
@@ -13,6 +13,15 @@ import { Axioms } from "../../logic/Axiom";
  */
 export function useAxioms() {
   const [axioms, setAxioms] = useState<Axiom[]>(Axioms);
+
+  useEffect(() => {
+    setAxioms((prev) =>
+      Axioms.map((latestAxiom) => ({
+        ...latestAxiom,
+        selected: prev.find((axiom) => axiom.id === latestAxiom.id)?.selected ?? latestAxiom.selected,
+      })),
+    );
+  }, []);
 
   const toggleSelectedAxiom = useCallback((id: string) => {
     setAxioms((prev) =>

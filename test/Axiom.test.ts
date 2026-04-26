@@ -19,8 +19,7 @@ import {
   deMorgan,
   conditionalIdentityImplication,
   conditionalIdentityIff,
-  implicationCommonConsequent,
-  implicationCommonAntecedent,
+  implication,
 } from "../src/logic/Axiom";
 import {
   createNode,
@@ -592,6 +591,27 @@ describe("Axioms", () => {
       const ACTUAL = distributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
+
+    it("(A ∧ B) ∨ (C ∧ D) yields full distribution over both sides", () => {
+      const aAndB = createAndNode(false, A, B)
+      const cAndD = createAndNode(false, C, D)
+      const original = createOrNode(false, aAndB, cAndD)
+
+      const left = createAndNode(
+        false,
+        createOrNode(false, A, C),
+        createOrNode(false, A, D),
+      )
+      const right = createAndNode(
+        false,
+        createOrNode(false, B, C),
+        createOrNode(false, B, D),
+      )
+      const EXPECTED = createAndNode(false, left, right)
+
+      const ACTUAL = distributivity(original)
+      expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
+    })
   })
   
   describe("Distributivity (∧ over ∨)", () => {
@@ -615,6 +635,27 @@ describe("Axioms", () => {
       const expectedRight = createAndNode(false, A, C)
       const EXPECTED = createOrNode(false, expectedLeft, expectedRight)
   
+      const ACTUAL = distributivity(original)
+      expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
+    })
+
+    it("(A ∨ B) ∧ (C ∨ D) yields full distribution over both sides", () => {
+      const aOrB = createOrNode(false, A, B)
+      const cOrD = createOrNode(false, C, D)
+      const original = createAndNode(false, aOrB, cOrD)
+
+      const left = createOrNode(
+        false,
+        createAndNode(false, A, C),
+        createAndNode(false, A, D),
+      )
+      const right = createOrNode(
+        false,
+        createAndNode(false, B, C),
+        createAndNode(false, B, D),
+      )
+      const EXPECTED = createOrNode(false, left, right)
+
       const ACTUAL = distributivity(original)
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true)
     })
@@ -820,7 +861,7 @@ describe("Axioms", () => {
       const aImpC = createImplicationNode(false, A, C)
       const bImpC = createImplicationNode(false, B, C)
 
-      const ACTUAL = implicationCommonConsequent(premises(aImpC, bImpC), [aImpC, bImpC]).text
+      const ACTUAL = implication(premises(aImpC, bImpC), [aImpC, bImpC]).text
       const EXPECTED = "(A ∨ B) → C"
       expect(ACTUAL).toBe(EXPECTED)
     })
@@ -831,7 +872,7 @@ describe("Axioms", () => {
       const aAndBImpE = createImplicationNode(false, aAndB, E)
       const cOrDImpE = createImplicationNode(false, cOrD, E)
 
-      const ACTUAL = implicationCommonConsequent(
+      const ACTUAL = implication(
         premises(aAndBImpE, cOrDImpE),
         [aAndBImpE, cOrDImpE],
       ).text
@@ -842,8 +883,20 @@ describe("Axioms", () => {
     it("returns ERROR when consequents differ", () => {
       const aImpC = createImplicationNode(false, A, C)
       const bImpD = createImplicationNode(false, B, D)
-      const ACTUAL = implicationCommonConsequent(premises(aImpC, bImpD), [aImpC, bImpD])
+      const ACTUAL = implication(premises(aImpC, bImpD), [aImpC, bImpD])
       expect(sameNode(ACTUAL, ERROR_NODE)).toBe(true)
+    })
+
+    it("reverse: ((A ∨ B) → C) yields (A → C) ∧ (B → C)", () => {
+      const aOrB = createOrNode(false, A, B)
+      const original = createImplicationNode(false, aOrB, C)
+      const expectedLeft = createImplicationNode(false, A, C)
+      const expectedRight = createImplicationNode(false, B, C)
+      const expected = createAndNode(false, expectedLeft, expectedRight)
+
+      const actual = implication(original, [original])
+
+      expect(sameNode(actual, expected)).toBe(true)
     })
   })
 
@@ -852,7 +905,7 @@ describe("Axioms", () => {
       const aImpB = createImplicationNode(false, A, B)
       const aImpC = createImplicationNode(false, A, C)
 
-      const ACTUAL = implicationCommonAntecedent(premises(aImpB, aImpC), [aImpB, aImpC]).text
+      const ACTUAL = implication(premises(aImpB, aImpC), [aImpB, aImpC]).text
       const EXPECTED = "A → (B ∧ C)"
       expect(ACTUAL).toBe(EXPECTED)
     })
@@ -863,7 +916,7 @@ describe("Axioms", () => {
       const aImpBOrC = createImplicationNode(false, A, bOrC)
       const aImpDAndE = createImplicationNode(false, A, dAndE)
 
-      const ACTUAL = implicationCommonAntecedent(
+      const ACTUAL = implication(
         premises(aImpBOrC, aImpDAndE),
         [aImpBOrC, aImpDAndE],
       ).text
@@ -874,8 +927,20 @@ describe("Axioms", () => {
     it("returns ERROR when antecedents differ", () => {
       const aImpB = createImplicationNode(false, A, B)
       const cImpD = createImplicationNode(false, C, D)
-      const ACTUAL = implicationCommonAntecedent(premises(aImpB, cImpD), [aImpB, cImpD])
+      const ACTUAL = implication(premises(aImpB, cImpD), [aImpB, cImpD])
       expect(sameNode(ACTUAL, ERROR_NODE)).toBe(true)
+    })
+
+    it("reverse: A → (B ∧ C) yields (A → B) ∧ (A → C)", () => {
+      const bAndC = createAndNode(false, B, C)
+      const original = createImplicationNode(false, A, bAndC)
+      const expectedLeft = createImplicationNode(false, A, B)
+      const expectedRight = createImplicationNode(false, A, C)
+      const expected = createAndNode(false, expectedLeft, expectedRight)
+
+      const actual = implication(original, [original])
+
+      expect(sameNode(actual, expected)).toBe(true)
     })
   })
   

@@ -21,7 +21,7 @@ import {
   createAndNode,
   isAtomNode,
 } from "./ProofNode";
-import type { ImplicationNode, NotNode, AndNode } from "./ProofNode";
+import type { ImplicationNode, AndNode } from "./ProofNode";
 
 /** Type 1: premises + selected. Type 2: premises + side. Type 3: original + addition. Type 4: original only. Type 5: premises + selected + connective. Type 6: original + option. Type 7: premises + selected + option (e.g. Implication common consequent/antecedent). */
 export type AxiomApplyType = "1" | "2" | "3" | "4" | "5" | "6" | "7";
@@ -32,6 +32,8 @@ export type Axiom = {
   selected: boolean;
   description: string;
   description2?: string;
+  description3?: string;
+  description4?: string;
   /** Which apply signature: "1" = premises + selected, "2" = premises + side, "3" = original + addition, "4" = original only, "5" = premises + selected + connective, "6" = original + option, "7" = premises + selected + option. */
   applyType: AxiomApplyType;
   /** For applyType "6" or "7", passed as option argument to apply. */
@@ -43,11 +45,11 @@ export type Axiom = {
     | ((original: ProofNode) => ProofNode)
     | ((premises: AndNode, selected: ProofNode[], connective: "or" | "and") => ProofNode)
     | ((original: ProofNode, option: string) => ProofNode)
-    | ((premises: AndNode, selected: ProofNode[], option: string) => ProofNode);
+    | ((premises: ProofNode, selected: ProofNode[], option: string) => ProofNode);
 };
 
 /** Throws if premises is not a valid And node with left and right. */
-function checkPremises(premises: AndNode): boolean {
+function checkPremises(premises: ProofNode): premises is AndNode {
   return isAndNode(premises) && !!premises.left && !!premises.right;
 }
 
@@ -427,6 +429,20 @@ function orOverAndDistributivity(original: ProofNode): ProofNode {
   if (!isOrNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
   }
+  if (isAndNode(original.left) && isAndNode(original.right)) {
+    // (A ∧ B) ∨ (C ∧ D) → ((A ∨ C) ∧ (A ∨ D)) ∧ ((B ∨ C) ∧ (B ∨ D))
+    const a = original.left.left;
+    const b = original.left.right;
+    const c = original.right.left;
+    const d = original.right.right;
+    const aOrC = createOrNode(false, a, c, undefined);
+    const aOrD = createOrNode(false, a, d, undefined);
+    const bOrC = createOrNode(false, b, c, undefined);
+    const bOrD = createOrNode(false, b, d, undefined);
+    const left = createAndNode(false, aOrC, aOrD, undefined);
+    const right = createAndNode(false, bOrC, bOrD, undefined);
+    return createAndNode(false, left, right, [original]);
+  }
   if (isAndNode(original.right)) {
     // A ∨ (B ∧ C) → (A ∨ B) ∧ (A ∨ C)
     const a = original.left;
@@ -458,6 +474,20 @@ function orOverAndDistributivity(original: ProofNode): ProofNode {
 function andOverOrDistributivity(original: ProofNode): ProofNode {
   if (!isAndNode(original) || !original.left || !original.right) {
     return ERROR_NODE;
+  }
+  if (isOrNode(original.left) && isOrNode(original.right)) {
+    // (A ∨ B) ∧ (C ∨ D) → ((A ∧ C) ∨ (A ∧ D)) ∨ ((B ∧ C) ∨ (B ∧ D))
+    const a = original.left.left;
+    const b = original.left.right;
+    const c = original.right.left;
+    const d = original.right.right;
+    const aAndC = createAndNode(false, a, c, undefined);
+    const aAndD = createAndNode(false, a, d, undefined);
+    const bAndC = createAndNode(false, b, c, undefined);
+    const bAndD = createAndNode(false, b, d, undefined);
+    const left = createOrNode(false, aAndC, aAndD, undefined);
+    const right = createOrNode(false, bAndC, bAndD, undefined);
+    return createOrNode(false, left, right, [original]);
   }
   if (isOrNode(original.right)) {
     // A ∧ (B ∨ C) → (A ∧ B) ∨ (A ∧ C)
@@ -655,79 +685,61 @@ export function conditionalIdentityIff(original: ProofNode): ProofNode {
   return createAndNode(false, pImplQ, qImplP, [original]);
 }
 
-
-
-
-/**
-     * Implication #32: [(p → r) ∧ (q → r)] → ((p ∨ q) → r)
- * @param premises And node containing two implication nodes
- * @param selected selected nodes used as parents for the result
- */
-export function implicationCommonConsequent(premises: AndNode, selected: ProofNode[]): ProofNode {
-  if (!checkPremises(premises)) return ERROR_NODE;
-  const a = premises.left;
-  const b = premises.right;
-
-  if (!(isImplicationNode(a) && isImplicationNode(b))) {
-    return ERROR_NODE;
-  }
-  if (!sameNode(a.right, b.right)) {
-    return ERROR_NODE;
-  }
-
-  const left = createOrNode(false, a.left, b.left, undefined);
-  return createImplicationNode(false, left, a.right, selected);
-}
-
-/**
- * Implication #33: [(p → q) ∧ (p → r)] → (p → (q ∧ r))
- * @param premises And node containing two implication nodes
- * @param selected selected nodes used as parents for the result
- */
-export function implicationCommonAntecedent(premises: AndNode, selected: ProofNode[]): ProofNode {
-  if (!checkPremises(premises)) return ERROR_NODE;
-  const a = premises.left;
-  const b = premises.right;
-
-  if (!(isImplicationNode(a) && isImplicationNode(b))) {
-    return ERROR_NODE;
-  }
-  if (!sameNode(a.left, b.left)) {
-    return ERROR_NODE;
-  }
-
-  const right = createAndNode(false, a.right, b.right, undefined);
-  return createImplicationNode(false, a.left, right, selected);
-}
-
 /**
  * Implication wrapper:
+ * 
  * first tries common consequent (#32), then common antecedent (#33).
  */
-export function implication(premises: AndNode, selected: ProofNode[]): ProofNode {
-  const consequentResult = implicationCommonConsequent(premises, selected);
-  if (!sameNode(consequentResult, ERROR_NODE)) {
-    return consequentResult;
+export function implication(premises: ProofNode, selected: ProofNode[]): ProofNode {
+  // Case 1 (A--> C) and (B --> C) = (A V B) --> C
+  // Case 2 (A --B) and A --> C) = (A --> (B V C))
+  // Case 3 (A --> (B V C)) = (A --B) and A --> C) 
+  // case 4 (A V B) --> C = (A--> C) and (B --> C)
+  if (checkPremises(premises)) {
+    const a = premises.left;
+    const b = premises.right;
+
+    if (!(isImplicationNode(a) && isImplicationNode(b))) {
+      return ERROR_NODE;
+    }
+
+    // Case 1: (A → C) ∧ (B → C) ≡ (A ∨ B) → C
+    if (sameNode(a.right, b.right)) {
+      const left = createOrNode(false, a.left, b.left, undefined);
+      return createImplicationNode(false, left, a.right, selected);
+    }
+
+    // Case 2: (A → B) ∧ (A → C) ≡ A → (B ∧ C)
+    if (sameNode(a.left, b.left)) {
+      const right = createAndNode(false, a.right, b.right, undefined);
+      return createImplicationNode(false, a.left, right, selected);
+    }
+
+    return ERROR_NODE;
   }
-  return implicationCommonAntecedent(premises, selected);
+
+  if (!isImplicationNode(premises)) {
+    return ERROR_NODE;
+  }
+
+  // Case 3: A → (B ∧ C) ≡ (A → B) ∧ (A → C)
+  if (isAndNode(premises.right)) {
+    const left = createImplicationNode(false, premises.left, premises.right.left, undefined);
+    const right = createImplicationNode(false, premises.left, premises.right.right, undefined);
+    return createAndNode(false, left, right, [premises]);
+  }
+
+  // Case 4: (A ∨ B) → C ≡ (A → C) ∧ (B → C)
+  if (isOrNode(premises.left)) {
+    const left = createImplicationNode(false, premises.left.left, premises.right, undefined);
+    const right = createImplicationNode(false, premises.left.right, premises.right, undefined);
+    return createAndNode(false, left, right, [premises]);
+  }
+
+  return ERROR_NODE;
 }
 
-/**
- * Implication with variant: "consequent" for common consequent, "antecedent" for common antecedent.
- */
-export function implicationCommonWithVariant(
-  premises: AndNode,
-  selected: ProofNode[],
-  variant: string
-): ProofNode {
-  if (variant !== "antecedent" && variant !== "consequent") {
-    return implication(premises, selected);
-  }
-  if (variant === "antecedent") {
-    return implicationCommonAntecedent(premises, selected);
-  }
-  return implicationCommonConsequent(premises, selected);
-}
+
 
 // Axioms list
 
@@ -831,8 +843,10 @@ export const Axioms: Axiom[] = [
     id: "Dist",
     text: "Distributivity",
     selected: false,
-    description: "A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)",
-    description2: "A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)",
+    description3: "A ∨ (B ∧ C) ≡ (A ∨ B) ∧ (A ∨ C)",
+    description4: "A ∧ (B ∨ C) ≡ (A ∧ B) ∨ (A ∧ C)",
+    description: "(A ∧ B) ∨ (C ∧ D) ≡ ((A ∨ C) ∧ (A ∨ D)) ∧ ((B ∨ C) ∧ (B ∨ D))",
+    description2: "(A ∨ B) ∧ (C ∨ D) ≡ ((A ∧ C) ∨ (A ∧ D)) ∨ ((B ∧ C) ∨ (B ∧ D))",
     applyType: "4",
     apply: distributivity,
   } satisfies Axiom,
@@ -884,8 +898,8 @@ export const Axioms: Axiom[] = [
     id: "32",
     text: "Implication",
     selected: false,
-    description: "[(A → C) ∧ (B → C)] → ((A ∨ B) → C)",
-    description2: "[(A → B) ∧ (A → C)] → (A → (B ∧ C))",
+    description: "[(A → C) ∧ (B → C)] ≡ ((A ∨ B) → C)",
+    description2: "[(A → B) ∧ (A → C)] ≡ (A → (B ∧ C))",
     applyType: "7",
     applyOption: "consequent",
     apply: implication,

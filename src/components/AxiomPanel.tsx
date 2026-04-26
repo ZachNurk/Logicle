@@ -122,6 +122,18 @@ export default function AxiomPanel({
                         {axiom.description2}
                       </>
                     ) : null}
+                    {axiom.description3 ? (
+                      <>
+                        <br />
+                        {axiom.description3}
+                      </>
+                    ) : null}
+                    {axiom.description4 ? (
+                      <>
+                        <br />
+                        {axiom.description4}
+                      </>
+                    ) : null}
                   </span>
                 </span>
               </button>
