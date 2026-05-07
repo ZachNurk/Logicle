@@ -31,7 +31,7 @@ const ALPHABET: string[] = [
   
 type AlphabetSet = Set<string>;
 type NodesSet = Set<ProofNode>;
-type ReverseRule = (node: ProofNode) => void | boolean;
+type ReverseRule = (node: ProofNode) => boolean;
 let curAlphabet: AlphabetSet = new Set<string>();
 let curNodes: NodesSet = new Set<ProofNode>();
 const NEGATION_PROBABILITY = 0.1;
@@ -45,7 +45,7 @@ const MAX_STEP_DEPTH = 7;
 const MIN_STEP_DEPTH = 3;
 const MAX_GIVEN_SIZE = 4;
 const ATOM_RULES: ReverseRule[] = [revMP, revMT, revSimp];
-const IMPLICATION_RULES: ReverseRule[] = [revHS,revMP,revMT, revSimp];
+const IMPLICATION_RULES: ReverseRule[] = [revHS,revMP,revMT, revSimp, revCD];
 
 /** Function selects a relationship from our list using the probabilities */
 function chooseRelationship() {
@@ -111,18 +111,19 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
 
 function chooseInvOperation(
   node: ProofNode,
-): ProofNode {
+) {
     //TODO if chose op is error, try another op. 
     //TODO see if node is already in the set
     // functions return false if operation is not possible
     if (isImplicationNode(node)) {
-        const rule = IMPLICATION_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
-        rule(node);
+        let rule = IMPLICATION_RULES[Math.floor(Math.random() * IMPLICATION_RULES.length)];
+        while (!rule(node)) rule = IMPLICATION_RULES[Math.floor(Math.random() * IMPLICATION_RULES.length)];
+        return rule
     } else {
-        const rule = ATOM_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
-        rule(node);
+        let rule = ATOM_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
+        while (!rule(node)) rule = ATOM_RULES[Math.floor(Math.random() * ATOM_RULES.length)];
+        return rule;
     }
-    return ERROR_NODE
 }
 
 export function generateSolutionNode(
@@ -203,7 +204,7 @@ function generateAtom(): ProofNode {
 /** [(p → q) ∧ (q → r)] → (p → r) */
 export function revHS(
   node: ProofNode,
-) {
+): boolean {
     if (!isImplicationNode(node)) return false;
     const nodeLeft = node.left
     const nodeRight = node.right
@@ -213,30 +214,33 @@ export function revHS(
     const nodeB: ProofNode = createImplicationNode(false,joiner,nodeRight,undefined,true)
     curNodes.add(nodeA)
     curNodes.add(nodeB)
+    return true
 }
 
 /** Disjunctive Syllogism [(p ∨ q) ∧ ¬p] → q */
-export function revDS(node: ProofNode) {
+export function revDS(node: ProofNode): boolean {
     curNodes.delete(node)
     const joiner = generateAtom();
     const negJoiner = createNotNode(false,joiner,undefined,true)
     const nodeA = createOrNode(false,joiner,node,undefined,true)
     curNodes.add(negJoiner)
     curNodes.add(nodeA)
+    return true
 }
 
 /**from P and (P -> Q), infer Q */
-export function revMP(node: ProofNode) {
+export function revMP(node: ProofNode): boolean {
     curNodes.delete(node)
     const joiner = generateAtom();
     const nodeA: ProofNode = joiner
     const nodeB: ProofNode = createImplicationNode(false,joiner, node,undefined,true)
     curNodes.add(nodeA)
     curNodes.add(nodeB)
+    return true
 }
 
 /** Modus Tollens: [¬q ∧ (p → q)] → ¬p */
-export function revMT(node: ProofNode) {
+export function revMT(node: ProofNode): boolean {
     curNodes.delete(node)
     const joiner = generateAtom();
     const negJoiner = createNotNode(false,joiner, undefined, true)
@@ -244,16 +248,65 @@ export function revMT(node: ProofNode) {
     const nodeB = createImplicationNode(false, negOriginal,joiner,undefined,true)
     curNodes.add(negJoiner)
     curNodes.add(nodeB)
+    return true
     
 }
 
-/** * Simplification: (p ∧ q) → p */
-export function revSimp(node: ProofNode) {
+/** Simplification: (p ∧ q) → p */
+export function revSimp(node: ProofNode): boolean {
+  // TODO make this randomize what side the additon gets added to
   curNodes.delete(node)
+  let nodeA 
   const joiner = generateAtom()
-  const nodeA = createAndNode(false, node, joiner, undefined, true)
+  if (Math.random() < .5) {
+    nodeA = createAndNode(false, node, joiner, undefined, true)
+  } else {
+    nodeA = createAndNode(false, joiner, node, undefined, true)
+  }
   curNodes.add(nodeA)
+  return true
+}
+/** Constructive Dilemma (OR): [(p → q) ∧ (r → s)] → [(p ∨ r) → (q ∨ s)] */
+export function revCDOr(node: ProofNode): boolean {
+  if (!isImplicationNode(node) || !isOrNode(node.left) || !isOrNode(node.right)) return false
+  curNodes.delete(node)
+  const antecedentLeft = node.left.left
+  const antecedentRight = node.left.right
+  const consequentLeft = node.right.left
+  const consequentRight = node.right.right
+
+  const newAndNodeLeft = createImplicationNode(false,antecedentLeft,consequentLeft, undefined, true)
+  const newAndNodeRight = createImplicationNode(false,antecedentRight,consequentRight, undefined, true)
+
+  const newAndNode = createAndNode(false,newAndNodeLeft,newAndNodeRight,undefined,true)
+  curNodes.add(newAndNode)
+  return true
+  
 }
 
+/** Constructive Dilemma (AND): [(p → q) ∧ (r → s)] → [(p ∧ r) → (q ∧ s)] */
+export function revCDAnd(node: ProofNode): boolean {
+  if (!isImplicationNode(node) || !isAndNode(node.left) || !isAndNode(node.right)) return false
+  curNodes.delete(node)
+  const antecedentLeft = node.left.left
+  const antecedentRight = node.left.right
+  const consequentLeft = node.right.left
+  const consequentRight = node.right.right
 
+  const newAndNodeLeft = createImplicationNode(false,antecedentLeft,consequentLeft, undefined, true)
+  const newAndNodeRight = createImplicationNode(false,antecedentRight,consequentRight, undefined, true)
 
+  const newAndNode = createAndNode(false,newAndNodeLeft,newAndNodeRight,undefined,true)
+  curNodes.add(newAndNode)
+  return true
+  
+}
+
+/** Constructive Dilemma: [(p → q) ∧ (r → s)] → [(p ⋄ r) → (q ⋄ s)] where ⋄ is OR or AND. */
+export function revCD(node: ProofNode): boolean {
+  if (!revCDOr(node)) {
+    return revCDAnd(node)
+  } else {
+    return true
+  }
+}
