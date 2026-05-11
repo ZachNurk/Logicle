@@ -1,16 +1,61 @@
 import bcrypt from "bcrypt";
-import { randomInt } from "node:crypto";
+import { randomInt, timingSafeEqual } from "node:crypto";
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import nodemailer from "nodemailer";
 import {
+  clearOtpByUserId,
   createUser,
   getUserByEmail,
-  getUserByValidOtp,
+  incrementOtpAttempts,
   setUserOtpByEmail,
   updatePasswordAndClearOtp,
 } from "../../db/users.ts";
 
 const router = Router();
+
+/** Max wrong OTP submissions before the current code self-destructs. */
+const OTP_MAX_ATTEMPTS = 5;
+
+/** In-memory rate limiters. Single-process only; swap for a Redis store
+ * when the API runs on more than one node. */
+const loginLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Try again in a minute." },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many account creations from this address." },
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: 5,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many reset requests. Try again later." },
+});
+
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60_000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many reset attempts. Try again later." },
+});
+
+/** Length-aware constant-time string compare so OTP guesses can't be timed. */
+function safeStringEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt();
@@ -52,7 +97,7 @@ async function sendOtpEmail(email: string, otp: string): Promise<void> {
 
 
 
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   const { email, password } = req.body ?? {};
 
   if (typeof email !== "string" || typeof password !== "string") {
@@ -81,7 +126,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", registerLimiter, async (req, res) => {
   const { email, password } = req.body ?? {};
   if (typeof email !== "string" || typeof password !== "string") {
     res.status(400).json({ error: "Email and password are required" });
@@ -112,7 +157,7 @@ router.post("/register", async (req, res) => {
 });
 
 // Password reset endpoints (wire up email + DB token storage before using).
-router.post("/forgotPassword", async (req, res) => {
+router.post("/forgotPassword", forgotPasswordLimiter, async (req, res) => {
   const { email } = req.body ?? {};
   if (typeof email !== "string" || !email.trim()) {
     res.status(400).json({ error: "Email is required" });
@@ -146,22 +191,26 @@ router.post("/forgotPassword", async (req, res) => {
   }
 });
 
-router.post("/resetPassword", async (req, res) => {
-  const { otp, password, confirmPassword } = req.body ?? {};
+router.post("/resetPassword", resetPasswordLimiter, async (req, res) => {
+  const { email, otp, password, confirmPassword } = req.body ?? {};
   if (
+    typeof email !== "string" ||
     typeof otp !== "string" ||
     typeof password !== "string" ||
     typeof confirmPassword !== "string"
   ) {
-    res.status(400).json({ error: "OTP, password, and confirmPassword are required" });
+    res
+      .status(400)
+      .json({ error: "Email, OTP, password, and confirmPassword are required" });
     return;
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
   const trimmedOtp = otp.trim();
   const trimmedPassword = password.trim();
   const trimmedConfirm = confirmPassword.trim();
-  if (!trimmedOtp || !trimmedPassword || !trimmedConfirm) {
-    res.status(400).json({ error: "OTP and passwords cannot be empty" });
+  if (!normalizedEmail || !trimmedOtp || !trimmedPassword || !trimmedConfirm) {
+    res.status(400).json({ error: "Email, OTP, and passwords cannot be empty" });
     return;
   }
   if (trimmedPassword !== trimmedConfirm) {
@@ -170,9 +219,42 @@ router.post("/resetPassword", async (req, res) => {
   }
 
   try {
-    const user = await getUserByValidOtp(trimmedOtp);
-    if (!user) {
+    const user = await getUserByEmail(normalizedEmail);
+
+    // Treat every "can't proceed" branch with the same generic error so the
+    // caller can't tell whether the email exists, the OTP is unknown, or it
+    // expired. Locking, increments, etc. happen silently in the DB.
+    const genericFailure = () =>
       res.status(400).json({ error: "Invalid or expired OTP" });
+
+    if (
+      !user ||
+      !user.otp ||
+      !user.otp_expire ||
+      new Date(user.otp_expire).getTime() <= Date.now()
+    ) {
+      if (user?.id && user.otp) {
+        // Expired OTP — clear it so it can't be reused or further guessed.
+        await clearOtpByUserId(user.id);
+      }
+      genericFailure();
+      return;
+    }
+
+    if ((user.otp_attempts ?? 0) >= OTP_MAX_ATTEMPTS) {
+      // Defensive: if attempts ever exceed the cap without being cleared,
+      // clear now and bail.
+      await clearOtpByUserId(user.id);
+      genericFailure();
+      return;
+    }
+
+    if (!safeStringEqual(user.otp, trimmedOtp)) {
+      const newAttempts = await incrementOtpAttempts(user.id);
+      if (newAttempts >= OTP_MAX_ATTEMPTS) {
+        await clearOtpByUserId(user.id);
+      }
+      genericFailure();
       return;
     }
 

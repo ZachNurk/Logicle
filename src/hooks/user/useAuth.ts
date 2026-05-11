@@ -151,6 +151,7 @@ const validateEmail =(email: string): boolean => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email,
           otp: trimmedOtp,
           password: newPassword,
           confirmPassword,

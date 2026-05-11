@@ -18,6 +18,12 @@ ADD COLUMN IF NOT EXISTS otp TEXT;
 ALTER TABLE users
 ADD COLUMN IF NOT EXISTS otp_expire TIMESTAMPTZ;
 
+-- Failed-attempt counter on the current OTP. Reset to 0 whenever a fresh OTP
+-- is minted; the route layer locks the OTP (clears it) once it reaches the
+-- configured threshold.
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS otp_attempts SMALLINT NOT NULL DEFAULT 0;
+
 CREATE TABLE IF NOT EXISTS user_progress (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,

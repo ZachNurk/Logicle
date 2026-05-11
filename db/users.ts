@@ -11,12 +11,13 @@ export type DbUser = {
   password: string;
   otp?: string | null;
   otp_expire?: Date | null;
+  otp_attempts?: number | null;
 };
 
 export async function getUserByEmail(email: string): Promise<DbUser | null> {
   const result = await pool.query<DbUser>(
     `
-    SELECT id, email, password
+    SELECT id, email, password, otp, otp_expire, otp_attempts
     FROM users
     WHERE email = $1
     `,
@@ -46,7 +47,7 @@ export async function setUserOtpByEmail(
   const result = await pool.query(
     `
     UPDATE users
-    SET otp = $1, otp_expire = $2
+    SET otp = $1, otp_expire = $2, otp_attempts = 0
     WHERE email = $3
     `,
     [otp, otpExpire, email],
@@ -54,16 +55,33 @@ export async function setUserOtpByEmail(
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function getUserByValidOtp(otp: string): Promise<DbUser | null> {
-  const result = await pool.query<DbUser>(
+/**
+ * Increments otp_attempts on the user and returns the new value.
+ * Used by the reset-password route to lock the OTP after N failed guesses.
+ */
+export async function incrementOtpAttempts(userId: string): Promise<number> {
+  const result = await pool.query<{ otp_attempts: number }>(
     `
-    SELECT id, email, password, otp, otp_expire
-    FROM users
-    WHERE otp = $1 AND otp_expire > NOW()
+    UPDATE users
+    SET otp_attempts = otp_attempts + 1
+    WHERE id = $1
+    RETURNING otp_attempts
     `,
-    [otp],
+    [userId],
   );
-  return result.rows[0] ?? null;
+  return result.rows[0]?.otp_attempts ?? 0;
+}
+
+/** Clears the OTP without touching the password (used when attempts maxed). */
+export async function clearOtpByUserId(userId: string): Promise<void> {
+  await pool.query(
+    `
+    UPDATE users
+    SET otp = NULL, otp_expire = NULL, otp_attempts = 0
+    WHERE id = $1
+    `,
+    [userId],
+  );
 }
 
 export async function updatePasswordAndClearOtp(
@@ -73,7 +91,7 @@ export async function updatePasswordAndClearOtp(
   const result = await pool.query(
     `
     UPDATE users
-    SET password = $1, otp = NULL, otp_expire = NULL
+    SET password = $1, otp = NULL, otp_expire = NULL, otp_attempts = 0
     WHERE id = $2
     `,
     [password, userId],
