@@ -34,6 +34,7 @@ type NodesSet = Set<ProofNode>;
 type ReverseRule = (node: ProofNode) => boolean;
 let curAlphabet: AlphabetSet = new Set<string>();
 let curNodes: NodesSet = new Set<ProofNode>();
+const CHARACTER_CAP = 30;
 const NEGATION_PROBABILITY = 0.1;
 const IF_PROBABILITY = 0.2;
 const ATOM_PROBABILITY = 0.35;
@@ -120,14 +121,17 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
       if (curNodes.size === MAX_GIVEN_SIZE) break;
 
         const curStepSet = new Set(curNodes);
-     
+        let numOfNodesWithTooManyChars = 0
         for (const node of curStepSet) {
-            if (!(node.text.length > 50)) {
+            if (!(node.text.length > CHARACTER_CAP)) {
               doInvOperation(node)
               stepCount++
               if (curNodes.size === MAX_GIVEN_SIZE) break;
+            } else {
+              numOfNodesWithTooManyChars++
             }
         }
+        if (numOfNodesWithTooManyChars === curStepSet.size) break;
     }
         
     
@@ -219,9 +223,10 @@ export function generateSolutionNode(
 /**
  * Generates a random atom that isnt already in the alphabet set.
  * Adds to the alphabet 
+ * @param canNegate determines if the node can be negated
  * @returns G is the new atom
  */
-function generateAtom(): ProofNode {
+function generateAtom(canNegate: boolean = true): ProofNode {
   if (curAlphabet.size >= ALPHABET.length) {
     throw new Error("No letters left in alphabet set");
   }
@@ -239,7 +244,7 @@ function generateAtom(): ProofNode {
     parentIds: [],
     context: false,
   } as ProofNode;
-  if (Math.random() < NEGATION_PROBABILITY) {
+  if (canNegate && Math.random() < NEGATION_PROBABILITY) {
     return createNotNode(false, atom, undefined, true);
   }
   return atom;
@@ -352,20 +357,40 @@ export function revCD(node: ProofNode): boolean {
     return true
   }
 }
-/** Addition: p → (p ∨ q) */
+/**
+ * Reverse the addition of a new node. If both sides aren't not nodes, we randomly pick
+ * a side to remove. If one side is a not node, we remove the non not node by adding the not
+ * node back to the curNodes set.
+ * @param node is the node to reverse
+ * @returns false if the given node isnt an or node, or if both sides of the or node are not nodes.
+ * Both sides being a not node is an issue because the addition axiom only adds true nodes.
+ * (This is just to make the addition axiom cleaner and easier to use)
+ */
 export function revAdd(node: ProofNode): boolean {
   if (!isOrNode(node)) return false
+  if (isNotNode(node.left) && isNotNode(node.right)) return false
+
   curNodes.delete(node)
-  const sideToKeep = Math.random() < 0.5 ? node.left : node.right
-  curNodes.add(sideToKeep)
+  if (!isNotNode(node.left) && !isNotNode(node.right)) {
+    const sideToKeep = Math.random() < 0.5 ? node.left : node.right
+    curNodes.add(sideToKeep)
+  } else if (isNotNode(node.left)) {
+    curNodes.add(node.left)
+  } else {
+    curNodes.add(node.right)
+  }
+
+  
   return true
 }
+
 /** Conjunction: p → (p ∧ q) */
 export function revConj(node: ProofNode): boolean {
   if (!isAndNode(node)) return false
   curNodes.delete(node)
-  const sideToKeep = Math.random() < 0.5 ? node.left : node.right
-  curNodes.add(sideToKeep)
+ 
+  curNodes.add(node.left)
+  curNodes.add(node.right)
   return true
 }
 
