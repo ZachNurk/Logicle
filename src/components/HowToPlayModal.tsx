@@ -42,6 +42,14 @@ export default function HowToPlayModal({
           </li>
         </ul>
 
+        <div style={styles.tip}>
+          <span style={styles.tipLabel}>Endless tip:</span> the last step is
+          often just <strong>Commutativity</strong>. If your derived fact has
+          the same pieces as the goal but in a different order
+          (e.g. <code>B ∧ A</code> vs. <code>A ∧ B</code>), try Commutativity
+          to flip the sides.
+        </div>
+
         {/* <p style={styles.footer}>
           A new puzzle each day. Sign in to save your progress.
         </p> */}
@@ -100,6 +108,21 @@ const styles: Record<string, CSSProperties> = {
   },
   listItem: {
     marginBottom: "12px",
+  },
+  tip: {
+    marginTop: "8px",
+    marginBottom: "16px",
+    padding: "14px 18px",
+    background: Colors.surface1,
+    border: `1px solid ${Colors.gray}`,
+    borderRadius: "12px",
+    fontSize: "18px",
+    lineHeight: 1.5,
+    color: "#333",
+  },
+  tipLabel: {
+    fontWeight: 700,
+    marginRight: "6px",
   },
   footer: {
     margin: 0,
