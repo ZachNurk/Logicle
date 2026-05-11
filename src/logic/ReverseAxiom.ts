@@ -122,10 +122,11 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
         const curStepSet = new Set(curNodes);
      
         for (const node of curStepSet) {
-            if (!(node.text.length > 50))
-            doInvOperation(node)
-            stepCount++
-            if (curNodes.size === MAX_GIVEN_SIZE) break;
+            if (!(node.text.length > 50)) {
+              doInvOperation(node)
+              stepCount++
+              if (curNodes.size === MAX_GIVEN_SIZE) break;
+            }
         }
     }
         
