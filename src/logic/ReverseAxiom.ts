@@ -116,8 +116,8 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
 
     payLoad.solution = generateSolutionNode()
     const numSteps = Math.floor(Math.random() * (MAX_STEP_DEPTH - MIN_STEP_DEPTH + 1)) + MIN_STEP_DEPTH;
-    let stepCount = 0
-    while (stepCount < numSteps) {
+    
+    for (let i = 0; i < numSteps; i++) {
       if (curNodes.size === MAX_GIVEN_SIZE) break;
 
         const curStepSet = new Set(curNodes);
@@ -125,7 +125,6 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
         for (const node of curStepSet) {
             if (!(node.text.length > CHARACTER_CAP)) {
               doInvOperation(node)
-              stepCount++
               if (curNodes.size === MAX_GIVEN_SIZE) break;
             } else {
               numOfNodesWithTooManyChars++
@@ -407,3 +406,7 @@ export function revAbso(node: ProofNode): boolean {
   curNodes.add(revAbsoResult)
   return true
 }
+/**
+ * We dont need an explicit call to Commutativity, since its already handled by how randomization works
+ */
+

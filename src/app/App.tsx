@@ -11,6 +11,7 @@ import PuzzleScreen from "../screens/PuzzleScreen";
 import EndlessScreen from "../screens/EndlessScreen";
 import LoginScreen from "../screens/LoginScreen";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 
 export default function App() {
   const [gameMode, setGameMode] = useState<"daily" | "endless">("daily");
@@ -25,13 +26,15 @@ export default function App() {
     | "error"
     | "puzzle"
     | "loginScreen"
-    | "createAccountScreen";
+    | "createAccountScreen"
+    | "resetPasswordScreen";
 
   const getScreen = (): Screen => {
     if (proof.isLoading) return "loading";
     if (proof.loadError) return "error";
     if (auth.authStatus === "loggedIn") return "puzzle";
     if (auth.authStatus === "loggedOut" && auth.authView === "createAccount") return "createAccountScreen";
+    if (auth.authStatus === "loggedOut" && auth.authView === "resetPassword") return "resetPasswordScreen";
     if (auth.authStatus === "loggedOut") return "loginScreen";
     return "error";
   };
@@ -100,6 +103,22 @@ export default function App() {
           onEmailChange={auth.setEmail}
           onPasswordChange={auth.setPassword}
           onSubmit={auth.handleCreateAccountSubmit}
+          onBackToLogin={auth.showLogin}
+        />
+      );
+    case "resetPasswordScreen":
+      return (
+        <ResetPasswordScreen
+          otp={auth.otp}
+          newPassword={auth.newPassword}
+          confirmPassword={auth.confirmPassword}
+          resetPasswordError={auth.resetPasswordError}
+          resetPasswordInfo={auth.resetPasswordInfo}
+          isResettingPassword={auth.isResettingPassword}
+          onOtpChange={auth.setOtp}
+          onNewPasswordChange={auth.setNewPassword}
+          onConfirmPasswordChange={auth.setConfirmPassword}
+          onSubmit={auth.handleResetPasswordSubmit}
           onBackToLogin={auth.showLogin}
         />
       );

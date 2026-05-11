@@ -47,6 +47,43 @@ function computeLayers(nodes: ProofNode[]): Map<string, number> {
   return layerOf;
 }
 
+/**
+ * Buckets nodes into rows by layer and orders each row by the average column
+ * index of its parents — so children of leftmost parents sit on the left.
+ * Layer 0 (starters) keeps its incoming order and anchors everything below.
+ */
+function buildOrderedLayers(
+  nodes: ProofNode[],
+  layerOf: Map<string, number>,
+  maxLayer: number,
+): ProofNode[][] {
+  const layers: ProofNode[][] = Array.from({ length: maxLayer + 1 }, () => []);
+  for (const n of nodes) {
+    const l = layerOf.get(n.id) ?? 0;
+    layers[l].push(n);
+  }
+
+  const columnOf = new Map<string, number>();
+  layers[0]?.forEach((n, i) => columnOf.set(n.id, i));
+
+  for (let l = 1; l < layers.length; l += 1) {
+    const entries = layers[l].map((node, originalIdx) => {
+      const parentCols = (node.parents ?? [])
+        .map((p) => columnOf.get(p.id))
+        .filter((c): c is number => c !== undefined);
+      const key = parentCols.length
+        ? parentCols.reduce((sum, c) => sum + c, 0) / parentCols.length
+        : originalIdx;
+      return { node, key, originalIdx };
+    });
+    entries.sort((a, b) => a.key - b.key || a.originalIdx - b.originalIdx);
+    layers[l] = entries.map((e) => e.node);
+    layers[l].forEach((n, i) => columnOf.set(n.id, i));
+  }
+
+  return layers;
+}
+
 export default function ProofNodePanel({
   givenArray,
   solutionNode,
@@ -125,16 +162,11 @@ export default function ProofNodePanel({
 
   const layerOf = computeLayers(visibleNodes);
 
-  // Build an ordered list of layers, each containing its nodes.
   const maxLayer = visibleNodes.reduce(
     (max, n) => Math.max(max, layerOf.get(n.id) ?? 0),
     0,
   );
-  const layers: ProofNode[][] = Array.from({ length: maxLayer + 1 }, () => []);
-  for (const n of visibleNodes) {
-    const l = layerOf.get(n.id) ?? 0;
-    layers[l].push(n);
-  }
+  const layers = buildOrderedLayers(visibleNodes, layerOf, maxLayer);
 
   return (
     <div ref={containerRef} style={styles.container}>

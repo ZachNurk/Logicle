@@ -1,5 +1,6 @@
 import type { CSSProperties, FormEvent } from "react";
 import AuthSubmitButton from "../components/AuthSubmitButton";
+import PasswordInput from "../components/PasswordInput";
 import { Colors } from "../constants/theme";
 
 type CreateAccountScreenProps = {
@@ -44,13 +45,13 @@ export default function CreateAccountScreen({
         <label style={styles.inputLabel} htmlFor="create-password">
           Password
         </label>
-        <input
+        <PasswordInput
           id="create-password"
-          type="password"
           value={password}
-          onChange={(e) => onPasswordChange(e.target.value)}
+          onChange={onPasswordChange}
           style={styles.input}
           placeholder="Choose a password"
+          autoComplete="new-password"
           required
         />
 

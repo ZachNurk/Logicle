@@ -38,22 +38,16 @@ router.post("/:email/progress", async (req, res) => {
   }
 
   try {
-    await addCompletedDay(email, dayId.trim());
+    const result = await addCompletedDay(email, dayId.trim());
+    if (!result.ok) {
+      // Expected when a stale session points at an email no longer in `users`
+      // (e.g. after a dev DB reset). Not logged as an error.
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
     res.status(201).json({ ok: true });
   } catch (error: unknown) {
     console.error("Add progress error:", error);
-    // PostgreSQL: 23503 = foreign key violation (e.g. email not in users)
-    const code =
-      error && typeof error === "object" && "code" in error
-        ? String((error as { code: string }).code)
-        : "";
-    if (code === "23503") {
-      res.status(400).json({
-        error:
-          "No user with this email in the database. Register or log in again after resetting the DB.",
-      });
-      return;
-    }
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

@@ -1,5 +1,6 @@
 import type { CSSProperties, FormEvent } from "react";
 import AuthSubmitButton from "../components/AuthSubmitButton";
+import PasswordInput from "../components/PasswordInput";
 import { Colors } from "../constants/theme";
 
 type LoginScreenProps = {
@@ -51,13 +52,13 @@ export default function LoginScreen({
         <label style={styles.inputLabel} htmlFor="password">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           value={password}
-          onChange={(e) => onPasswordChange(e.target.value)}
+          onChange={onPasswordChange}
           style={styles.input}
           placeholder="********"
+          autoComplete="current-password"
           required
         />
 

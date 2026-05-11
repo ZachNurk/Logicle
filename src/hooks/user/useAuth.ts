@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 
 export type AuthStatus = "loading" | "loggedOut" | "loggedIn";
-export type AuthView = "login" | "createAccount";
+export type AuthView = "login" | "createAccount" | "resetPassword";
 
 export type AuthUser = {
   id: string;
@@ -26,6 +26,14 @@ export function useAuth() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const [createAccountError, setCreateAccountError] = useState<string | null>(null);
+  /** Reset-password screen state. `otp`/`newPassword`/`confirmPassword` only
+   * live during the reset flow; cleared on view changes and after success. */
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(null);
+  const [resetPasswordInfo, setResetPasswordInfo] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   // Single place to apply a logged-in user. When we later need to fetch
@@ -96,9 +104,19 @@ const validateEmail =(email: string): boolean => {
       if (!res.ok) {
         throw new Error(data?.error ?? "Could not send reset email");
       }
-      setForgotPasswordMessage(
-        typeof data?.data === "string" ? data.data : "Check your email for a reset code.",
+      // Navigate to the reset screen with a "check your email" banner.
+      // Server's 60-second OTP TTL starts now — the screen is where the user
+      // will paste the code and pick a new password.
+      setOtp("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setResetPasswordError(null);
+      setResetPasswordInfo(
+        typeof data?.data === "string"
+          ? data.data
+          : "Check your email for a 6-digit code.",
       );
+      setAuthView("resetPassword");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not send reset email";
@@ -108,6 +126,61 @@ const validateEmail =(email: string): boolean => {
       setIsSendingForgotPassword(false);
     }
   }, [email]);
+
+  const handleResetPasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setResetPasswordError(null);
+
+    const trimmedOtp = otp.trim();
+    if (!/^[0-9]{6}$/.test(trimmedOtp)) {
+      setResetPasswordError("Enter the 6-digit code from your email.");
+      return;
+    }
+    if (!newPassword || !confirmPassword) {
+      setResetPasswordError("Enter and confirm your new password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetPasswordError("Passwords don't match.");
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const res = await fetch("/api/resetPassword", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          otp: trimmedOtp,
+          password: newPassword,
+          confirmPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Could not reset password");
+      }
+      // Drop straight back to the login screen with a green success banner
+      // and the email pre-filled so the user can sign in immediately.
+      setOtp("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setResetPasswordError(null);
+      setResetPasswordInfo(null);
+      setPassword("");
+      setLoginError(null);
+      setForgotPasswordMessage(
+        "Password reset successful. Sign in with your new password.",
+      );
+      setAuthView("login");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not reset password";
+      setResetPasswordError(message);
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
 
   const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -186,12 +259,21 @@ const validateEmail =(email: string): boolean => {
     }
   };
 
+  const clearResetFlowState = () => {
+    setOtp("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setResetPasswordError(null);
+    setResetPasswordInfo(null);
+  };
+
   const showCreateAccount = () => {
     setLoginError(null);
     setForgotPasswordMessage(null);
     setCreateAccountError(null);
     setEmail("");
     setPassword("");
+    clearResetFlowState();
     setAuthView("createAccount");
   };
 
@@ -201,6 +283,7 @@ const validateEmail =(email: string): boolean => {
     setCreateAccountError(null);
     setEmail("");
     setPassword("");
+    clearResetFlowState();
     setAuthView("login");
   };
 
@@ -241,6 +324,16 @@ const validateEmail =(email: string): boolean => {
     loginError,
     isCreatingAccount,
     createAccountError,
+    otp,
+    newPassword,
+    confirmPassword,
+    isResettingPassword,
+    resetPasswordError,
+    resetPasswordInfo,
+    setOtp,
+    setNewPassword,
+    setConfirmPassword,
+    handleResetPasswordSubmit,
     currentUser,
     setEmail,
     setPassword,

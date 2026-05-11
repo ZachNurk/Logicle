@@ -517,6 +517,7 @@ function andOverOrDistributivity(original: ProofNode): ProofNode {
  * @param original is the original node
  * @returns returns a valid node if the operation is valid, ERROR_NODE if not
  */
+//TODO maybe make this so we choose side if we have 2 ands
 export function distributivity(original: ProofNode): ProofNode {
   if (isAndNode(original)) {
    return andOverOrDistributivity(original)

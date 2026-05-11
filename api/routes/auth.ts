@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { randomInt } from "node:crypto";
 import { Router } from "express";
 import nodemailer from "nodemailer";
 import {
@@ -45,7 +46,7 @@ async function sendOtpEmail(email: string, otp: string): Promise<void> {
     from: smtpFrom,
     to: email,
     subject: "Password reset OTP",
-    text: `Your OTP (expires in 1 minute): ${otp}`,
+    text: `Your OTP (expires in 10 minutes): ${otp}`,
   });
 }
 
@@ -127,16 +128,18 @@ router.post("/forgotPassword", async (req, res) => {
   try {
     const user = await getUserByEmail(normalizedEmail);
     if (!user) {
-      res.status(400).json({ error: "Email is not registereds" });
+      res.status(400).json({ error: "Email is not registered" });
       return;
     }
 
-    const otp = String(Math.floor(1000 + Math.random() * 9000));
-    const otpExpire = new Date(Date.now() + 60_000);
+    // 6 digits from a CSPRNG (~20 bits). Pad so leading-zero codes (e.g.
+    // "012345") aren't dropped to 5 digits when stringified.
+    const otp = randomInt(0, 1_000_000).toString().padStart(6, "0");
+    const otpExpire = new Date(Date.now() + 10 * 60_000);
     await setUserOtpByEmail(normalizedEmail, otp, otpExpire);
     await sendOtpEmail(normalizedEmail, otp);
 
-    res.status(200).json({ data: "Your OTP send to the email" });
+    res.status(200).json({ data: "Your OTP sent to the email" });
   } catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({ error: "Internal Server Error" });
