@@ -54,6 +54,7 @@ import {
   revConditionalIdentityIff,
   revImplication,
   getReverseRulesForNode,
+  runReverseRule,
 } from "../src/logic/GeneratePuzzle";
 
 function premises(left: ProofNode, right: ProofNode) {
@@ -87,8 +88,14 @@ function constructiveDilemmaAndStandard(prem: AndNode, selected: ProofNode[] = [
   return createImplicationNode(false, ant, cons, selected);
 }
 
-function runReverse(rule: ReverseRule, node: ProofNode): ProofNode[] {
-  return rule(node);
+function runReverse(rule: ReverseRule, node: ProofNode): ProofNode[] | false {
+  return runReverseRule(rule, node);
+}
+
+function assertReverse(rule: ReverseRule, node: ProofNode): ProofNode[] {
+  const result = runReverseRule(rule, node);
+  expect(result).not.toBe(false);
+  return result as ProofNode[];
 }
 
 describe("ReverseAxiom", () => {
@@ -106,8 +113,7 @@ describe("ReverseAxiom", () => {
     it("revMP: P and (P→Q) ⊢ Q", () => {
       const q = createImplicationNode(false, A, B, undefined, true);
 
-      const reversed = runReverse(revMP, q);
-      expect(reversed.length).toBeGreaterThan(0);
+      const reversed = assertReverse(revMP, q);
       expect(reversed).toHaveLength(2);
 
       const [p, pImplQ] = reversed;
@@ -118,7 +124,7 @@ describe("ReverseAxiom", () => {
     it("revHS: (P→Q)∧(Q→R) ⊢ P→R", () => {
       const pImpR = createImplicationNode(false, A, C, undefined, true);
 
-      const reversed = runReverse(revHS, pImpR);
+      const reversed = assertReverse(revHS, pImpR);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(2);
 
@@ -130,7 +136,7 @@ describe("ReverseAxiom", () => {
     it("revMT: ¬Q∧(P→Q) ⊢ ¬P", () => {
       const notP = negateNode(false, A, undefined, true);
 
-      const reversed = runReverse(revMT, notP);
+      const reversed = assertReverse(revMT, notP);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(2);
 
@@ -142,7 +148,7 @@ describe("ReverseAxiom", () => {
     it("revSimp: (P∧Q) ⊢ P", () => {
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
 
-      const reversed = runReverse(revSimp, A);
+      const reversed = assertReverse(revSimp, A);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
 
@@ -155,7 +161,7 @@ describe("ReverseAxiom", () => {
     it("revDS: (P∨Q)∧¬P ⊢ Q", () => {
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
 
-      const reversed = runReverse(revDS, B);
+      const reversed = assertReverse(revDS, B);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(2);
 
@@ -174,7 +180,7 @@ describe("ReverseAxiom", () => {
       const prem = premises(aImpB, cImpD);
       const cdResult = constructiveDilemmaAndStandard(prem, [aImpB, cImpD]);
       expect(sameNode(cdResult, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revCD, cdResult);
+      const reversed = assertReverse(revCD, cdResult);
       expect(reversed.length).toBeGreaterThan(0);
 
       const restored = constructiveDilemmaAndStandard(reversed[0] as AndNode, [aImpB, cImpD]);
@@ -188,7 +194,7 @@ describe("ReverseAxiom", () => {
       const cdResult = constructiveDilemmaOrStandard(prem, [aImpB, cImpD]);
       expect(sameNode(cdResult, ERROR_NODE)).toBe(false);
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
-      const reversed = runReverse(revCD, cdResult);
+      const reversed = assertReverse(revCD, cdResult);
       expect(reversed.length).toBeGreaterThan(0);
 
       const restored = constructiveDilemmaOrStandard(
@@ -201,7 +207,7 @@ describe("ReverseAxiom", () => {
 
     it("revAbso: P∨(P∧Q) ⊢ P", () => {
 
-      const reversed = runReverse(revAbso, A);
+      const reversed = assertReverse(revAbso, A);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(absorption(reversed[0]), A)).toBe(true);
@@ -217,7 +223,7 @@ describe("ReverseAxiom", () => {
       );
       const reassoc = associativity(flat);
       expect(sameNode(reassoc, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revAndAssociativity, reassoc);
+      const reversed = assertReverse(revAndAssociativity, reassoc);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], flat)).toBe(true);
     });
@@ -232,7 +238,7 @@ describe("ReverseAxiom", () => {
       );
       const reassoc = associativity(flat);
       expect(sameNode(reassoc, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revOrAssociativity, reassoc);
+      const reversed = assertReverse(revOrAssociativity, reassoc);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], flat)).toBe(true);
     });
@@ -243,7 +249,7 @@ describe("ReverseAxiom", () => {
       );
       expect(sameNode(expanded, ERROR_NODE)).toBe(false);
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
-      const reversed = runReverse(revDistributivity, expanded);
+      const reversed = assertReverse(revDistributivity, expanded);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(distributivity(reversed[0]), expanded)).toBe(true);
       randomSpy.mockRestore();
@@ -255,7 +261,7 @@ describe("ReverseAxiom", () => {
       );
       expect(sameNode(expanded, ERROR_NODE)).toBe(false);
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
-      const reversed = runReverse(revDistributivity, expanded);
+      const reversed = assertReverse(revDistributivity, expanded);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(distributivity(reversed[0]), expanded)).toBe(true);
       randomSpy.mockRestore();
@@ -264,7 +270,7 @@ describe("ReverseAxiom", () => {
     it("revIndempotent: P∨P ⊢ P", () => {
       const pOrP = createOrNode(false, A, A, undefined, true);
 
-      const reversed = runReverse(revIndempotent, A);
+      const reversed = assertReverse(revIndempotent, A);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], pOrP)).toBe(true);
       expect(sameNode(indempotent(reversed[0]), A)).toBe(true);
@@ -273,7 +279,7 @@ describe("ReverseAxiom", () => {
     it("revDeMorgan: ¬(¬P∨¬Q) ⊢ P∧Q", () => {
       const pAndQ = createAndNode(false, A, B, undefined, true);
 
-      const reversed = runReverse(revDeMorgan, pAndQ);
+      const reversed = assertReverse(revDeMorgan, pAndQ);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(deMorgan(reversed[0]), pAndQ)).toBe(true);
     });
@@ -281,7 +287,7 @@ describe("ReverseAxiom", () => {
     it("revDeMorgan on OR: ¬(¬P∧¬Q) ⊢ P∨Q", () => {
       const pOrQ = createOrNode(false, A, B, undefined, true);
 
-      const reversed = runReverse(revDeMorgan, pOrQ);
+      const reversed = assertReverse(revDeMorgan, pOrQ);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(deMorgan(reversed[0]), pOrQ)).toBe(true);
     });
@@ -290,7 +296,7 @@ describe("ReverseAxiom", () => {
       const aImpB = createImplicationNode(false, A, B, undefined, true);
       const cp = contrapositive(aImpB);
       expect(sameNode(cp, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revContrapositive, aImpB);
+      const reversed = assertReverse(revContrapositive, aImpB);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], cp)).toBe(true);
       expect(sameNode(contrapositive(reversed[0]), aImpB)).toBe(true);
@@ -300,7 +306,7 @@ describe("ReverseAxiom", () => {
       const aImpB = createImplicationNode(false, A, B, undefined, true);
       const asOr = conditionalIdentityImplication(aImpB);
       expect(sameNode(asOr, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revConditionalIdentityImplication, aImpB);
+      const reversed = assertReverse(revConditionalIdentityImplication, aImpB);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], asOr)).toBe(true);
       expect(sameNode(conditionalIdentityImplication(reversed[0]), aImpB)).toBe(true);
@@ -309,7 +315,7 @@ describe("ReverseAxiom", () => {
     it("revConditionalIdentityOr: ¬A∨B becomes A→B", () => {
       const aImpB = createImplicationNode(false, A, B, undefined, true);
       const asOr = conditionalIdentityImplication(aImpB);
-      const reversed = runReverse(revConditionalIdentityOr, asOr);
+      const reversed = assertReverse(revConditionalIdentityOr, asOr);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], aImpB)).toBe(true);
     });
@@ -319,7 +325,7 @@ describe("ReverseAxiom", () => {
       const bImpC = createImplicationNode(false, B, C, undefined, true);
       const merged = implication(premises(aImpC, bImpC), [aImpC, bImpC]);
       expect(sameNode(merged, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revImplication, merged);
+      const reversed = assertReverse(revImplication, merged);
       expect(reversed.length).toBeGreaterThan(0);
       expect(
         sameNode(implication(reversed[0] as ReturnType<typeof createAndNode>, [aImpC, bImpC]),
@@ -333,7 +339,7 @@ describe("ReverseAxiom", () => {
       const aImpC = createImplicationNode(false, A, C, undefined, true);
       const merged = implication(premises(aImpB, aImpC), [aImpB, aImpC]);
       expect(sameNode(merged, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revImplication, merged);
+      const reversed = assertReverse(revImplication, merged);
       expect(reversed.length).toBeGreaterThan(0);
       expect(
         sameNode(implication(reversed[0] as ReturnType<typeof createAndNode>, [aImpB, aImpC]),
@@ -352,7 +358,7 @@ describe("ReverseAxiom", () => {
       );
       const split = implication(aImpBC, [aImpBC]);
       expect(sameNode(split, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revImplication, aImpBC);
+      const reversed = assertReverse(revImplication, aImpBC);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(implication(reversed[0] as AndNode, []), aImpBC)).toBe(true);
     });
@@ -367,7 +373,7 @@ describe("ReverseAxiom", () => {
       );
       const split = implication(abImpC, [abImpC]);
       expect(sameNode(split, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revImplication, abImpC);
+      const reversed = assertReverse(revImplication, abImpC);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(implication(reversed[0] as AndNode, []), abImpC)).toBe(true);
     });
@@ -377,7 +383,7 @@ describe("ReverseAxiom", () => {
     it("revConj splits (P∧Q) into P and Q", () => {
       const pAndQ = createAndNode(false, A, B, undefined, true);
 
-      const reversed = runReverse(revConj, pAndQ);
+      const reversed = assertReverse(revConj, pAndQ);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(2);
       expect(sameNode(reversed[0], A)).toBe(true);
@@ -387,7 +393,7 @@ describe("ReverseAxiom", () => {
     it("revAdd on (P∨Q) keeps one disjunct", () => {
       const pOrQ = createOrNode(false, A, B, undefined, true);
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
-      const reversed = runReverse(revAdd, pOrQ);
+      const reversed = assertReverse(revAdd, pOrQ);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(reversed[0], A)).toBe(true);
@@ -405,7 +411,7 @@ describe("ReverseAxiom", () => {
       );
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
 
-      const reversed = runReverse(revAdd, bothNot);
+      const reversed = assertReverse(revAdd, bothNot);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(reversed[0], negateNode(false, A, undefined, true))).toBe(
@@ -423,14 +429,14 @@ describe("ReverseAxiom", () => {
         undefined,
         true,
       );
-      expect(runReverse(revAdd, bothComplex)).toEqual([ERROR_NODE]);
+      expect(runReverse(revAdd, bothComplex)).toBe(false);
     });
 
     it("revAdd on P∨(Q∧R) keeps the conjunction", () => {
       const qAndR = createAndNode(false, B, C, undefined, true);
       const pOrQAndR = createOrNode(false, A, qAndR, undefined, true);
 
-      const reversed = runReverse(revAdd, pOrQAndR);
+      const reversed = assertReverse(revAdd, pOrQAndR);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(reversed[0], qAndR)).toBe(true);
@@ -440,7 +446,7 @@ describe("ReverseAxiom", () => {
       const pAndQ = createAndNode(false, A, B, undefined, true);
       const orNode = createOrNode(false, pAndQ, C, undefined, true);
 
-      const reversed = runReverse(revAdd, orNode);
+      const reversed = assertReverse(revAdd, orNode);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(reversed[0], pAndQ)).toBe(true);
@@ -450,7 +456,7 @@ describe("ReverseAxiom", () => {
       const expanded = addition(A, B);
       const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
 
-      const reversed = runReverse(revAdd, expanded);
+      const reversed = assertReverse(revAdd, expanded);
       expect(reversed.length).toBeGreaterThan(0);
       expect(sameNode(reversed[0], A)).toBe(true);
       expect(sameNode(addition(reversed[0], B), expanded)).toBe(true);
@@ -461,18 +467,16 @@ describe("ReverseAxiom", () => {
 
   describe("guards and rejects", () => {
     it("revHS returns false for non-implication", () => {
-      expect(runReverse(revHS, createIffNode(false, A, B, undefined, true))).toEqual([
-        ERROR_NODE,
-      ]);
+      expect(runReverse(revHS, createIffNode(false, A, B, undefined, true))).toBe(false);
     });
 
     it("revConj returns false for non-AND", () => {
-      expect(runReverse(revConj, A)).toEqual([ERROR_NODE]);
+      expect(runReverse(revConj, A)).toBe(false);
     });
 
     it("revAbso returns false for AND with nested ∧/∨ child", () => {
       const nested = createAndNode(false, createOrNode(false, A, B), C, undefined, true);
-      expect(runReverse(revAbso, nested)).toEqual([ERROR_NODE]);
+      expect(runReverse(revAbso, nested)).toBe(false);
     });
   });
 
@@ -482,7 +486,7 @@ describe("ReverseAxiom", () => {
       const cImpD = createImplicationNode(false, C, D, undefined, true);
       const prem = premises(aImpB, cImpD);
       const standard = constructiveDilemmaAndStandard(prem, [aImpB, cImpD]);
-      const reversed = runReverse(revCD, standard);
+      const reversed = assertReverse(revCD, standard);
       expect(reversed.length).toBeGreaterThan(0);
 
       const viaCurrentForward = constructiveDilemmaAnd(reversed[0] as AndNode, [aImpB, cImpD]);
@@ -494,7 +498,7 @@ describe("ReverseAxiom", () => {
       const cImpD = createImplicationNode(false, C, D, undefined, true);
       const prem = premises(aImpB, cImpD);
       const standard = constructiveDilemmaOrStandard(prem, [aImpB, cImpD]);
-      const reversed = runReverse(revCD, standard);
+      const reversed = assertReverse(revCD, standard);
       expect(reversed.length).toBeGreaterThan(0);
 
       const viaCurrentForward = constructiveDilemmaOr(
@@ -508,7 +512,7 @@ describe("ReverseAxiom", () => {
       const aIffB = createIffNode(false, A, B, undefined, true);
       const forward = conditionalIdentityIff(aIffB);
       expect(sameNode(forward, ERROR_NODE)).toBe(false);
-      const reversed = runReverse(revConditionalIdentityIff, aIffB);
+      const reversed = assertReverse(revConditionalIdentityIff, aIffB);
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(conditionalIdentityIff(aIffB), forward)).toBe(true);
