@@ -30,6 +30,7 @@ import {
   ERROR_NODE,
   createOrNode,
   createIffNode,
+  negateNode,
 } from "../src/logic/ProofNode";
 import type { ProofNode, NotNode, OrNode, AndNode } from "../src/logic/ProofNode";
 import type { ImplicationNode } from "../src/logic/ProofNode";
@@ -520,6 +521,16 @@ describe("Axioms", () => {
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   })
+
+  describe("IFF commutativity", () => {
+    it("(A ↔ B) yields (B ↔ A)", () => {
+      const aIffB = createIffNode(false, A, B)
+      const EXPECTED = "B ↔ A"
+
+      const ACTUAL = commutativity(aIffB)
+      expect(ACTUAL.text === EXPECTED).toBe(true)
+    })
+  })
   
   describe("OR associativity", () => {
     it("((A ∨ B) ∨ C) yields (A ∨ (B ∨ C))", () => {
@@ -763,6 +774,13 @@ describe("Axioms", () => {
       const ACTUAL = conditionalIdentityImplication(aImpB).text
       expect(ACTUAL).toBe("¬A ∨ B")
     })
+
+    it("(¬A ∨ B) ≡ (A → B)", () => {
+      const notA = negateNode(false, A)
+      const notAOrB = createOrNode(false, notA, B)
+      const ACTUAL = conditionalIdentityImplication(notAOrB).text
+      expect(ACTUAL).toBe("A → B")
+    })
   })
 
   describe("Conditional Identity (↔)", () => {
@@ -836,10 +854,18 @@ describe("Axioms", () => {
     })
 
     it("Conditional Identity: ¬A → B ≡ A ∨ B", () => {
-      const notA = createNotNode(false, A, [A])
+      const notA = negateNode(false, A, [A])
       const notAImpB = createImplicationNode(false, notA, B, [notA, B])
       const EXPECTED = "A ∨ B"
       const RESULT = conditionalIdentityImplication(notAImpB).text
+
+      expect(RESULT).toBe(EXPECTED)
+    })
+
+    it("Conditional Identity: A ∨ B ≡ ¬A → B", () => {
+      const aOrB = createOrNode(false, A, B, [A, B])
+      const EXPECTED = "¬A → B"
+      const RESULT = conditionalIdentityImplication(aOrB).text
 
       expect(RESULT).toBe(EXPECTED)
     })

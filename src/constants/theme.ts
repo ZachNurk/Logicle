@@ -22,3 +22,11 @@ export const Colors = {
   lightPink: "#ffcfe3",
   gray: "#abb3ad",
 };
+
+/** Starter 1–4: red, blue, green, yellow; derived nodes use deeper shades by layer. */
+export const StarterNodePalette = [
+  { base: "#ef4444", depth1: "#dc2626", depth2: "#991b1b", text: "#ffffff" },
+  { base: "#3b82f6", depth1: "#2563eb", depth2: "#1e3a8a", text: "#ffffff" },
+  { base: "#4ade80", depth1: "#16a34a", depth2: "#14532d", text: "#000000" },
+  { base: "#facc15", depth1: "#ca8a04", depth2: "#854d0e", text: "#000000" },
+] as const;

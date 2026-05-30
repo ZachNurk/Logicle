@@ -272,7 +272,6 @@ const validateEmail =(email: string): boolean => {
     setLoginError(null);
     setForgotPasswordMessage(null);
     setCreateAccountError(null);
-    setEmail("");
     setPassword("");
     clearResetFlowState();
     setAuthView("createAccount");
@@ -282,7 +281,6 @@ const validateEmail =(email: string): boolean => {
     setLoginError(null);
     setForgotPasswordMessage(null);
     setCreateAccountError(null);
-    setEmail("");
     setPassword("");
     clearResetFlowState();
     setAuthView("login");

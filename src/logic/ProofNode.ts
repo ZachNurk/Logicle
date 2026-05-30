@@ -11,7 +11,7 @@ export type Relationship = "If" | "Not" | "And" | "Or" | "Iff";
 
 /**
  * Function checks if two nodes are the same (logically equivalent).
- * For And and Or, order of left/right does not matter (commutative).
+ * For And, Or, and Iff, order of left/right does not matter (commutative).
  * @param a is the first node
  * @param b is the second node
  * @return returns true if the same, false if not
@@ -213,7 +213,7 @@ export function createNode(
   };
 }
 
-export function createNotNode(
+export function negateNode(
   selected: boolean,
   contains: ProofNode,
   parents?: ProofNode[],

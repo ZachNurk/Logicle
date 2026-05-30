@@ -6,10 +6,16 @@
  * @file ProofNodePanel.tsx
  */
 
-import { useRef, useLayoutEffect, useState, useCallback } from "react";
+import {
+  useRef,
+  useLayoutEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import type { ProofNode } from "../logic/ProofNode";
 import type { CSSProperties } from "react";
-import { Colors } from "../constants/theme";
+import { Colors, StarterNodePalette } from "../constants/theme";
 
 type Arrow = { x1: number; y1: number; x2: number; y2: number; rule?: string };
 
@@ -82,6 +88,140 @@ function buildOrderedLayers(
   }
 
   return layers;
+}
+
+type NodeColorMaps = {
+  starterIndexById: Map<string, number>;
+  lineageStarterId: (node: ProofNode) => string;
+  byId: Map<string, ProofNode>;
+};
+
+function paletteColorAtLayer(
+  paletteIdx: number,
+  layer: number,
+): string {
+  const palette = StarterNodePalette[paletteIdx];
+  if (layer <= 0) return palette.base;
+  if (layer === 1) return palette.depth1;
+  return palette.depth2;
+}
+
+function starterIndexForNode(node: ProofNode, maps: NodeColorMaps): number {
+  const resolved = maps.byId.get(node.id) ?? node;
+  const starterId = resolved.isStarter
+    ? resolved.id
+    : maps.lineageStarterId(resolved);
+  return maps.starterIndexById.get(starterId) ?? 0;
+}
+
+function buildNodeColorMaps(
+  visibleNodes: ProofNode[],
+  layer0: ProofNode[],
+): NodeColorMaps {
+  const starterIndexById = new Map<string, number>();
+  layer0.forEach((s, i) => {
+    starterIndexById.set(s.id, Math.min(i, StarterNodePalette.length - 1));
+  });
+
+  const byId = new Map(visibleNodes.map((n) => [n.id, n]));
+  const lineageCache = new Map<string, string>();
+  const fallbackStarterId = layer0[0]?.id;
+
+  function lineageStarterId(node: ProofNode): string {
+    const cached = lineageCache.get(node.id);
+    if (cached) return cached;
+
+    if (node.isStarter) {
+      lineageCache.set(node.id, node.id);
+      return node.id;
+    }
+
+    const parent = node.parents?.[0];
+    const resolved =
+      parent === undefined
+        ? fallbackStarterId ?? node.id
+        : lineageStarterId(byId.get(parent.id) ?? parent);
+
+    lineageCache.set(node.id, resolved);
+    return resolved;
+  }
+
+  return { starterIndexById, lineageStarterId, byId };
+}
+
+type SplitParentColors = { left: string; right: string; leftText: string; rightText: string };
+
+function getSplitParentColors(
+  node: ProofNode,
+  layer: number,
+  maps: NodeColorMaps,
+): SplitParentColors | null {
+  const parents = node.parents ?? [];
+  if (node.isStarter || parents.length < 2) return null;
+
+  const p0 = maps.byId.get(parents[0].id) ?? parents[0];
+  const p1 = maps.byId.get(parents[1].id) ?? parents[1];
+  const idx0 = starterIndexForNode(p0, maps);
+  const idx1 = starterIndexForNode(p1, maps);
+  if (idx0 === idx1) return null;
+
+  return {
+    left: paletteColorAtLayer(idx0, layer),
+    right: paletteColorAtLayer(idx1, layer),
+    leftText: StarterNodePalette[idx0].text,
+    rightText: StarterNodePalette[idx1].text,
+  };
+}
+
+function getNodeBackgroundStyle(
+  node: ProofNode,
+  layer: number,
+  maps: NodeColorMaps,
+): Pick<
+  CSSProperties,
+  | "backgroundColor"
+  | "backgroundImage"
+  | "backgroundRepeat"
+  | "backgroundSize"
+  | "backgroundOrigin"
+  | "backgroundClip"
+> {
+  const split = getSplitParentColors(node, layer, maps);
+  if (split) {
+    const { left, right } = split;
+    return {
+      backgroundColor: right,
+      backgroundImage: `linear-gradient(to right, ${left} 0%, ${left} 30%, ${right} 70%, ${right} 100%)`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "100% 100%",
+      backgroundOrigin: "border-box",
+      backgroundClip: "border-box",
+    };
+  }
+  const color = paletteColorAtLayer(starterIndexForNode(node, maps), layer);
+  return {
+    backgroundColor: color,
+    backgroundImage: "none",
+  };
+}
+
+function getNodeTextStyle(
+  node: ProofNode,
+  layer: number,
+  maps: NodeColorMaps,
+): Pick<CSSProperties, "color" | "textShadow"> {
+  const split = getSplitParentColors(node, layer, maps);
+  if (split) {
+    if (split.leftText === split.rightText) {
+      return { color: split.leftText };
+    }
+    return {
+      color: Colors.white,
+      textShadow: `0 0 3px ${Colors.black}, 0 1px 2px ${Colors.black}`,
+    };
+  }
+  const paletteIdx = starterIndexForNode(node, maps);
+  return { color: StarterNodePalette[paletteIdx].text };
 }
 
 export default function ProofNodePanel({
@@ -168,6 +308,12 @@ export default function ProofNodePanel({
   );
   const layers = buildOrderedLayers(visibleNodes, layerOf, maxLayer);
 
+  const starterOrderKey = layers[0]?.map((n) => n.id).join(",") ?? "";
+  const colorMaps = useMemo(
+    () => buildNodeColorMaps(visibleNodes, layers[0] ?? []),
+    [visibleNodes, starterOrderKey],
+  );
+
   return (
     <div ref={containerRef} style={styles.container}>
       {/* Dashed lines under nodes (z-index 0) */}
@@ -191,23 +337,36 @@ export default function ProofNodePanel({
       <div style={styles.nodesColumn}>
         {layers.map((layerNodes, layerIdx) => (
           <div key={layerIdx} style={styles.layer}>
-            {layerNodes.map((node) => (
+            {layerNodes.map((node) => {
+              const layer = layerOf.get(node.id) ?? 0;
+              const backgroundStyle = getNodeBackgroundStyle(
+                node,
+                layer,
+                colorMaps,
+              );
+              const textStyle = getNodeTextStyle(node, layer, colorMaps);
+
+              return (
               <button
                 key={node.id}
                 ref={setRef(node.id)}
                 onClick={() => toggleSelected(node.id)}
                 style={{
                   ...styles.nodeButton,
-                  ...(node.isStarter ? styles.starterButton : styles.derivedButton),
+                  ...backgroundStyle,
+                  ...textStyle,
                   ...(node.selected ? styles.selectedButton : {}),
-                  ...(hoveredNodeId === node.id && !node.selected ? styles.nodeButtonHover : {}),
+                  ...(hoveredNodeId === node.id && !node.selected
+                    ? styles.nodeButtonHover
+                    : {}),
                 }}
                 onMouseEnter={() => setHoveredNodeId(node.id)}
                 onMouseLeave={() => setHoveredNodeId(null)}
               >
                 {node.text}
               </button>
-            ))}
+            );
+            })}
           </div>
         ))}
 
@@ -313,29 +472,26 @@ const styles: Record<string, CSSProperties> = {
     border: `2px solid ${Colors.black}`,
     borderRadius: "100px",
     fontWeight: "bold",
-    transition:
-      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    appearance: "none",
+    transition: "transform 0.2s, box-shadow 0.2s, color 0.2s, filter 0.2s",
   },
   nodeButtonHover: {
-    backgroundColor: Colors.lightPink,
+    filter: "brightness(1.12)",
     transform: "translate(-2px, -2px)",
     boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
-  starterButton: {
-    backgroundColor: Colors.darkPink,
-  },
-  derivedButton: {
-    backgroundColor: Colors.mediumPink,
-  },
   selectedButton: {
     backgroundColor: Colors.white,
+    backgroundImage: "none",
+    color: Colors.black,
+    textShadow: "none",
     transform: "translate(-2px, -2px)",
     boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
   solutionButton: {
     cursor: "default",
     backgroundColor: Colors.darkPink,
-    color: "black",
+    color: Colors.black,
   },
   solutionReached: {
     backgroundColor: "#22c55e",
