@@ -298,7 +298,6 @@ export function revMT(node: ProofNode): boolean {
     curNodes.add(negJoiner)
     curNodes.add(nodeB)
     return true
-    
 }
 
 /** Simplification: (p ∧ q) → p */
