@@ -6,7 +6,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
-import { generateEndlessPuzzle } from "../../logic/ReverseAxiom";
+import { generateEndlessPuzzle } from "../../logic/GeneratePuzzle";
+import { DAILY_PUZZLES } from "../../data/dailyPuzzles";
 
 /** Pause before loading the next endless puzzle so the solved state is visible. */
 const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 1000;
@@ -112,45 +113,37 @@ export function useProofNodes(
     setLoadError(null);
 
     // effect is dependent on userId because logout deletes created nodes
-    (async () => {
-      try {
-        let day: DayPayload;
+    try {
+      let day: DayPayload;
 
-        if (puzzleSource === "endless") {
-          day = generateEndlessPuzzle();
-        } else {
-          const res = await fetch("/api/days");
-          if (!res.ok) {
-            throw new Error(`Failed to load days: ${res.status}`);
-          }
+      if (puzzleSource === "endless") {
+        day = generateEndlessPuzzle();
+      } else {
+        // Daily puzzles are hardcoded (DAILY_PUZZLES), sorted ascending by id.
+        // Pick today's puzzle by offset from the first puzzle date.
+        const firstDay = new Date("2026-03-19");
+        const today = new Date();
 
-          const data = await res.json();
-          const days = Array.isArray(data) ? data : (data?.days ?? []);
-          // Latest day by id (dates sort lexicographically as YYYY-MM-DD)
-          // 2026-03-19
+        const diffMs = today.getTime() - firstDay.getTime();
+        const msPerDay = 1000 * 60 * 60 * 24;
 
-          const firstDay = new Date("2026-03-19");
-          const today = new Date();
+        const dayIndex = Math.round(diffMs / msPerDay) - 1;
 
-          const diffMs = today.getTime() - firstDay.getTime()
-          const msPerDay = 1000 * 60 * 60 * 24;
-
-          const dayIndex = Math.round(diffMs / msPerDay) - 1
-
-          day = days[dayIndex] 
-          //TODO remove me ^
-    
-        }
-
-        applyLoadedDay(day, puzzleSource);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load days";
-        setLoadError(message);
-      } finally {
-        setIsLoading(false);
+        day = DAILY_PUZZLES[dayIndex];
       }
-    })();
+
+      if (!day) {
+        throw new Error("No puzzle available for today");
+      }
+
+      applyLoadedDay(day, puzzleSource);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load puzzle";
+      setLoadError(message);
+    } finally {
+      setIsLoading(false);
+    }
   }, [userId, puzzleSource, applyLoadedDay]);
 
   const advanceEndlessPuzzle = useCallback(() => {

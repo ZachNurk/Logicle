@@ -1,8 +1,5 @@
-CREATE TABLE IF NOT EXISTS days (
-  id TEXT PRIMARY KEY,
-  nodes JSONB NOT NULL DEFAULT '[]'::jsonb,
-  solution JSONB NOT NULL DEFAULT '{}'::jsonb
-);
+-- Daily puzzles are hardcoded in the frontend (src/data/dailyPuzzles.ts);
+-- there is no longer a `days` table. Only auth + progress live in the DB.
 
 CREATE TABLE IF NOT EXISTS users (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,

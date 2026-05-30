@@ -90,81 +90,28 @@ function buildOrderedLayers(
   return layers;
 }
 
-/** Left/right starter palette indices; equal indices = solid color. */
-type NodeGradient = { leftIdx: number; rightIdx: number };
-
 type NodeColorMaps = {
+  starterIndexById: Map<string, number>;
+  lineageStarterId: (node: ProofNode) => string;
   byId: Map<string, ProofNode>;
-  nodeGradient: (node: ProofNode) => NodeGradient;
 };
 
-function paletteColorAtLayer(paletteIdx: number, layer: number): string {
+function paletteColorAtLayer(
+  paletteIdx: number,
+  layer: number,
+): string {
   const palette = StarterNodePalette[paletteIdx];
   if (layer <= 0) return palette.base;
   if (layer === 1) return palette.depth1;
   return palette.depth2;
 }
 
-function gradientColorsAtLayer(
-  gradient: NodeGradient,
-  layer: number,
-): { left: string; right: string; leftText: string; rightText: string } {
-  const { leftIdx, rightIdx } = gradient;
-  return {
-    left: paletteColorAtLayer(leftIdx, layer),
-    right: paletteColorAtLayer(rightIdx, layer),
-    leftText: StarterNodePalette[leftIdx].text,
-    rightText: StarterNodePalette[rightIdx].text,
-  };
-}
-
-function isDualGradient(gradient: NodeGradient): boolean {
-  return gradient.leftIdx !== gradient.rightIdx;
-}
-
-const gradientFillBase: Pick<
-  CSSProperties,
-  | "backgroundRepeat"
-  | "backgroundSize"
-  | "backgroundOrigin"
-  | "backgroundClip"
-> = {
-  backgroundRepeat: "no-repeat",
-  backgroundSize: "100% 100%",
-  backgroundOrigin: "border-box",
-  backgroundClip: "border-box",
-};
-
-/** Single horizontal band: parent colors on the sides, blend between. */
-function simpleDualGradientStyle(
-  left: string,
-  right: string,
-): Pick<CSSProperties, "backgroundColor" | "backgroundImage"> {
-  return {
-    backgroundColor: right,
-    backgroundImage: `linear-gradient(to right, ${left} 0%, ${left} 30%, ${right} 70%, ${right} 100%)`,
-  };
-}
-
-/** Stack two parent gradients so they merge toward the center. */
-function overlayGradientStyle(
-  g0: NodeGradient,
-  g1: NodeGradient,
-  layer: number,
-): Pick<
-  CSSProperties,
-  "backgroundColor" | "backgroundImage" | "backgroundBlendMode"
-> {
-  const c0 = gradientColorsAtLayer(g0, layer);
-  const c1 = gradientColorsAtLayer(g1, layer);
-  return {
-    backgroundColor: c1.right,
-    backgroundImage: [
-      `linear-gradient(to right, ${c0.left} 0%, ${c0.right} 100%)`,
-      `linear-gradient(to right, ${c1.left} 0%, ${c1.right} 100%)`,
-    ].join(", "),
-    backgroundBlendMode: "overlay",
-  };
+function starterIndexForNode(node: ProofNode, maps: NodeColorMaps): number {
+  const resolved = maps.byId.get(node.id) ?? node;
+  const starterId = resolved.isStarter
+    ? resolved.id
+    : maps.lineageStarterId(resolved);
+  return maps.starterIndexById.get(starterId) ?? 0;
 }
 
 function buildNodeColorMaps(
@@ -172,49 +119,60 @@ function buildNodeColorMaps(
   layer0: ProofNode[],
 ): NodeColorMaps {
   const starterIndexById = new Map<string, number>();
-  layer0.forEach((s, i) => {
+  const sortedStarters = [...layer0].sort(
+    (a, b) => a.text.localeCompare(b.text) || a.id.localeCompare(b.id),
+  );
+  sortedStarters.forEach((s, i) => {
     starterIndexById.set(s.id, Math.min(i, StarterNodePalette.length - 1));
   });
 
   const byId = new Map(visibleNodes.map((n) => [n.id, n]));
-  const gradientCache = new Map<string, NodeGradient>();
-  const fallbackIdx = 0;
+  const lineageCache = new Map<string, string>();
+  const fallbackStarterId = layer0[0]?.id;
 
-  function resolveNodeGradient(node: ProofNode): NodeGradient {
-    const cached = gradientCache.get(node.id);
+  function lineageStarterId(node: ProofNode): string {
+    const cached = lineageCache.get(node.id);
     if (cached) return cached;
 
-    let gradient: NodeGradient;
     if (node.isStarter) {
-      const idx = starterIndexById.get(node.id) ?? fallbackIdx;
-      gradient = { leftIdx: idx, rightIdx: idx };
-    } else {
-      const parents = node.parents ?? [];
-      if (parents.length >= 2) {
-        const p0 = byId.get(parents[0].id) ?? parents[0];
-        const p1 = byId.get(parents[1].id) ?? parents[1];
-        const g0 = resolveNodeGradient(p0);
-        const g1 = resolveNodeGradient(p1);
-        gradient = { leftIdx: g0.leftIdx, rightIdx: g1.rightIdx };
-      } else if (parents.length === 1) {
-        const p = byId.get(parents[0].id) ?? parents[0];
-        gradient = resolveNodeGradient(p);
-      } else {
-        gradient = { leftIdx: fallbackIdx, rightIdx: fallbackIdx };
-      }
+      lineageCache.set(node.id, node.id);
+      return node.id;
     }
 
-    gradientCache.set(node.id, gradient);
-    return gradient;
+    const parent = node.parents?.[0];
+    const resolved =
+      parent === undefined
+        ? fallbackStarterId ?? node.id
+        : lineageStarterId(byId.get(parent.id) ?? parent);
+
+    lineageCache.set(node.id, resolved);
+    return resolved;
   }
 
-  for (const n of visibleNodes) {
-    resolveNodeGradient(n);
-  }
+  return { starterIndexById, lineageStarterId, byId };
+}
+
+type SplitParentColors = { left: string; right: string; leftText: string; rightText: string };
+
+function getSplitParentColors(
+  node: ProofNode,
+  layer: number,
+  maps: NodeColorMaps,
+): SplitParentColors | null {
+  const parents = node.parents ?? [];
+  if (node.isStarter || parents.length < 2) return null;
+
+  const p0 = maps.byId.get(parents[0].id) ?? parents[0];
+  const p1 = maps.byId.get(parents[1].id) ?? parents[1];
+  const idx0 = starterIndexForNode(p0, maps);
+  const idx1 = starterIndexForNode(p1, maps);
+  if (idx0 === idx1) return null;
 
   return {
-    byId,
-    nodeGradient: resolveNodeGradient,
+    left: paletteColorAtLayer(idx0, layer),
+    right: paletteColorAtLayer(idx1, layer),
+    leftText: StarterNodePalette[idx0].text,
+    rightText: StarterNodePalette[idx1].text,
   };
 }
 
@@ -230,33 +188,23 @@ function getNodeBackgroundStyle(
   | "backgroundSize"
   | "backgroundOrigin"
   | "backgroundClip"
-  | "backgroundBlendMode"
 > {
-  const gradient = maps.nodeGradient(node);
-  const parents = node.parents ?? [];
-
-  if (parents.length >= 2) {
-    const p0 = maps.byId.get(parents[0].id) ?? parents[0];
-    const p1 = maps.byId.get(parents[1].id) ?? parents[1];
-    const g0 = maps.nodeGradient(p0);
-    const g1 = maps.nodeGradient(p1);
-
-    if (isDualGradient(g0) || isDualGradient(g1)) {
-      return { ...gradientFillBase, ...overlayGradientStyle(g0, g1, layer) };
-    }
-  }
-
-  const { left, right } = gradientColorsAtLayer(gradient, layer);
-  if (!isDualGradient(gradient)) {
+  const split = getSplitParentColors(node, layer, maps);
+  if (split) {
+    const { left, right } = split;
     return {
-      backgroundColor: left,
-      backgroundImage: "none",
+      backgroundColor: right,
+      backgroundImage: `linear-gradient(to right, ${left} 0%, ${left} 30%, ${right} 70%, ${right} 100%)`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "100% 100%",
+      backgroundOrigin: "border-box",
+      backgroundClip: "border-box",
     };
   }
-
+  const color = paletteColorAtLayer(starterIndexForNode(node, maps), layer);
   return {
-    ...gradientFillBase,
-    ...simpleDualGradientStyle(left, right),
+    backgroundColor: color,
+    backgroundImage: "none",
   };
 }
 
@@ -265,17 +213,18 @@ function getNodeTextStyle(
   layer: number,
   maps: NodeColorMaps,
 ): Pick<CSSProperties, "color" | "textShadow"> {
-  const { leftText, rightText } = gradientColorsAtLayer(
-    maps.nodeGradient(node),
-    layer,
-  );
-  if (leftText === rightText) {
-    return { color: leftText };
+  const split = getSplitParentColors(node, layer, maps);
+  if (split) {
+    if (split.leftText === split.rightText) {
+      return { color: split.leftText };
+    }
+    return {
+      color: Colors.white,
+      textShadow: `0 0 3px ${Colors.black}, 0 1px 2px ${Colors.black}`,
+    };
   }
-  return {
-    color: Colors.white,
-    textShadow: `0 0 3px ${Colors.black}, 0 1px 2px ${Colors.black}`,
-  };
+  const paletteIdx = starterIndexForNode(node, maps);
+  return { color: StarterNodePalette[paletteIdx].text };
 }
 
 export default function ProofNodePanel({
@@ -368,6 +317,17 @@ export default function ProofNodePanel({
     [visibleNodes, starterOrderKey],
   );
 
+  const displayLayers = useMemo(() => {
+    if (!layers[0]?.length) return layers;
+    const next = layers.map((row) => [...row]);
+    next[0].sort((a, b) => {
+      const ia = colorMaps.starterIndexById.get(a.id) ?? 0;
+      const ib = colorMaps.starterIndexById.get(b.id) ?? 0;
+      return ia - ib;
+    });
+    return next;
+  }, [layers, colorMaps]);
+
   return (
     <div ref={containerRef} style={styles.container}>
       {/* Dashed lines under nodes (z-index 0) */}
@@ -389,7 +349,7 @@ export default function ProofNodePanel({
 
       {/* Nodes between lines and arrowheads */}
       <div style={styles.nodesColumn}>
-        {layers.map((layerNodes, layerIdx) => (
+        {displayLayers.map((layerNodes, layerIdx) => (
           <div key={layerIdx} style={styles.layer}>
             {layerNodes.map((node) => {
               const layer = layerOf.get(node.id) ?? 0;
@@ -537,7 +497,6 @@ const styles: Record<string, CSSProperties> = {
   selectedButton: {
     backgroundColor: Colors.white,
     backgroundImage: "none",
-    backgroundBlendMode: "normal",
     color: Colors.black,
     textShadow: "none",
     transform: "translate(-2px, -2px)",

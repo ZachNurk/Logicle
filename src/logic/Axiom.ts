@@ -675,7 +675,7 @@ export function contrapositive(original: ProofNode) : ProofNode {
  * Accepts either an implication or the equivalent disjunction.
  */
 export function conditionalIdentityImplication(original: ProofNode): ProofNode {
-  if (isImplicationNode(original) && original.left && original.right) {
+  if (isImplicationNode(original)) {
     let left;
     if (isNotNode(original.left)) {
       left = original.left.contains;

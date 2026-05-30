@@ -1,7 +1,6 @@
 import cors from "cors";
 import express from "express";
 import authRouter from "./routes/auth.ts";
-import daysRouter from "./routes/days.ts";
 import userDataRouter from "./routes/userData.ts";
 
 const port = Number(process.env.PORT ?? 3001);
@@ -12,7 +11,6 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api", authRouter);
-app.use("/api/days", daysRouter);
 app.use("/api/users", userDataRouter);
 
 app.use((_req, res) => {

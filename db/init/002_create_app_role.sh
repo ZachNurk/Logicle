@@ -32,9 +32,6 @@ psql -v ON_ERROR_STOP=1 \
   GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO ${APP_DB_USER};
   GRANT USAGE ON SCHEMA public TO ${APP_DB_USER};
 
-  -- days: read-only puzzle bank.
-  GRANT SELECT ON TABLE days TO ${APP_DB_USER};
-
   -- users: register, look up, rotate OTP / password. No DELETE.
   GRANT SELECT, INSERT, UPDATE ON TABLE users TO ${APP_DB_USER};
 

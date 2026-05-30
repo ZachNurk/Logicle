@@ -33,7 +33,8 @@ import {
 } from "../src/logic/ProofNode";
 import type { ProofNode, NotNode, OrNode, AndNode } from "../src/logic/ProofNode";
 import type { ImplicationNode } from "../src/logic/ProofNode";
-import { generateEndlessPuzzle, generateSolutionNode, revHS } from "../src/logic/ReverseAxiom";
+import { generateEndlessPuzzle, generateSolutionNode } from "../src/logic/GeneratePuzzle";
+import { revHS } from "../src/logic/ReverseAxiom";
 
 const A: ProofNode = createNode("A", true, undefined);
 const B: ProofNode = createNode("B", true, undefined);
@@ -43,11 +44,18 @@ const E: ProofNode = createNode("E", true, undefined);
 const F: ProofNode = createNode("F", true, undefined);
 
 describe("ReverseAxiom", () => {
-  it("revHS accepts iff input (non-error path)", () => {
-    const iff = createIffNode(false, A, B, undefined, true); // A-->B
+  it("revHS accepts implication input", () => {
+    const implication = createImplicationNode(false, A, B, undefined, true);
+    const ctx = {
+      replaceNode: () => true,
+      generateAtom: () => createNode("G", true),
+      createRandomAndNode: (l: ProofNode, r: ProofNode) =>
+        createAndNode(false, l, r),
+      createRandomOrNode: (l: ProofNode, r: ProofNode) =>
+        createOrNode(false, l, r),
+    };
 
-    const result = revHS(iff);
-    expect(result).not.toEqual(ERROR_NODE);
+    expect(revHS(ctx, implication)).toBe(true);
   });
   it("logs 10 generated solution nodes", () => {
     for (let i = 0; i < 10; i += 1) {

@@ -862,6 +862,15 @@ describe("Axioms", () => {
       expect(RESULT).toBe(EXPECTED)
     })
 
+    it("Conditional Identity: ¬A ∨ B ≡ A → B", () => {
+      const notA = negateNode(false, A, [A])
+      const notAOrB = createOrNode(false, notA, B, [notA, B])
+      const EXPECTED = "A → B"
+      const RESULT = conditionalIdentityImplication(notAOrB).text
+
+      expect(RESULT).toBe(EXPECTED)
+    })
+
     it("Conditional Identity: A ∨ B ≡ ¬A → B", () => {
       const aOrB = createOrNode(false, A, B, [A, B])
       const EXPECTED = "¬A → B"
