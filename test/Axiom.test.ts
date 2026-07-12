@@ -23,7 +23,7 @@ import {
 } from "../src/logic/Axiom";
 import {
   createNode,
-  createNotNode,
+  negateNode,
   createImplicationNode,
   createAndNode,
   sameNode,
@@ -142,9 +142,9 @@ describe("Axioms", () => {
       const Q: ProofNode = createNode("Q", true, undefined);
   
       const PImpliesQ: ImplicationNode = createImplicationNode(true, P, Q);
-      const NQ: NotNode = createNotNode(true, Q, undefined);
+      const NQ: NotNode = negateNode(true, Q, undefined);
 
-      const EXPECTED: NotNode = createNotNode(true, P, undefined);
+      const EXPECTED: NotNode = negateNode(true, P, undefined);
   
       let ACTUAL: ProofNode = modusTollens(premises(PImpliesQ, NQ), [PImpliesQ, NQ]);
       expect(sameNode(ACTUAL, EXPECTED)).toBe(true);
@@ -161,8 +161,8 @@ describe("Axioms", () => {
       const CImpliesB: ImplicationNode = createImplicationNode(true, C, B);
       const PImplies_CImpliesB: ImplicationNode = createImplicationNode(true, P, CImpliesB);
 
-      const Not_CImpliesB: NotNode = createNotNode(true, CImpliesB, undefined);
-      const EXPECTED: NotNode = createNotNode(true, P, undefined);
+      const Not_CImpliesB: NotNode = negateNode(true, CImpliesB, undefined);
+      const EXPECTED: NotNode = negateNode(true, P, undefined);
   
       let ACTUAL: ProofNode = modusTollens(
         premises(PImplies_CImpliesB, Not_CImpliesB),
@@ -178,10 +178,10 @@ describe("Axioms", () => {
       const P: ProofNode = createNode("P", true, undefined);
       const Q: ProofNode = createNode("Q", true, undefined);
   
-      const NQ: NotNode = createNotNode(true, Q, undefined);
+      const NQ: NotNode = negateNode(true, Q, undefined);
       const PImpliesQ: ImplicationNode = createImplicationNode(true, P, Q);
 
-      const EXPECTED: NotNode = createNotNode(true, P, undefined);
+      const EXPECTED: NotNode = negateNode(true, P, undefined);
   
       expect(sameNode(modusTollens(premises(NQ, PImpliesQ), [NQ, PImpliesQ]), EXPECTED)).toBe(
         true,
@@ -192,7 +192,7 @@ describe("Axioms", () => {
       const P: ProofNode = createNode("P", true, undefined);
       const Q: ProofNode = createNode("Q", true, undefined);
   
-      const NP: NotNode = createNotNode(true, P, undefined);
+      const NP: NotNode = negateNode(true, P, undefined);
       const PImpliesQ: ImplicationNode = createImplicationNode(true, P, Q);
       expect(sameNode(modusTollens(premises(PImpliesQ, NP), [PImpliesQ, NP]), ERROR_NODE)).toBe(
         true,
@@ -213,7 +213,7 @@ describe("Axioms", () => {
         Q,
         R,
       );
-      const Not_QImpliesR: NotNode = createNotNode(
+      const Not_QImpliesR: NotNode = negateNode(
 
         true,
         QImpliesR,
@@ -243,8 +243,8 @@ describe("Axioms", () => {
       const AImpliesB: ImplicationNode = createImplicationNode(true, A, B);
       const PImplies_AImpliesB: ImplicationNode = createImplicationNode(true, P, AImpliesB);
 
-      const Not_AImpliesB: NotNode = createNotNode(true, AImpliesB, undefined);
-      const EXPECTED: NotNode = createNotNode(true, P, undefined);
+      const Not_AImpliesB: NotNode = negateNode(true, AImpliesB, undefined);
+      const EXPECTED: NotNode = negateNode(true, P, undefined);
   
       expect(
         sameNode(
@@ -338,7 +338,7 @@ describe("Axioms", () => {
     it("[(p ∨ q) ∧ ¬p] → q", () => {
       const P: ProofNode = createNode("P", true, undefined);
       const Q: ProofNode = createNode("Q", true, undefined);
-      const NP: NotNode = createNotNode(true, P, undefined);
+      const NP: NotNode = negateNode(true, P, undefined);
       const POQ: OrNode = createOrNode(true, P, Q, undefined);
   
       const EXPECTED = Q;
@@ -351,7 +351,7 @@ describe("Axioms", () => {
     it("[(q ∨ p) ∧ ¬p] → q", () => {
       const P: ProofNode = createNode("P", true, undefined);
       const Q: ProofNode = createNode("Q", true, undefined);
-      const NP: NotNode = createNotNode(true, P, undefined);
+      const NP: NotNode = negateNode(true, P, undefined);
       const QOP: OrNode = createOrNode(true, Q, P, undefined);
   
       const EXPECTED = Q;
@@ -363,7 +363,7 @@ describe("Axioms", () => {
   
     it("[(C ∨ (A ∧ B)) ∧ ¬( A ^ B )] → C", () => {
       const ANB: AndNode = createAndNode(true, A, B, undefined)
-      const NANB: NotNode = createNotNode(true, ANB, undefined)
+      const NANB: NotNode = negateNode(true, ANB, undefined)
       const COANBD: OrNode = createOrNode(true, C, ANB, undefined)
   
   
@@ -376,7 +376,7 @@ describe("Axioms", () => {
   
     it("[(C ∨ (A ∧ B)) ∧ ¬C] → (A ∧ B)", () => {
       const ANB: AndNode = createAndNode(true, A, B, undefined)
-      const NC: NotNode = createNotNode(true, C, undefined)
+      const NC: NotNode = negateNode(true, C, undefined)
       const COANBD: OrNode = createOrNode(true, C, ANB, undefined)
   
   
@@ -517,6 +517,16 @@ describe("Axioms", () => {
       const EXPECTED = "C ∧ (A ∨ B)"
   
       const ACTUAL = commutativity(aOrBAndC)
+      expect(ACTUAL.text === EXPECTED).toBe(true)
+    })
+  })
+
+  describe("IFF commutativity", () => {
+    it("(A ↔ B) yields (B ↔ A)", () => {
+      const aIffB = createIffNode(false, A, B)
+      const EXPECTED = "B ↔ A"
+
+      const ACTUAL = commutativity(aIffB)
       expect(ACTUAL.text === EXPECTED).toBe(true)
     })
   })
@@ -718,16 +728,16 @@ describe("Axioms", () => {
   describe("De Morgan", () => {
     it("¬(A ∨ B) ≡ (¬A ∧ ¬B)", () => {
       const aOrB = createOrNode(false, A, B)
-      const notAOrB = createNotNode(false, aOrB)
+      const notAOrB = negateNode(false, aOrB)
       const ACTUAL = deMorgan(notAOrB).text
       const EXPECTED = "¬A ∧ ¬B"
       expect(ACTUAL).toBe(EXPECTED)
     })
     it("handles double-negated terms (AND case): ¬(¬A ∧ ¬B) ≡ A ∨ B", () => {
-      const notA = createNotNode(false, A)
-      const notB = createNotNode(false, B)
+      const notA = negateNode(false, A)
+      const notB = negateNode(false, B)
       const notAAndNotB = createAndNode(false, notA, notB)
-      const input = createNotNode(false, notAAndNotB)
+      const input = negateNode(false, notAAndNotB)
 
       const actual = deMorgan(input)
       const expected = "A ∨ B"
@@ -736,7 +746,7 @@ describe("Axioms", () => {
     })
     it("¬(A ∧ B) ≡ (¬A ∨ ¬B)", () => {
       const aAndB = createAndNode(false, A, B)
-      const notAAndB = createNotNode(false, aAndB)
+      const notAAndB = negateNode(false, aAndB)
       const ACTUAL = deMorgan(notAAndB).text
       const EXPECTED = "¬A ∨ ¬B"
       expect(ACTUAL).toBe(EXPECTED)
@@ -745,7 +755,7 @@ describe("Axioms", () => {
       const aAndB = createAndNode(false, A, B)
       const cAndD = createAndNode(false, C, D)
       const aAndBOrCAndD = createOrNode(false, aAndB, cAndD)
-      const notOuter = createNotNode(false, aAndBOrCAndD)
+      const notOuter = negateNode(false, aAndBOrCAndD)
 
       const afterFirst = deMorgan(notOuter) as AndNode
       expect(afterFirst.text).toBe("¬(A ∧ B) ∧ ¬(C ∧ D)")
@@ -762,6 +772,13 @@ describe("Axioms", () => {
       const aImpB = createImplicationNode(false, A, B)
       const ACTUAL = conditionalIdentityImplication(aImpB).text
       expect(ACTUAL).toBe("¬A ∨ B")
+    })
+
+    it("(¬A ∨ B) ≡ (A → B)", () => {
+      const notA = negateNode(false, A)
+      const notAOrB = createOrNode(false, notA, B)
+      const ACTUAL = conditionalIdentityImplication(notAOrB).text
+      expect(ACTUAL).toBe("A → B")
     })
   })
 
@@ -797,8 +814,8 @@ describe("Axioms", () => {
   })
 
   it("¬P → ¬Q is congruent to Q → P (contrapositive)", () => {
-    const notP = createNotNode(false, A)
-    const notQ = createNotNode(false, B)
+    const notP = negateNode(false, A)
+    const notQ = negateNode(false, B)
     const notPImplNotQ = createImplicationNode(false, notP, notQ, [notP, notQ])
 
     const result = contrapositive(notPImplNotQ)
@@ -836,10 +853,27 @@ describe("Axioms", () => {
     })
 
     it("Conditional Identity: ¬A → B ≡ A ∨ B", () => {
-      const notA = createNotNode(false, A, [A])
+      const notA = negateNode(false, A, [A])
       const notAImpB = createImplicationNode(false, notA, B, [notA, B])
       const EXPECTED = "A ∨ B"
       const RESULT = conditionalIdentityImplication(notAImpB).text
+
+      expect(RESULT).toBe(EXPECTED)
+    })
+
+    it("Conditional Identity: ¬A ∨ B ≡ A → B", () => {
+      const notA = negateNode(false, A, [A])
+      const notAOrB = createOrNode(false, notA, B, [notA, B])
+      const EXPECTED = "A → B"
+      const RESULT = conditionalIdentityImplication(notAOrB).text
+
+      expect(RESULT).toBe(EXPECTED)
+    })
+
+    it("Conditional Identity: A ∨ B ≡ ¬A → B", () => {
+      const aOrB = createOrNode(false, A, B, [A, B])
+      const EXPECTED = "¬A → B"
+      const RESULT = conditionalIdentityImplication(aOrB).text
 
       expect(RESULT).toBe(EXPECTED)
     })

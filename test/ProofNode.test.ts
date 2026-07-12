@@ -5,7 +5,7 @@ import {
   createIffNode,
   createImplicationNode,
   createNode,
-  createNotNode,
+  negateNode,
   nodeFromDb,
   createOrNode,
   sameNode,
@@ -52,10 +52,10 @@ describe("proof node constructors", () => {
     });
   });
 
-  it("createNotNode builds negation nodes", () => {
+  it("negateNode builds negation nodes", () => {
     const contains = createNode("P", false);
     const parent = createNode("Premise", false);
-    const notNode = createNotNode(true, contains, [parent], true);
+    const notNode = negateNode(true, contains, [parent], true);
 
     expect(notNode).toMatchObject({
       text: "¬P",
@@ -69,11 +69,11 @@ describe("proof node constructors", () => {
     expect(notNode.id).toEqual(expect.any(String));
   });
 
-  it("createNotNode wraps binary formulas in parentheses", () => {
+  it("negateNode wraps binary formulas in parentheses", () => {
     const left = createNode("P", false);
     const right = createNode("Q", false);
     const andNode = createAndNode(false, left, right);
-    const notNode = createNotNode(false, andNode);
+    const notNode = negateNode(false, andNode);
 
     expect(notNode.text).toBe("¬(P ∧ Q)");
     expect(notNode.parents).toEqual([]);

@@ -11,7 +11,7 @@ import {
   isImplicationNode,
   ERROR_NODE,
   isNotNode,
-  createNotNode,
+  negateNode,
   createImplicationNode,
   isAndNode,
   isOrNode,
@@ -19,6 +19,7 @@ import {
   createResultNode,
   createOrNode,
   createAndNode,
+  createIffNode,
   isAtomNode,
 } from "./ProofNode";
 import type { ImplicationNode, AndNode } from "./ProofNode";
@@ -188,7 +189,7 @@ export function modusTollens(premises: AndNode, selected: ProofNode[]): ProofNod
   }
 
   if (areNegationsOfEachOther(premise, implication.right)) {
-    return createNotNode(false, implication.left, selected);
+    return negateNode(false, implication.left, selected);
   }
   return ERROR_NODE;
 
@@ -346,18 +347,33 @@ function andCommutativity(original: ProofNode): ProofNode {
 }
 
 /**
- * Function combines communativity of and and or
+ * IFF commutativity: (A ↔ B) ≡ (B ↔ A)
+ * @param original is the Iff node (A ↔ B) to reorder
+ * @return returns a proof node (B ↔ A), or ERROR_NODE if original is not an Iff node
+ */
+function iffCommutativity(original: ProofNode): ProofNode {
+  if (!isIffNode(original) || !original.left || !original.right) {
+    return ERROR_NODE;
+  }
+  return createIffNode(false, original.right, original.left, [original]);
+}
+
+/**
+ * Function combines commutativity of and, or, and iff
  * @param original is the original node 
  * @return returns a proof node, or ERROR_NODE if original is not a valid node
  */
 export function commutativity(original: ProofNode): ProofNode {
   if (isAndNode(original)) {
-    return andCommutativity(original)
+    return andCommutativity(original);
   }
-  else if (isOrNode(original)) {
-    return orCommutativity(original)
+  if (isOrNode(original)) {
+    return orCommutativity(original);
   }
-  return ERROR_NODE
+  if (isIffNode(original)) {
+    return iffCommutativity(original);
+  }
+  return ERROR_NODE;
 }
 /**
  * AND associativity: (A ∧ B) ∧ C ≡ A ∧ (B ∧ C)
@@ -569,12 +585,12 @@ function deMorganOr(original: ProofNode): ProofNode {
   if (isNotNode(inner.left)) {
     left = inner.left.contains
   } else {
-     left = createNotNode(false, inner.left, undefined);
+     left = negateNode(false, inner.left, undefined);
   }
   if (isNotNode(inner.right)) {
     right = inner.right.contains
   } else {
-    right = createNotNode(false, inner.right, undefined);
+    right = negateNode(false, inner.right, undefined);
   }
 
 
@@ -599,12 +615,12 @@ function deMorganAnd(original: ProofNode): ProofNode {
   if (isNotNode(inner.left)) {
     left = inner.left.contains
   } else {
-     left = createNotNode(false, inner.left, undefined);
+     left = negateNode(false, inner.left, undefined);
   }
   if (isNotNode(inner.right)) {
     right = inner.right.contains
   } else {
-    right = createNotNode(false, inner.right, undefined);
+    right = negateNode(false, inner.right, undefined);
   }
 
   
@@ -643,12 +659,12 @@ export function contrapositive(original: ProofNode) : ProofNode {
   if (isNotNode(original.left)) {
     left = original.left.contains
   } else {
-     left = createNotNode(false, original.left, undefined);
+     left = negateNode(false, original.left, undefined);
   }
   if (isNotNode(original.right)) {
     right = original.right.contains
   } else {
-    right = createNotNode(false, original.right, undefined);
+    right = negateNode(false, original.right, undefined);
   }
 
   return createImplicationNode(false, right, left, [original]);
@@ -656,21 +672,30 @@ export function contrapositive(original: ProofNode) : ProofNode {
 
 /**
  * Conditional Identity (→): (p → q) ≡ (¬p ∨ q)
- * @param original must be an ImplicationNode
+ * Accepts either an implication or the equivalent disjunction.
  */
-//TODO FLAG
 export function conditionalIdentityImplication(original: ProofNode): ProofNode {
-  if (!isImplicationNode(original) || !original.left || !original.right) {
-    return ERROR_NODE;
-  } 
-  let left;
-  if (isNotNode(original.left)) {
-    left = original.left.contains
-  } else {
-     left = createNotNode(false, original.left, undefined);
+  if (isImplicationNode(original)) {
+    let left;
+    if (isNotNode(original.left)) {
+      left = original.left.contains;
+    } else {
+      left = negateNode(false, original.left, undefined);
+    }
+    return createOrNode(false, left, original.right, [original]);
   }
 
-  return createOrNode(false, left, original.right, [original]);
+  if (isOrNode(original) && original.left && original.right) {
+    let antecedent;
+    if (isNotNode(original.left)) {
+      antecedent = original.left.contains;
+    } else {
+      antecedent = negateNode(false, original.left, undefined);
+    }
+    return createImplicationNode(false, antecedent, original.right, [original]);
+  }
+
+  return ERROR_NODE;
 }
 
 /**
@@ -688,15 +713,22 @@ export function conditionalIdentityIff(original: ProofNode): ProofNode {
 
 /**
  * Implication wrapper:
- * 
+ *
+ * Premises must be an ∧ of two implications (cases 1–2) or a single → (cases 3–4).
  * first tries common consequent (#32), then common antecedent (#33).
  */
 export function implication(premises: ProofNode, selected: ProofNode[]): ProofNode {
-  // Case 1 (A--> C) and (B --> C) = (A V B) --> C
-  // Case 2 (A --B) and A --> C) = (A --> (B V C))
-  // Case 3 (A --> (B V C)) = (A --B) and A --> C) 
-  // case 4 (A V B) --> C = (A--> C) and (B --> C)
-  if (checkPremises(premises)) {
+  if (!isAndNode(premises) && !isImplicationNode(premises)) {
+    return ERROR_NODE;
+  }
+
+  // Case 1 (A → C) ∧ (B → C) ≡ (A ∨ B) → C
+  // Case 2 (A → B) ∧ (A → C) ≡ A → (B ∧ C)
+  if (isAndNode(premises)) {
+    if (!premises.left || !premises.right) {
+      return ERROR_NODE;
+    }
+
     const a = premises.left;
     const b = premises.right;
 
@@ -704,13 +736,11 @@ export function implication(premises: ProofNode, selected: ProofNode[]): ProofNo
       return ERROR_NODE;
     }
 
-    // Case 1: (A → C) ∧ (B → C) ≡ (A ∨ B) → C
     if (sameNode(a.right, b.right)) {
       const left = createOrNode(false, a.left, b.left, undefined);
       return createImplicationNode(false, left, a.right, selected);
     }
 
-    // Case 2: (A → B) ∧ (A → C) ≡ A → (B ∧ C)
     if (sameNode(a.left, b.left)) {
       const right = createAndNode(false, a.right, b.right, undefined);
       return createImplicationNode(false, a.left, right, selected);
@@ -719,18 +749,18 @@ export function implication(premises: ProofNode, selected: ProofNode[]): ProofNo
     return ERROR_NODE;
   }
 
-  if (!isImplicationNode(premises)) {
+  // Case 3: A → (B ∧ C) ≡ (A → B) ∧ (A → C)
+  // Case 4: (A ∨ B) → C ≡ (A → C) ∧ (B → C)
+  if (!premises.left || !premises.right) {
     return ERROR_NODE;
   }
 
-  // Case 3: A → (B ∧ C) ≡ (A → B) ∧ (A → C)
   if (isAndNode(premises.right)) {
     const left = createImplicationNode(false, premises.left, premises.right.left, undefined);
     const right = createImplicationNode(false, premises.left, premises.right.right, undefined);
     return createAndNode(false, left, right, [premises]);
   }
 
-  // Case 4: (A ∨ B) → C ≡ (A → C) ∧ (B → C)
   if (isOrNode(premises.left)) {
     const left = createImplicationNode(false, premises.left.left, premises.right, undefined);
     const right = createImplicationNode(false, premises.left.right, premises.right, undefined);
@@ -828,6 +858,7 @@ export const Axioms: Axiom[] = [
     selected: false,
     description: "(A ∧ B) ≡ (B ∧ A)",
     description2: "(A ∨ B) ≡ (B ∨ A)",
+    description3: "(A ↔ B) ≡ (B ↔ A)",
     applyType: "4",
     apply: commutativity,
   } satisfies Axiom,
@@ -882,6 +913,7 @@ export const Axioms: Axiom[] = [
     text: "Conditional Identity (→)",
     selected: false,
     description: "(A → B) ≡ (¬A ∨ B)",
+    description2: "(¬A ∨ B) ≡ (A → B)",
     applyType: "4",
     applyOption: "imp",
     apply: conditionalIdentityImplication,

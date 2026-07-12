@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
-import { generateEndlessPuzzle } from "../../logic/ReverseAxiom";
+import { generateEndlessPuzzle } from "../../logic/GeneratePuzzle";
 import { formatLocalDateKey } from "../../utils/dateKeys";
 
 /** Pause before loading the next endless puzzle so the solved state is visible. */
@@ -112,9 +112,8 @@ export function useProofNodes(
         } else {
           const res = await fetch("/api/days");
           if (!res.ok) {
-            throw new Error(`Failed to load days: ${res.status}`);
+            throw new Error("Failed to load days");
           }
-
           const data = await res.json();
           const days: DayPayload[] = Array.isArray(data) ? data : (data?.days ?? []);
           if (days.length === 0) {
@@ -131,10 +130,14 @@ export function useProofNodes(
           day = sorted.find((d) => d.id === todayKey) ?? sorted[sorted.length - 1];
         }
 
+        if (!day) {
+          throw new Error("No puzzle available for today");
+        }
+
         applyLoadedDay(day, puzzleSource);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Failed to load days";
+          error instanceof Error ? error.message : "Failed to load puzzle";
         setLoadError(message);
       } finally {
         setIsLoading(false);
