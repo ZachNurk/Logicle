@@ -7,10 +7,13 @@ import type { CookieOptions, Response } from "express";
 const SESSION_COOKIE = "session";
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
-const jwtSecret = process.env.JWT_SECRET;
-if (!jwtSecret) {
-  throw new Error("Missing JWT_SECRET in environment");
-}
+const jwtSecret: string = (() => {
+  const value = process.env.JWT_SECRET;
+  if (!value) {
+    throw new Error("Missing JWT_SECRET in environment");
+  }
+  return value;
+})();
 
 export type SessionPayload = {
   userId: string;
