@@ -172,7 +172,7 @@ export default function StatsModal({
             onMouseEnter={() => setSignInHovered(true)}
             onMouseLeave={() => setSignInHovered(false)}
           >
-            Sign in to save progress
+            Want to see your progress? Sign in
           </button>
         )}
 

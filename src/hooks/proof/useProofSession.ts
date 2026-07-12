@@ -37,7 +37,7 @@ export function useProofSession(
     deleteSelectedNode,
     resetNodes,
     advanceEndlessPuzzle,
-    endlessSolves,
+    endlessSolutionSteps,
   } = useProofNodes(userId, puzzleSource);
   const { axioms, setAxioms, toggleSelectedAxiom } = useAxioms();
 
@@ -101,7 +101,7 @@ export function useProofSession(
     if (puzzleSource !== "endless") return;
     clearAxiomSelection();
     setInvalidAxiomIds([]);
-  }, [endlessSolves, puzzleSource, clearAxiomSelection]);
+  }, [endlessSolutionSteps, puzzleSource, clearAxiomSelection]);
 
   /** Shake / red flash on this axiom for 1s; supports several axioms at once. */
   const registerInvalidAxiom = useCallback((axiomId: string) => {
@@ -275,6 +275,6 @@ export function useProofSession(
     selectedSide,
     setSide,
     invalidAxiomIds,
-    endlessSolves,
+    endlessSolutionSteps,
   };
 }

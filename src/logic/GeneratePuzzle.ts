@@ -15,15 +15,89 @@ import {
   isIffNode,
 } from "./ProofNode";
 import type { BinaryNode } from "./ProofNode";
-import { conditionalIdentityImplication } from "./Axiom";
+import { conditionalIdentityImplication, Axioms } from "./Axiom";
 
 export type EndlessPuzzlePayload = {
   id?: string;
   nodes: ProofNode[];
   solution: ProofNode;
+  /** Forward-order guide for "Give Up" assist: apply step[i].output after
+   * highlighting step[i].inputIds, in order, to walk from givens to solution. */
+  solutionSteps: SolutionStep[];
 };
 
+/** One forward-solving step, derived by reversing the puzzle's generation trace. */
+export type SolutionStep = {
+  /** Axiom.ts id to highlight (e.g. "MP", "HS"); "" if no direct mapping exists. */
+  axiomId: string;
+  ruleName: string;
+  /** Human-readable rule name for display (e.g. "Disjunctive Syllogism"). */
+  ruleLabel: string;
+  /** Ids of the node(s) to highlight — the inputs a real solve would select. */
+  inputIds: string[];
+  /** The resulting node to add to givens (already fully formed). */
+  output: ProofNode;
+};
+
+/** Rules with no direct Axiom.ts entry (commutativity is applied implicitly
+ * elsewhere in the game, not as a selectable button) — spelled out by hand. */
+const RULE_LABEL_FALLBACK: Record<string, string> = {
+  revComm: "Commutativity",
+};
+
+function ruleLabelFor(ruleName: string, axiomId: string): string {
+  const axiom = Axioms.find((a) => a.id === axiomId);
+  return axiom?.text ?? RULE_LABEL_FALLBACK[ruleName] ?? ruleName;
+}
+
+/**
+ * Drops steps whose output is never actually used — either as another step's
+ * input or as the final solution. The generator sometimes wanders into a
+ * round trip (e.g. Addition immediately undone later by Idempotent) that's
+ * valid but contributes nothing to reaching the solution; a backward pass
+ * over the already topologically-ordered step list removes those in one go.
+ */
+function pruneDeadSteps(steps: SolutionStep[]): SolutionStep[] {
+  if (steps.length === 0) return steps;
+
+  const needed = new Set<string>([steps[steps.length - 1].output.id]);
+  const kept: SolutionStep[] = [];
+
+  for (let i = steps.length - 1; i >= 0; i -= 1) {
+    const step = steps[i];
+    if (!needed.has(step.output.id)) continue;
+    kept.push(step);
+    for (const id of step.inputIds) needed.add(id);
+  }
+
+  return kept.reverse();
+}
+
 export type ReverseRule = (node: ProofNode) => boolean;
+
+/** Maps a reverse-generation rule's function name to the forward Axiom.ts id
+ * that undoes it, so the "Give Up" assist can highlight the matching button. */
+const RULE_TO_AXIOM_ID: Record<string, string> = {
+  revMP: "MP",
+  revMT: "MT",
+  revSimp: "Simp",
+  revAbso: "Abs",
+  revIndempotent: "Idem",
+  revHS: "HS",
+  revCD: "CD",
+  revImplication: "32",
+  revConditionalIdentityImplication: "C (→)",
+  revContrapositive: "CP",
+  revDS: "DS",
+  revConj: "Conj",
+  revAndAssociativity: "Asso",
+  revOrAssociativity: "Asso",
+  revDistributivity: "Dist",
+  revDeMorgan: "DM",
+  revAdd: "Add",
+  revConditionalIdentityOr: "C (→)",
+  revConditionalIdentityIff: "CI (↔)",
+};
 
 const NODE_CHARACTER_CAP = 18;
 const TOTAL_CHARACTER_CAP = NODE_CHARACTER_CAP * 4 * 0.55;
@@ -76,6 +150,14 @@ let frontier: NodesSet = new Set<ProofNode>();
 /** Incremented after each successful reverse rule during generation. */
 let ruleLogIndex = 0;
 
+type RawGenerationStep = { removed: ProofNode; added: ProofNode[]; ruleName: string };
+/** Chronological trace of reverse-rule applications this generation; reversed
+ * (and remapped) into forward-order `solutionSteps` for the "Give Up" assist. */
+let generationSteps: RawGenerationStep[] = [];
+/** Set by `replaceNode` on success so `doInvOperation` can record the step. */
+let lastReplaceRemoved: ProofNode | null = null;
+let lastReplaceAdded: ProofNode[] | null = null;
+
 function totalGivenChars(): number {
   let sum = 0;
   for (const n of curNodes) sum += n.text.length;
@@ -122,6 +204,8 @@ function replaceNode(node: ProofNode, ...added: ProofNode[]): boolean {
     curNodes.add(n);
     frontier.add(n);
   }
+  lastReplaceRemoved = node;
+  lastReplaceAdded = added;
   return true;
 }
 
@@ -214,12 +298,6 @@ export function generateSolutionNode(): ProofNode {
   }
 }
 
-function logCurrentNodes(label: string): void {
-  const nodes = Array.from(curNodes).map((n) => n.text);
-  // eslint-disable-next-line no-console
-  console.log(`${label} — nodes (${nodes.length}):`, nodes);
-}
-
 function refillFrontierIfNeeded(): void {
   if (frontier.size > 0 || curNodes.size >= MIN_GIVEN_SIZE) return;
   for (const node of curNodes) {
@@ -233,9 +311,17 @@ function doInvOperation(node: ProofNode) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const rule = pickWeightedRule(rules);
+    lastReplaceRemoved = null;
+    lastReplaceAdded = null;
     if (rule(node)) {
       ruleLogIndex += 1;
-      logCurrentNodes(`Rule ${ruleLogIndex}: ${rule.name} on "${node.text}"`);
+      if (lastReplaceRemoved && lastReplaceAdded) {
+        generationSteps.push({
+          removed: lastReplaceRemoved,
+          added: lastReplaceAdded,
+          ruleName: rule.name,
+        });
+      }
       return;
     }
   }
@@ -250,19 +336,19 @@ export function generateEndlessPuzzle(): EndlessPuzzlePayload {
 }
 
 function generateEndlessPuzzleOnce(): EndlessPuzzlePayload {
-  console.log("Generating new puzzle");
   ruleLogIndex = 0;
   curNodes.clear();
   frontier.clear();
+  generationSteps = [];
 
   const payLoad: EndlessPuzzlePayload = {
     id: undefined,
     nodes: [],
     solution: ERROR_NODE,
+    solutionSteps: [],
   };
 
   payLoad.solution = generateSolutionNode();
-  logCurrentNodes("Initial");
 
   const numSteps =
     Math.floor(Math.random() * (MAX_STEP_DEPTH - MIN_STEP_DEPTH + 1)) +
@@ -304,6 +390,25 @@ function generateEndlessPuzzleOnce(): EndlessPuzzlePayload {
     const j = Math.floor(Math.random() * (i + 1));
     [payLoad.nodes[i], payLoad.nodes[j]] = [payLoad.nodes[j], payLoad.nodes[i]];
   }
+
+  // Generation walks solution → givens via reverse rules; reversing that
+  // trace gives the forward givens → solution order the assist plays back.
+  const forwardSteps: SolutionStep[] = generationSteps
+    .slice()
+    .reverse()
+    .map((step) => {
+      const axiomId = RULE_TO_AXIOM_ID[step.ruleName] ?? "";
+      return {
+        axiomId,
+        ruleName: step.ruleName,
+        ruleLabel: ruleLabelFor(step.ruleName, axiomId),
+        inputIds: step.added.map((n) => n.id),
+        output: step.removed,
+      };
+    });
+
+  payLoad.solutionSteps = pruneDeadSteps(forwardSteps);
+
   return payLoad;
 }
 

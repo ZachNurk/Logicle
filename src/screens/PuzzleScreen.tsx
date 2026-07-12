@@ -23,7 +23,8 @@ type PuzzleScreenProps = {
   ) => void;
   selectedSide: "" | "left" | "right";
   setSide: (side: "left" | "right") => void;
-  logOut: () => void;
+  /** Opens the app-level logout confirmation (shown in place of Logout when signed in). */
+  onLogoutClick: () => void;
   currentUser: AuthUser | null;
   /** From `useUserProgress` — keeps stats calendar in sync when a day is completed. */
   completedDayIds: string[];
@@ -50,7 +51,7 @@ export default function PuzzleScreen({
   applyAxiom,
   selectedSide,
   setSide,
-  logOut,
+  onLogoutClick,
   currentUser,
   completedDayIds,
   victory,
@@ -118,7 +119,7 @@ export default function PuzzleScreen({
           title="You Won!"
           onClose={() => setWinStatsDismissed(true)}
           onEndless={() => setShowEndlessIntro(true)}
-          onLogout={logOut}
+          onLogout={onLogoutClick}
           onSignIn={onSignIn}
         />
       )}
@@ -127,6 +128,8 @@ export default function PuzzleScreen({
           currentUser={currentUser}
           completedDayIds={completedDayIds}
           onClose={() => setShowStats(false)}
+          onLogout={onLogoutClick}
+          onSignIn={onSignIn}
         />
       )}
       {showHowToPlay && (
@@ -187,7 +190,7 @@ export default function PuzzleScreen({
                 ...styles.menuButton,
                 ...(hoveredMenuButton === "logout" ? styles.menuButtonRedHover : {}),
               }}
-              onClick={logOut}
+              onClick={onLogoutClick}
               onMouseEnter={() => setHoveredMenuButton("logout")}
               onMouseLeave={() => setHoveredMenuButton(null)}
             >

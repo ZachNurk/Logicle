@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
 import { generateEndlessPuzzle } from "../../logic/GeneratePuzzle";
+import type { SolutionStep } from "../../logic/GeneratePuzzle";
 import { formatLocalDateKey } from "../../utils/dateKeys";
 
 /** Pause before loading the next endless puzzle so the solved state is visible. */
@@ -16,6 +17,8 @@ type DayPayload = {
   id?: string;
   nodes?: unknown;
   solution?: unknown;
+  /** Endless only: forward-order "Give Up" assist guide. */
+  solutionSteps?: SolutionStep[];
 };
 
 function nodesStorageKey(dayId: string, source: "daily" | "endless") {
@@ -33,11 +36,8 @@ export function useProofNodes(
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentDayId, setCurrentDayId] = useState<string | null>(null);
-  /**
-   * Endless only: session solve count and refetch trigger (same value bumps the load effect
-   * when advancing after a win).
-   */
-  const [endlessSolves, setEndlessSolves] = useState(0);
+  /** Endless only: forward-order "Give Up" assist guide for the current puzzle. */
+  const [endlessSolutionSteps, setEndlessSolutionSteps] = useState<SolutionStep[]>([]);
 
   const prevPuzzleSourceRef = useRef(puzzleSource);
   const advanceEndlessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -76,6 +76,7 @@ export function useProofNodes(
       setCurrentDayId(dayId);
       setNodes([...starterNodes, ...savedNodes]);
       setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
+      setEndlessSolutionSteps(source === "endless" ? (day?.solutionSteps ?? []) : []);
     },
     [],
   );
@@ -83,7 +84,6 @@ export function useProofNodes(
   useEffect(() => {
     if (prevPuzzleSourceRef.current === "endless" && puzzleSource === "daily") {
       clearAdvanceEndlessTimeout();
-      setEndlessSolves(0);
     }
     prevPuzzleSourceRef.current = puzzleSource;
   }, [puzzleSource, clearAdvanceEndlessTimeout]);
@@ -156,7 +156,6 @@ export function useProofNodes(
         try {
           const day = generateEndlessPuzzle();
           applyLoadedDay(day, "endless");
-          setEndlessSolves((n) => n + 1);
         } catch (error) {
           const message =
             error instanceof Error
@@ -169,6 +168,7 @@ export function useProofNodes(
       })();
     }, ENDLESS_ADVANCE_AFTER_SOLVE_MS);
   }, [puzzleSource, clearAdvanceEndlessTimeout, applyLoadedDay]);
+
 
   // Persist derived nodes (non-starter) whenever they change.
   useEffect(() => {
@@ -221,6 +221,6 @@ export function useProofNodes(
     deleteSelectedNode,
     resetNodes,
     advanceEndlessPuzzle,
-    endlessSolves,
+    endlessSolutionSteps,
   };
 }
