@@ -4,8 +4,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { join, dirname } from "node:path";
+import { join } from "node:path";
 
 export type Day = {
   id: string;
@@ -13,7 +12,10 @@ export type Day = {
   solution: unknown;
 };
 
-const DAYS_PATH = join(dirname(fileURLToPath(import.meta.url)), "days.json");
+// process.cwd()-relative (not import.meta.url-relative): the Vercel function
+// bundles this module's code but not its original file location, so a path
+// derived from import.meta.url would point at the wrong directory at runtime.
+const DAYS_PATH = join(process.cwd(), "db", "days.json");
 
 const days: Day[] = JSON.parse(readFileSync(DAYS_PATH, "utf-8"));
 const daysById = new Map(days.map((d) => [d.id, d]));
