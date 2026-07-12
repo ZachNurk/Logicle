@@ -14,7 +14,7 @@ router.use(requireAuth);
 /** Blocks a valid session from reading/writing another account's data. */
 router.use("/:email", (req, res, next) => {
   const email = normalizeEmailParam(req.params.email);
-  if ((req as AuthedRequest).user.email !== email) {
+  if ((req as unknown as AuthedRequest).user.email !== email) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
