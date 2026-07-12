@@ -1,8 +1,3 @@
 {
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }],
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "db/days.json"
-    }
-  }
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }]
 }

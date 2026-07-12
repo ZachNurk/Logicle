@@ -3,8 +3,10 @@
  * @file days.ts
  */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+// Imported (not readFileSync'd): esbuild inlines JSON imports into the
+// bundle at build time, so the deployed function has no separate-file
+// runtime dependency to resolve.
+import daysData from "./days.json";
 
 export type Day = {
   id: string;
@@ -12,12 +14,7 @@ export type Day = {
   solution: unknown;
 };
 
-// process.cwd()-relative (not import.meta.url-relative): the Vercel function
-// bundles this module's code but not its original file location, so a path
-// derived from import.meta.url would point at the wrong directory at runtime.
-const DAYS_PATH = join(process.cwd(), "db", "days.json");
-
-const days: Day[] = JSON.parse(readFileSync(DAYS_PATH, "utf-8"));
+const days: Day[] = daysData as Day[];
 const daysById = new Map(days.map((d) => [d.id, d]));
 
 export async function getDays() {
