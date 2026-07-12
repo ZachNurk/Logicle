@@ -1,5 +1,5 @@
 /** Local/self-hosted entry point (`npm run server`). Vercel uses `api/index.ts` instead. */
-import app from "../server/app.ts";
+import app from "../server/app";
 
 const port = Number(process.env.PORT ?? 3001);
 

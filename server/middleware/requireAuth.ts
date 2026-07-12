@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { SESSION_COOKIE, verifySessionToken, type SessionPayload } from "../auth/session.ts";
+import { SESSION_COOKIE, verifySessionToken, type SessionPayload } from "../auth/session";
 
 export type AuthedRequest = Request & { user: SessionPayload };
 

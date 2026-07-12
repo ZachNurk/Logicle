@@ -10,8 +10,8 @@ import {
   incrementOtpAttempts,
   setUserOtpByEmail,
   updatePasswordAndClearOtp,
-} from "../../db/users.ts";
-import { clearSessionCookie, setSessionCookie } from "../auth/session.ts";
+} from "../../db/users";
+import { clearSessionCookie, setSessionCookie } from "../auth/session";
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Router, type Response } from "express";
-import { getDayById, getDays, getRandomDay } from "../../db/days.ts";
+import { getDayById, getDays, getRandomDay } from "../../db/days";
 
 const router = Router();
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { addCompletedDay, getUserDays } from "../../db/userProgress.ts";
-import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.ts";
+import { addCompletedDay, getUserDays } from "../../db/userProgress";
+import { requireAuth, type AuthedRequest } from "../middleware/requireAuth";
 
 const router = Router();
 
