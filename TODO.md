@@ -1,9 +1,8 @@
 TODOs:
 
-Puzzle generator that uses a DFS search with randomization
-Secure DB
-Ship to vercel 
+
 Make daily puzzles better
+Add Give up Option to endless
 
 DB security:
 
