@@ -1,6 +1,6 @@
 TODOs:
 
-
+How to play pops up on first load when not logged in
 Make daily puzzles better
 Add Give up Option to endless
 
