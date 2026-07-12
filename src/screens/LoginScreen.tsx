@@ -15,6 +15,7 @@ type LoginScreenProps = {
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onForgotPasswordClick: () => void;
   onCreateAccountClick: () => void;
+  onCancel?: () => void;
 };
 
 export default function LoginScreen({
@@ -29,10 +30,21 @@ export default function LoginScreen({
   onSubmit,
   onForgotPasswordClick,
   onCreateAccountClick,
+  onCancel,
 }: LoginScreenProps) {
   return (
     <div style={styles.loginPage}>
       <form style={styles.loginCard} noValidate onSubmit={onSubmit}>
+        {onCancel ? (
+          <button
+            type="button"
+            style={styles.closeButton}
+            onClick={onCancel}
+            aria-label="Back to puzzle"
+          >
+            ×
+          </button>
+        ) : null}
         <h1 style={styles.loginTitle}>Logicle</h1>
         <p style={styles.loginSubtitle}>Sign in to start your puzzle.</p>
 
@@ -103,6 +115,7 @@ const styles: Record<string, CSSProperties> = {
     padding: "24px",
   },
   loginCard: {
+    position: "relative",
     width: "100%",
     maxWidth: "460px",
     display: "flex",
@@ -113,6 +126,23 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.surface1,
     padding: "32px",
     boxSizing: "border-box",
+  },
+  closeButton: {
+    position: "absolute",
+    top: "16px",
+    right: "16px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "none",
+    background: "transparent",
+    color: "#666",
+    fontSize: "24px",
+    lineHeight: 1,
+    cursor: "pointer",
+    borderRadius: "50%",
   },
   loginTitle: {
     margin: 0,

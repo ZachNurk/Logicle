@@ -16,6 +16,9 @@ const AUTH_USER_STORAGE_KEY = "logicle_auth_user";
 export function useAuth() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
   const [authView, setAuthView] = useState<AuthView>("login");
+  /** True once the user has explicitly navigated to an auth screen; false
+   * means logged-out users should just see the puzzle. */
+  const [authScreenRequested, setAuthScreenRequested] = useState(false);
   /** True until PuzzleScreen consumes it — set only after successful register. */
   const [openHowToPlayAfterSignup, setOpenHowToPlayAfterSignup] = useState(false);
   const [email, setEmail] = useState("");
@@ -213,6 +216,7 @@ const validateEmail =(email: string): boolean => {
       }
 
       setAuthView("login");
+      setAuthScreenRequested(false);
       setLoginError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign in failed";
@@ -253,6 +257,7 @@ const validateEmail =(email: string): boolean => {
       }
 
       setAuthView("login");
+      setAuthScreenRequested(false);
       setCreateAccountError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Create account failed";
@@ -277,6 +282,7 @@ const validateEmail =(email: string): boolean => {
     setPassword("");
     clearResetFlowState();
     setAuthView("createAccount");
+    setAuthScreenRequested(true);
   };
 
   const showLogin = () => {
@@ -286,7 +292,17 @@ const validateEmail =(email: string): boolean => {
     setPassword("");
     clearResetFlowState();
     setAuthView("login");
+    setAuthScreenRequested(true);
   };
+
+  const dismissAuthScreen = useCallback(() => {
+    setAuthScreenRequested(false);
+    setAuthView("login");
+    setLoginError(null);
+    setForgotPasswordMessage(null);
+    setCreateAccountError(null);
+    setPassword("");
+  }, []);
 
   const refreshUserProgress = async () => {
     if (!currentUser?.email) return;
@@ -308,6 +324,7 @@ const validateEmail =(email: string): boolean => {
   const logout = useCallback(() => {
     setAuthStatus("loggedOut");
     setAuthView("login");
+    setAuthScreenRequested(false);
     setCurrentUser(null);
     setOpenHowToPlayAfterSignup(false);
     localStorage.clear();
@@ -321,6 +338,8 @@ const validateEmail =(email: string): boolean => {
   return {
     authStatus,
     authView,
+    authScreenRequested,
+    dismissAuthScreen,
     email,
     password,
     isSigningIn,

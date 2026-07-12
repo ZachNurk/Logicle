@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { nodeFromDb, ERROR_NODE } from "../../logic/ProofNode";
 import type { ProofNode } from "../../logic/ProofNode";
 import { generateEndlessPuzzle } from "../../logic/ReverseAxiom";
+import { formatLocalDateKey } from "../../utils/dateKeys";
 
 /** Pause before loading the next endless puzzle so the solved state is visible. */
 const ENDLESS_ADVANCE_AFTER_SOLVE_MS = 1000;
@@ -98,16 +99,6 @@ export function useProofNodes(
   }, [clearAdvanceEndlessTimeout]);
 
   useEffect(() => {
-    // No user yet — reset to blank state and stop loading.
-    if (!userId) {
-      setNodes([]);
-      setSolutionNode(ERROR_NODE);
-      setLoadError(null);
-      setIsLoading(false);
-      setCurrentDayId(null);
-      return;
-    }
-
     setIsLoading(true);
     setLoadError(null);
 
@@ -125,21 +116,19 @@ export function useProofNodes(
           }
 
           const data = await res.json();
-          const days = Array.isArray(data) ? data : (data?.days ?? []);
-          // Latest day by id (dates sort lexicographically as YYYY-MM-DD)
-          // 2026-03-19
+          const days: DayPayload[] = Array.isArray(data) ? data : (data?.days ?? []);
+          if (days.length === 0) {
+            throw new Error("No puzzles available");
+          }
 
-          const firstDay = new Date("2026-03-19");
-          const today = new Date();
+          // Days sort lexicographically since id is YYYY-MM-DD.
+          const sorted = [...days].sort((a, b) =>
+            (a.id ?? "") < (b.id ?? "") ? -1 : (a.id ?? "") > (b.id ?? "") ? 1 : 0,
+          );
+          const todayKey = formatLocalDateKey(new Date());
 
-          const diffMs = today.getTime() - firstDay.getTime()
-          const msPerDay = 1000 * 60 * 60 * 24;
-
-          const dayIndex = Math.round(diffMs / msPerDay) - 1
-
-          day = days[dayIndex] 
-          //TODO remove me ^
-    
+          // Prefer today's puzzle; otherwise fall back to the most recent one seeded.
+          day = sorted.find((d) => d.id === todayKey) ?? sorted[sorted.length - 1];
         }
 
         applyLoadedDay(day, puzzleSource);

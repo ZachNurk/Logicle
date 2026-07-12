@@ -33,9 +33,12 @@ export default function App() {
     if (proof.isLoading) return "loading";
     if (proof.loadError) return "error";
     if (auth.authStatus === "loggedIn") return "puzzle";
-    if (auth.authStatus === "loggedOut" && auth.authView === "createAccount") return "createAccountScreen";
-    if (auth.authStatus === "loggedOut" && auth.authView === "resetPassword") return "resetPasswordScreen";
-    if (auth.authStatus === "loggedOut") return "loginScreen";
+    if (auth.authStatus === "loggedOut" && auth.authScreenRequested) {
+      if (auth.authView === "createAccount") return "createAccountScreen";
+      if (auth.authView === "resetPassword") return "resetPasswordScreen";
+      return "loginScreen";
+    }
+    if (auth.authStatus === "loggedOut") return "puzzle";
     return "error";
   };
 
@@ -68,6 +71,7 @@ export default function App() {
           {...sharedGameProps}
           endlessSolves={proof.endlessSolves}
           onBackToDaily={() => setGameMode("daily")}
+          onSignIn={auth.showLogin}
         />
       ) : (
         <PuzzleScreen
@@ -75,6 +79,7 @@ export default function App() {
           openHowToPlayAfterSignup={auth.openHowToPlayAfterSignup}
           onHowToPlayAfterSignupConsumed={auth.clearHowToPlayAfterSignup}
           onOpenEndless={() => setGameMode("endless")}
+          onSignIn={auth.showLogin}
         />
       );
     case "loginScreen":
@@ -91,6 +96,7 @@ export default function App() {
           onSubmit={auth.handleLoginSubmit}
           onForgotPasswordClick={auth.handleForgotPassword}
           onCreateAccountClick={auth.showCreateAccount}
+          onCancel={auth.dismissAuthScreen}
         />
       );
     case "createAccountScreen":
@@ -104,6 +110,7 @@ export default function App() {
           onPasswordChange={auth.setPassword}
           onSubmit={auth.handleCreateAccountSubmit}
           onBackToLogin={auth.showLogin}
+          onCancel={auth.dismissAuthScreen}
         />
       );
     case "resetPasswordScreen":
@@ -120,6 +127,7 @@ export default function App() {
           onConfirmPasswordChange={auth.setConfirmPassword}
           onSubmit={auth.handleResetPasswordSubmit}
           onBackToLogin={auth.showLogin}
+          onCancel={auth.dismissAuthScreen}
         />
       );
     default:

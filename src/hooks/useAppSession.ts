@@ -9,10 +9,11 @@
  * @file useAppSession.ts
  */
 
+import { useEffect, useRef } from "react";
 import { useAuth } from "./user/useAuth";
 import { useUserProgress } from "./user/useUserProgress";
 import { useProofSession } from "./proof/useProofSession";
-import { formatLocalDateKey } from "../utils/dateKeys";
+import { formatLocalDateKey, normalizeDayId } from "../utils/dateKeys";
 
 export function useAppSession(puzzleSource: "daily" | "endless" = "daily") {
   const auth = useAuth();
@@ -21,6 +22,23 @@ export function useAppSession(puzzleSource: "daily" | "endless" = "daily") {
     auth.currentUser?.completedDayIds,
     auth.logout,
   );
+
+  /** Syncs any day completed while signed out to the account once the user signs in. */
+  const wasLoggedIn = useRef(false);
+  useEffect(() => {
+    if (auth.authStatus === "loggedIn" && !wasLoggedIn.current) {
+      const serverDayIds = new Set(
+        (auth.currentUser?.completedDayIds ?? []).map(normalizeDayId),
+      );
+      const localOnlyDayIds = progress.completedDayIds.filter(
+        (id) => !serverDayIds.has(normalizeDayId(id)),
+      );
+      for (const dayId of localOnlyDayIds) {
+        void progress.markDayCompleted(dayId);
+      }
+    }
+    wasLoggedIn.current = auth.authStatus === "loggedIn";
+  }, [auth.authStatus, auth.currentUser, progress.completedDayIds, progress.markDayCompleted]);
 
   const today = formatLocalDateKey(new Date());
   const hasWonToday = progress.completedDayIds.includes(today);

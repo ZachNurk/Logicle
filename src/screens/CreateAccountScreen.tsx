@@ -12,6 +12,7 @@ type CreateAccountScreenProps = {
   onPasswordChange: (value: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onBackToLogin: () => void;
+  onCancel?: () => void;
 };
 
 export default function CreateAccountScreen({
@@ -23,10 +24,21 @@ export default function CreateAccountScreen({
   onPasswordChange,
   onSubmit,
   onBackToLogin,
+  onCancel,
 }: CreateAccountScreenProps) {
   return (
     <div style={styles.page}>
       <form style={styles.card} onSubmit={onSubmit}>
+        {onCancel ? (
+          <button
+            type="button"
+            style={styles.closeButton}
+            onClick={onCancel}
+            aria-label="Back to puzzle"
+          >
+            ×
+          </button>
+        ) : null}
         <h1 style={styles.title}>Create account</h1>
         <p style={styles.subtitle}>Set up a new Logicle account.</p>
 
@@ -80,6 +92,7 @@ const styles: Record<string, CSSProperties> = {
     padding: "24px",
   },
   card: {
+    position: "relative",
     width: "100%",
     maxWidth: "460px",
     display: "flex",
@@ -90,6 +103,23 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.surface1,
     padding: "32px",
     boxSizing: "border-box",
+  },
+  closeButton: {
+    position: "absolute",
+    top: "16px",
+    right: "16px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "none",
+    background: "transparent",
+    color: "#666",
+    fontSize: "24px",
+    lineHeight: 1,
+    cursor: "pointer",
+    borderRadius: "50%",
   },
   title: {
     margin: 0,

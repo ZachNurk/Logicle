@@ -36,6 +36,8 @@ type PuzzleScreenProps = {
   onHowToPlayAfterSignupConsumed?: () => void;
   /** Opens endless mode (same session hooks; navigation only until endless data loads separately). */
   onOpenEndless?: () => void;
+  /** Navigates to the login screen; shown in place of Logout when signed out. */
+  onSignIn?: () => void;
 };
 
 export default function PuzzleScreen({
@@ -57,6 +59,7 @@ export default function PuzzleScreen({
   openHowToPlayAfterSignup = false,
   onHowToPlayAfterSignupConsumed,
   onOpenEndless,
+  onSignIn,
 }: PuzzleScreenProps) {
   const [showStats, setShowStats] = useState(false);
   const [showEndlessIntro, setShowEndlessIntro] = useState(false);
@@ -71,8 +74,11 @@ export default function PuzzleScreen({
   const [showHowToPlay, setHowToPlay] = useState(openHowToPlayAfterSignup);
 
   useEffect(() => {
-    if (openHowToPlayAfterSignup) setHowToPlay(true);
-  }, [openHowToPlayAfterSignup]);
+    if (openHowToPlayAfterSignup) {
+      setHowToPlay(true);
+      onHowToPlayAfterSignupConsumed?.();
+    }
+  }, [openHowToPlayAfterSignup, onHowToPlayAfterSignupConsumed]);
 
   useEffect(() => {
     if (!victory) setWinStatsDismissed(false);
@@ -100,7 +106,6 @@ export default function PuzzleScreen({
 
   const closeHowToPlay = () => {
     setHowToPlay(false);
-    if (openHowToPlayAfterSignup) onHowToPlayAfterSignupConsumed?.();
   };
 
   return (
@@ -113,6 +118,7 @@ export default function PuzzleScreen({
           onClose={() => setWinStatsDismissed(true)}
           onEndless={() => setShowEndlessIntro(true)}
           onLogout={logOut}
+          onSignIn={onSignIn}
         />
       )}
       {showStats && (!victory || winStatsDismissed || !showVictoryStats) && (
@@ -174,17 +180,32 @@ export default function PuzzleScreen({
           >
             Endless
           </button>
-          <button
-            style={{
-              ...styles.menuButton,
-              ...(hoveredMenuButton === "logout" ? styles.menuButtonRedHover : {}),
-            }}
-            onClick={logOut}
-            onMouseEnter={() => setHoveredMenuButton("logout")}
-            onMouseLeave={() => setHoveredMenuButton(null)}
-          >
-            Logout
-          </button>
+          {currentUser ? (
+            <button
+              style={{
+                ...styles.menuButton,
+                ...(hoveredMenuButton === "logout" ? styles.menuButtonRedHover : {}),
+              }}
+              onClick={logOut}
+              onMouseEnter={() => setHoveredMenuButton("logout")}
+              onMouseLeave={() => setHoveredMenuButton(null)}
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              style={{
+                ...styles.menuButton,
+                ...styles.menuButtonPink,
+                ...(hoveredMenuButton === "logout" ? styles.menuButtonPinkHover : {}),
+              }}
+              onClick={onSignIn}
+              onMouseEnter={() => setHoveredMenuButton("logout")}
+              onMouseLeave={() => setHoveredMenuButton(null)}
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -264,6 +285,11 @@ const styles: Record<string, CSSProperties> = {
     transform: "translate(-2px, -2px)",
     background: Colors.lightPink,
     boxShadow: "0.25rem 0.25rem #000",
+  },
+  menuButtonPink: {
+    border: `1px solid ${Colors.lightPink}`,
+    background: Colors.lightPink,
+    color: "#000",
   },
   menuButtonRedHover: {
     color: "#fff",

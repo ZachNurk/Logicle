@@ -33,6 +33,8 @@ type EndlessScreenProps = {
   endlessSolves: number;
   /** Return to the daily puzzle screen */
   onBackToDaily: () => void;
+  /** Navigates to the login screen; shown in place of Logout when signed out. */
+  onSignIn?: () => void;
 };
 
 export default function EndlessScreen({
@@ -52,6 +54,7 @@ export default function EndlessScreen({
   invalidAxiomIds,
   endlessSolves,
   onBackToDaily,
+  onSignIn,
 }: EndlessScreenProps) {
   const [showStats, setShowStats] = useState(false);
   const [showHowToPlay, setHowToPlay] = useState(false);
@@ -122,17 +125,32 @@ export default function EndlessScreen({
           >
             Daily
           </button>
-          <button
-            style={{
-              ...styles.menuButton,
-              ...(hoveredMenuButton === "logout" ? styles.menuButtonRedHover : {}),
-            }}
-            onClick={logOut}
-            onMouseEnter={() => setHoveredMenuButton("logout")}
-            onMouseLeave={() => setHoveredMenuButton(null)}
-          >
-            Logout
-          </button>
+          {currentUser ? (
+            <button
+              style={{
+                ...styles.menuButton,
+                ...(hoveredMenuButton === "logout" ? styles.menuButtonRedHover : {}),
+              }}
+              onClick={logOut}
+              onMouseEnter={() => setHoveredMenuButton("logout")}
+              onMouseLeave={() => setHoveredMenuButton(null)}
+            >
+              Logout
+            </button>
+          ) : (
+            <button
+              style={{
+                ...styles.menuButton,
+                ...styles.menuButtonPink,
+                ...(hoveredMenuButton === "logout" ? styles.menuButtonPinkHover : {}),
+              }}
+              onClick={onSignIn}
+              onMouseEnter={() => setHoveredMenuButton("logout")}
+              onMouseLeave={() => setHoveredMenuButton(null)}
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -214,6 +232,11 @@ const styles: Record<string, CSSProperties> = {
     transform: "translate(-2px, -2px)",
     background: Colors.lightPink,
     boxShadow: "0.25rem 0.25rem #000",
+  },
+  menuButtonPink: {
+    border: `1px solid ${Colors.lightPink}`,
+    background: Colors.lightPink,
+    color: "#000",
   },
   menuButtonRedHover: {
     color: "#fff",

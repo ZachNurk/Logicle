@@ -48,7 +48,7 @@ export function useProofSession(
 
   useEffect(() => {
     if (puzzleSource === "daily") {
-      setVictory(!!userId && hasWonToday);
+      setVictory(hasWonToday);
     } else {
       setVictory(false);
     }

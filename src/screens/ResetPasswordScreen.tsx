@@ -15,6 +15,7 @@ type ResetPasswordScreenProps = {
   onConfirmPasswordChange: (value: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onBackToLogin: () => void;
+  onCancel?: () => void;
 };
 
 export default function ResetPasswordScreen({
@@ -29,10 +30,21 @@ export default function ResetPasswordScreen({
   onConfirmPasswordChange,
   onSubmit,
   onBackToLogin,
+  onCancel,
 }: ResetPasswordScreenProps) {
   return (
     <div style={styles.resetPage}>
       <form style={styles.resetCard} noValidate onSubmit={onSubmit}>
+        {onCancel ? (
+          <button
+            type="button"
+            style={styles.closeButton}
+            onClick={onCancel}
+            aria-label="Back to puzzle"
+          >
+            ×
+          </button>
+        ) : null}
         <h1 style={styles.resetTitle}>Reset password</h1>
         <p style={styles.resetSubtitle}>
           Enter the 6-digit code we emailed you and choose a new password.
@@ -111,6 +123,7 @@ const styles: Record<string, CSSProperties> = {
     padding: "24px",
   },
   resetCard: {
+    position: "relative",
     width: "100%",
     maxWidth: "460px",
     display: "flex",
@@ -121,6 +134,23 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.surface1,
     padding: "32px",
     boxSizing: "border-box",
+  },
+  closeButton: {
+    position: "absolute",
+    top: "16px",
+    right: "16px",
+    width: "32px",
+    height: "32px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "none",
+    background: "transparent",
+    color: "#666",
+    fontSize: "24px",
+    lineHeight: 1,
+    cursor: "pointer",
+    borderRadius: "50%",
   },
   resetTitle: {
     margin: 0,

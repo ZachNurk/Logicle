@@ -71,7 +71,6 @@ export function useUserProgress(
         );
         console.error("Failed to save progress:", err);
       }
-      console.log(completedDayIds)
     },
     [userEmail, onProgressSaveFailed],
   );

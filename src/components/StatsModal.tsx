@@ -15,6 +15,7 @@ type StatsModalProps = {
   title?: string;
   onEndless?: () => void;
   onLogout?: () => void;
+  onSignIn?: () => void;
 };
 
 function getMonthDays(year: number, month: number): Date[] {
@@ -40,9 +41,11 @@ export default function StatsModal({
   title = "Your Stats",
   onEndless,
   onLogout,
+  onSignIn,
 }: StatsModalProps) {
   const [endlessHovered, setEndlessHovered] = useState(false);
   const [logoutHovered, setLogoutHovered] = useState(false);
+  const [signInHovered, setSignInHovered] = useState(false);
   const [hoveredYearNav, setHoveredYearNav] = useState<"left" | "right" | null>(null);
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -157,6 +160,21 @@ export default function StatsModal({
           })}
           </div>
         </div>
+
+        {!currentUser && onSignIn && (
+          <button
+            type="button"
+            style={{
+              ...styles.signInButton,
+              ...(signInHovered ? styles.signInButtonHover : {}),
+            }}
+            onClick={onSignIn}
+            onMouseEnter={() => setSignInHovered(true)}
+            onMouseLeave={() => setSignInHovered(false)}
+          >
+            Sign in to save progress
+          </button>
+        )}
 
         {onEndless && (
           <button
@@ -410,6 +428,26 @@ const styles: Record<string, CSSProperties> = {
     color: Colors.white,
     transform: "translate(-2px, -2px)",
     background: "#ef4444",
+    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+  signInButton: {
+    marginTop: "24px",
+    width: "100%",
+    minHeight: "50px",
+    border: `1px solid ${Colors.black}`,
+    borderRadius: "4px",
+    padding: "0.8em 2em",
+    background: Colors.lightPink,
+    color: Colors.black,
+    fontSize: "17px",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition:
+      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    textAlign: "center",
+  },
+  signInButtonHover: {
+    transform: "translate(-2px, -2px)",
     boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
 };
