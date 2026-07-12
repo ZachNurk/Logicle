@@ -198,6 +198,7 @@ const validateEmail =(email: string): boolean => {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -236,6 +237,7 @@ const validateEmail =(email: string): boolean => {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -288,7 +290,10 @@ const validateEmail =(email: string): boolean => {
 
   const refreshUserProgress = async () => {
     if (!currentUser?.email) return;
-    const res = await fetch(`/api/users/${encodeURIComponent(currentUser.email)}/progress`);
+    const res = await fetch(
+      `/api/users/${encodeURIComponent(currentUser.email)}/progress`,
+      { credentials: "include" },
+    );
     const data = await res.json();
     setCurrentUser((prev) =>
       prev
@@ -306,6 +311,7 @@ const validateEmail =(email: string): boolean => {
     setCurrentUser(null);
     setOpenHowToPlayAfterSignup(false);
     localStorage.clear();
+    void fetch("/api/logout", { method: "POST", credentials: "include" });
   }, []);
 
   const clearHowToPlayAfterSignup = useCallback(() => {

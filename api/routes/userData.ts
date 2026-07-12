@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { addCompletedDay, getUserDays } from "../../db/userProgress.ts";
+import { requireAuth, type AuthedRequest } from "../middleware/requireAuth.ts";
 
 const router = Router();
 
@@ -7,6 +8,18 @@ const router = Router();
 function normalizeEmailParam(raw: string): string {
   return decodeURIComponent(raw).trim().toLowerCase();
 }
+
+router.use(requireAuth);
+
+/** Blocks a valid session from reading/writing another account's data. */
+router.use("/:email", (req, res, next) => {
+  const email = normalizeEmailParam(req.params.email);
+  if ((req as AuthedRequest).user.email !== email) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  next();
+});
 
 /**
  * Get all completed day IDs for a user

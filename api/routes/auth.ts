@@ -11,6 +11,7 @@ import {
   setUserOtpByEmail,
   updatePasswordAndClearOtp,
 } from "../../db/users.ts";
+import { clearSessionCookie, setSessionCookie } from "../auth/session.ts";
 
 const router = Router();
 
@@ -119,6 +120,7 @@ router.post("/login", loginLimiter, async (req, res) => {
       return;
     }
 
+    setSessionCookie(res, { userId: user.id, email: user.email });
     res.status(200).json({ ok: true, user: { id: user.id, email: user.email } });
   } catch (error) {
     console.error("Login error:", error);
@@ -149,6 +151,7 @@ router.post("/register", registerLimiter, async (req, res) => {
 
     const hashedPassword = await hashPassword(trimmedPassword);
     const user = await createUser(normalizedEmail, hashedPassword);
+    setSessionCookie(res, { userId: user.id, email: user.email });
     res.status(201).json({ ok: true, user: { id: user.id, email: user.email } });
   } catch (error) {
     console.error("Register error:", error);
@@ -270,6 +273,11 @@ router.post("/resetPassword", resetPasswordLimiter, async (req, res) => {
     console.error("Reset password error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+});
+
+router.post("/logout", (_req, res) => {
+  clearSessionCookie(res);
+  res.status(200).json({ ok: true });
 });
 
 export default router;

@@ -5,12 +5,14 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # Both passwords come from .env — no committed defaults. Set them
+      # before the first `docker compose up` on a fresh data volume; changing
+      # them afterward requires a volume reset (Postgres bakes creds in at init).
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?Set POSTGRES_SUPERUSER_PASSWORD in .env}
       POSTGRES_DB: logicle
       # Consumed by db/init/002_create_app_role.sh on a fresh data volume.
-      # Override APP_DB_PASSWORD in your shell or .env before `docker compose up`.
       APP_DB_USER: logicle_app
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-app_password_change_me}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Set APP_DB_PASSWORD in .env}
     # Bind to loopback only so the DB isn't reachable from other hosts on the
     # network. Drop the `ports:` block entirely once the API runs in the same
     # docker network and connects via the service name.
