@@ -24,7 +24,7 @@ export default function EndlessIntroModal({
 
         <p style={styles.lead}>
           You’ll get randomly generated puzzles, one after another. There’s no
-          daily win screen—when you solve a puzzle, another loads automatically.
+          daily win screen. When you solve a puzzle, another loads automatically.
         </p>
 
         <ul style={styles.list}>
