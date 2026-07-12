@@ -31,9 +31,10 @@ type PuzzleScreenProps = {
   deleteSelectedNode: () => void;
   resetNodes: () => void;
   invalidAxiomIds: string[];
-  /** From auth after successful create-account; PuzzleScreen opens How to Play once then clears. */
-  openHowToPlayAfterSignup?: boolean;
-  onHowToPlayAfterSignupConsumed?: () => void;
+  /** From auth after successful create-account, or once on initial load for
+   * a signed-out guest; PuzzleScreen opens How to Play once then clears. */
+  openHowToPlayOnLoad?: boolean;
+  onHowToPlayOnLoadConsumed?: () => void;
   /** Opens endless mode (same session hooks; navigation only until endless data loads separately). */
   onOpenEndless?: () => void;
   /** Navigates to the login screen; shown in place of Logout when signed out. */
@@ -56,8 +57,8 @@ export default function PuzzleScreen({
   deleteSelectedNode,
   resetNodes,
   invalidAxiomIds,
-  openHowToPlayAfterSignup = false,
-  onHowToPlayAfterSignupConsumed,
+  openHowToPlayOnLoad = false,
+  onHowToPlayOnLoadConsumed,
   onOpenEndless,
   onSignIn,
 }: PuzzleScreenProps) {
@@ -70,15 +71,15 @@ export default function PuzzleScreen({
   const [winStatsDismissed, setWinStatsDismissed] = useState(false);
   const [showVictoryStats, setShowVictoryStats] = useState(false);
   const previousVictoryRef = useRef(victory);
-  /** Seed from signup flag so we don't rely on an effect that clears before Strict Mode's remount. */
-  const [showHowToPlay, setHowToPlay] = useState(openHowToPlayAfterSignup);
+  /** Seed from the flag so we don't rely on an effect that clears before Strict Mode's remount. */
+  const [showHowToPlay, setHowToPlay] = useState(openHowToPlayOnLoad);
 
   useEffect(() => {
-    if (openHowToPlayAfterSignup) {
+    if (openHowToPlayOnLoad) {
       setHowToPlay(true);
-      onHowToPlayAfterSignupConsumed?.();
+      onHowToPlayOnLoadConsumed?.();
     }
-  }, [openHowToPlayAfterSignup, onHowToPlayAfterSignupConsumed]);
+  }, [openHowToPlayOnLoad, onHowToPlayOnLoadConsumed]);
 
   useEffect(() => {
     if (!victory) setWinStatsDismissed(false);

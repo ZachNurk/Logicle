@@ -76,8 +76,8 @@ export default function App() {
       ) : (
         <PuzzleScreen
           {...puzzleScreenProps}
-          openHowToPlayAfterSignup={auth.openHowToPlayAfterSignup}
-          onHowToPlayAfterSignupConsumed={auth.clearHowToPlayAfterSignup}
+          openHowToPlayOnLoad={auth.openHowToPlayOnLoad}
+          onHowToPlayOnLoadConsumed={auth.clearHowToPlayOnLoad}
           onOpenEndless={() => setGameMode("endless")}
           onSignIn={auth.showLogin}
         />

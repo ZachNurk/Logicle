@@ -19,8 +19,9 @@ export function useAuth() {
   /** True once the user has explicitly navigated to an auth screen; false
    * means logged-out users should just see the puzzle. */
   const [authScreenRequested, setAuthScreenRequested] = useState(false);
-  /** True until PuzzleScreen consumes it — set only after successful register. */
-  const [openHowToPlayAfterSignup, setOpenHowToPlayAfterSignup] = useState(false);
+  /** True until PuzzleScreen consumes it — set after successful register, or
+   * once on initial load for a guest who isn't logged in. */
+  const [openHowToPlayOnLoad, setOpenHowToPlayOnLoad] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -71,6 +72,7 @@ const validateEmail =(email: string): boolean => {
       const storedUser = localStorage.getItem(AUTH_USER_STORAGE_KEY);
       if (!storedUser) {
         setAuthStatus("loggedOut");
+        setOpenHowToPlayOnLoad(true);
         return;
       }
 
@@ -78,6 +80,7 @@ const validateEmail =(email: string): boolean => {
       if (!parsed?.id || !parsed?.email) {
         localStorage.removeItem(AUTH_USER_STORAGE_KEY);
         setAuthStatus("loggedOut");
+        setOpenHowToPlayOnLoad(true);
         return;
       }
 
@@ -85,6 +88,7 @@ const validateEmail =(email: string): boolean => {
     } catch {
       localStorage.removeItem(AUTH_USER_STORAGE_KEY);
       setAuthStatus("loggedOut");
+      setOpenHowToPlayOnLoad(true);
     }
   }, []);
 
@@ -253,7 +257,7 @@ const validateEmail =(email: string): boolean => {
       const user = data?.user as AuthUser | undefined;
       if (user) {
         await applyAuthenticatedUser(user);
-        setOpenHowToPlayAfterSignup(true);
+        setOpenHowToPlayOnLoad(true);
       }
 
       setAuthView("login");
@@ -326,13 +330,13 @@ const validateEmail =(email: string): boolean => {
     setAuthView("login");
     setAuthScreenRequested(false);
     setCurrentUser(null);
-    setOpenHowToPlayAfterSignup(false);
+    setOpenHowToPlayOnLoad(false);
     localStorage.clear();
     void fetch("/api/logout", { method: "POST", credentials: "include" });
   }, []);
 
-  const clearHowToPlayAfterSignup = useCallback(() => {
-    setOpenHowToPlayAfterSignup(false);
+  const clearHowToPlayOnLoad = useCallback(() => {
+    setOpenHowToPlayOnLoad(false);
   }, []);
 
   return {
@@ -368,7 +372,7 @@ const validateEmail =(email: string): boolean => {
     showLogin,
     logout,
     refreshUserProgress,
-    openHowToPlayAfterSignup,
-    clearHowToPlayAfterSignup,
+    openHowToPlayOnLoad,
+    clearHowToPlayOnLoad,
   };
 }
