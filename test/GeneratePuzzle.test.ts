@@ -508,7 +508,10 @@ describe("ReverseAxiom", () => {
       expect(sameNode(viaCurrentForward, standard)).toBe(false);
     });
 
-    it("revConditionalIdentityIff does not round-trip conditionalIdentityIff", () => {
+  });
+
+  describe("conditionalIdentityIff round-trips (fixed: was previously a documented bug)", () => {
+    it("revConditionalIdentityIff round-trips through conditionalIdentityIff", () => {
       const aIffB = createIffNode(false, A, B, undefined, true);
       const forward = conditionalIdentityIff(aIffB);
       expect(sameNode(forward, ERROR_NODE)).toBe(false);
@@ -516,7 +519,7 @@ describe("ReverseAxiom", () => {
       expect(reversed.length).toBeGreaterThan(0);
       expect(reversed).toHaveLength(1);
       expect(sameNode(conditionalIdentityIff(aIffB), forward)).toBe(true);
-      expect(sameNode(reversed[0], forward)).toBe(false);
+      expect(sameNode(reversed[0], forward)).toBe(true);
     });
   });
 });

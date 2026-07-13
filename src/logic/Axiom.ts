@@ -700,15 +700,29 @@ export function conditionalIdentityImplication(original: ProofNode): ProofNode {
 
 /**
  * Conditional Identity (↔): p ↔ q ≡ (p → q) ∧ (q → p)
- * @param original must be an IffNode
+ * Accepts either an Iff or the equivalent conjunction of both implications.
  */
 export function conditionalIdentityIff(original: ProofNode): ProofNode {
-  if (!isIffNode(original) || !original.left || !original.right) {
-    return ERROR_NODE;
+  if (isIffNode(original) && original.left && original.right) {
+    const pImplQ = createImplicationNode(false, original.left, original.right, undefined);
+    const qImplP = createImplicationNode(false, original.right, original.left, undefined);
+    return createAndNode(false, pImplQ, qImplP, [original]);
   }
-  const pImplQ = createImplicationNode(false, original.left, original.right, undefined);
-  const qImplP = createImplicationNode(false, original.right, original.left, undefined);
-  return createAndNode(false, pImplQ, qImplP, [original]);
+
+  if (isAndNode(original) && original.left && original.right) {
+    const a = original.left;
+    const b = original.right;
+    if (
+      isImplicationNode(a) &&
+      isImplicationNode(b) &&
+      sameNode(a.left, b.right) &&
+      sameNode(a.right, b.left)
+    ) {
+      return createIffNode(false, a.left, a.right, [original]);
+    }
+  }
+
+  return ERROR_NODE;
 }
 
 /**
