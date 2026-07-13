@@ -56,19 +56,22 @@ export function useUserProgress(
           },
         );
         if (!res.ok) {
-          setCompletedDayIds((prev) =>
-            prev.filter((d) => normalizeDayId(d) !== normalized),
-          );
-          if (res.status === 400) {
+          if (res.status === 404) {
+            // Stale session pointing at an email no longer in `users` — the
+            // day genuinely can't be saved for this session, so undo the
+            // optimistic local win and let the caller handle re-auth.
+            setCompletedDayIds((prev) =>
+              prev.filter((d) => normalizeDayId(d) !== normalized),
+            );
             onProgressSaveFailed?.();
           } else {
+            // Transient failure (network blip, 500, etc). The user did solve
+            // the puzzle, so keep showing the win locally rather than
+            // silently un-completing it; just log for diagnostics.
             console.error("Failed to save progress:", res.status, await res.text());
           }
         }
       } catch (err) {
-        setCompletedDayIds((prev) =>
-          prev.filter((d) => normalizeDayId(d) !== normalized),
-        );
         console.error("Failed to save progress:", err);
       }
     },
