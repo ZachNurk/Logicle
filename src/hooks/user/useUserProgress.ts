@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { normalizeDayId } from "../../utils/dateKeys";
 
+/** Signed-out users have no server record, so completed days are kept here across reloads. */
+const ANON_COMPLETED_DAYS_STORAGE_KEY = "logicle_anon_completed_days";
+
 function mergeDayIds(
   local: string[],
   server: string[] | undefined,
@@ -11,6 +14,24 @@ function mergeDayIds(
   return Array.from(merged).sort();
 }
 
+function readAnonCompletedDayIds(): string[] {
+  try {
+    const raw = localStorage.getItem(ANON_COMPLETED_DAYS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAnonCompletedDayIds(ids: string[]) {
+  try {
+    localStorage.setItem(ANON_COMPLETED_DAYS_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // Ignore quota/private-mode errors; anon progress just won't persist.
+  }
+}
+
 export function useUserProgress(
   userEmail: string | null,
   initialCompletedDayIds?: string[],
@@ -18,12 +39,14 @@ export function useUserProgress(
   onProgressSaveFailed?: () => void,
 ) {
   const [completedDayIds, setCompletedDayIds] = useState<string[]>(() =>
-    mergeDayIds([], initialCompletedDayIds ?? []),
+    userEmail
+      ? mergeDayIds([], initialCompletedDayIds ?? [])
+      : mergeDayIds(readAnonCompletedDayIds(), initialCompletedDayIds ?? []),
   );
 
   useEffect(() => {
     if (!userEmail) {
-      setCompletedDayIds([]);
+      setCompletedDayIds(readAnonCompletedDayIds());
       return;
     }
     /** Union with previous so optimistic `markDayCompleted` is not wiped if auth lags or GET races. */
@@ -31,6 +54,11 @@ export function useUserProgress(
       mergeDayIds(prev, initialCompletedDayIds ?? []),
     );
   }, [userEmail, initialCompletedDayIds]);
+
+  /** Mirror anon progress to localStorage so a solved puzzle still shows as solved after a reload. */
+  useEffect(() => {
+    if (!userEmail) writeAnonCompletedDayIds(completedDayIds);
+  }, [userEmail, completedDayIds]);
 
   const isDayCompleted = useCallback(
     (dayId: string) =>
