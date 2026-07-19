@@ -613,7 +613,11 @@ export function revAndAssociativity(node: ProofNode): boolean {
   if (!isAndNode(node) || !node.left || !node.right) return false;
 
   const { left, right } = node;
-  const canReassocFromLeft = isAndNode(left);
+  // Forward andAssociativity checks its left child first: if we reassoc from
+  // the left branch while left.left is itself an And node, forward would
+  // wrongly re-collapse through left.left instead of reconstructing this
+  // node, so that case must be excluded.
+  const canReassocFromLeft = isAndNode(left) && !isAndNode(left.left);
   const canReassocFromRight = isAndNode(right);
   if (!canReassocFromLeft && !canReassocFromRight) return false;
 
@@ -641,7 +645,8 @@ export function revOrAssociativity(node: ProofNode): boolean {
   if (!isOrNode(node) || !node.left || !node.right) return false;
 
   const { left, right } = node;
-  const canReassocFromLeft = isOrNode(left);
+  // Same left-priority hazard as revAndAssociativity, mirrored for Or.
+  const canReassocFromLeft = isOrNode(left) && !isOrNode(left.left);
   const canReassocFromRight = isOrNode(right);
   if (!canReassocFromLeft && !canReassocFromRight) return false;
 
@@ -740,14 +745,16 @@ export function revConditionalIdentityOr(node: ProofNode): boolean {
   return replaceNode(node, newNode);
 }
 
+/**
+ * Reverse Conditional Identity (↔): p ↔ q → (p → q) ∧ (q → p) — mirrors
+ * forward `conditionalIdentityIff`'s AndNode-of-two-implications case so a
+ * single forward call can reconstruct the Iff.
+ */
 export function revConditionalIdentityIff(node: ProofNode): boolean {
-  if (!isIffNode(node)) return false;
-  const newLeft = negateNode(false, node.left, undefined, true);
-  const newRight = negateNode(false, node.right, undefined, true);
-  return replaceNode(
-    node,
-    createImplicationNode(false, newLeft, newRight, undefined, true),
-  );
+  if (!isIffNode(node) || !node.left || !node.right) return false;
+  const pImplQ = createImplicationNode(false, node.left, node.right, undefined, true);
+  const qImplP = createImplicationNode(false, node.right, node.left, undefined, true);
+  return replaceNode(node, createAndNode(false, pImplQ, qImplP, undefined, true));
 }
 
 export function revImplication(node: ProofNode): boolean {
