@@ -562,22 +562,17 @@ function isRevAddRemovable(node: ProofNode): boolean {
 }
 
 /**
- * Reverse addition: (p ∨ q) → p or q. Only disjuncts that are atoms or not-nodes
- * may be removed; if neither side qualifies, the rule does not apply.
+ * Reverse addition: (p ∨ q) → p. Only the right disjunct may be dropped —
+ * forward `addition()` always reconstructs as Or(original, addition), so the
+ * kept node must stay in the left slot to match text order on replay. If only
+ * the left side qualifies as a droppable atom/not-node, the rule doesn't
+ * apply (dropping it would keep the right side in the left slot and produce
+ * an unreconstructable order).
  */
 export function revAdd(node: ProofNode): boolean {
   if (!isOrNode(node)) return false;
+  if (!isRevAddRemovable(node.right)) return false;
 
-  const leftRemovable = isRevAddRemovable(node.left);
-  const rightRemovable = isRevAddRemovable(node.right);
-  if (!leftRemovable && !rightRemovable) return false;
-
-  if (leftRemovable && rightRemovable) {
-    const keepLeft = Math.random() < 0.5;
-    return replaceNode(node, keepLeft ? node.left : node.right);
-  }
-
-  if (leftRemovable) return replaceNode(node, node.right);
   return replaceNode(node, node.left);
 }
 
