@@ -327,10 +327,19 @@ function doInvOperation(node: ProofNode) {
   }
 }
 
+/** A given identical to the solution makes the puzzle trivially/degenerately
+ * solved before any steps are taken (and is hidden from the board, since the
+ * UI treats any node with the solution's text as the derived winning node). */
+function hasGivenEqualToSolution(payload: EndlessPuzzlePayload): boolean {
+  return payload.nodes.some((n) => n.text === payload.solution.text);
+}
+
 export function generateEndlessPuzzle(): EndlessPuzzlePayload {
   for (let attempt = 0; attempt < 50; attempt += 1) {
     const payload = generateEndlessPuzzleOnce();
-    if (payload.nodes.length >= MIN_GIVEN_SIZE) return payload;
+    if (payload.nodes.length >= MIN_GIVEN_SIZE && !hasGivenEqualToSolution(payload)) {
+      return payload;
+    }
   }
   return generateEndlessPuzzleOnce();
 }

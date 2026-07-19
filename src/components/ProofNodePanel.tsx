@@ -299,8 +299,11 @@ export default function ProofNodePanel({
 
   // Register the winning node's id → solution button so arrow lookup still works.
   // We do this by aliasing: when computing arrows, remap the winning id to solutionNode.id.
+  // Starter givens are never hidden this way, even if one happens to already
+  // match the solution's text — that's a real, clickable given, not a derived
+  // "winning" node.
   const visibleNodes = (givenArray ?? []).filter(
-    (n) => !n.context && n.text !== solutionNode.text,
+    (n) => !n.context && (n.isStarter || n.text !== solutionNode.text),
   );
 
   const layerOf = computeLayers(visibleNodes);
