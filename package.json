@@ -11,7 +11,8 @@
     "dev": "bash scripts/dev.sh",
     "server": "tsx api/server.ts",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:endless": "tsx scripts/testEndless.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

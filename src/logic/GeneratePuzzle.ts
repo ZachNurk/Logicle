@@ -778,7 +778,12 @@ export function revImplication(node: ProofNode): boolean {
         true,
       );
       resNode = createAndNode(false, newLeft, newRight, undefined, true);
-    } else if (isAndNode(node.right)) {
+    } else if (isAndNode(node.right) && !sameNode(node.right.left, node.right.right)) {
+      // Forward implication()'s AndNode dispatch checks common-consequent
+      // (case 1) before common-antecedent (case 2). If B and C are equal,
+      // the two synthesized implications A→B and A→C become identical, so
+      // forward would spuriously match case 1 instead of reconstructing
+      // A→(B∧C) — skip this branch in that degenerate case.
       const newLeft = createImplicationNode(
         false,
         node.left,
@@ -815,7 +820,15 @@ export function revImplication(node: ProofNode): boolean {
         undefined,
         true,
       );
-    } else if (sameNode(node.left.right, node.right.right)) {
+    } else if (
+      sameNode(node.left.right, node.right.right) &&
+      !isAndNode(node.left.right)
+    ) {
+      // Forward implication()'s ImplicationNode dispatch checks for an
+      // AndNode on the right (case 3) before an OrNode on the left (case 4).
+      // If the shared consequent C is itself an AndNode, forward would
+      // misfire into case 3 instead of reconstructing (A∨B)→C — skip this
+      // branch in that degenerate case.
       const newLeft = createOrNode(
         false,
         node.left.left,

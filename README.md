@@ -54,5 +54,20 @@ Create an account or sign in, then play the daily puzzle.
 | `npm run server` | API only (port `3001` by default) |
 | `npm run build` | Production build |
 | `npm run test` / `npm run test:run` | Vitest |
+| `npm run test:endless -- [count]` | Stress-test the endless puzzle generator — samples `count` puzzles (default 2000) and forward-validates each solve trace against `src/logic/Axiom.ts`, failing if any puzzle turns out unsolvable |
 | `npm run lint` | ESLint |
+
+## Regenerating daily puzzles
+
+`db/days.json` holds the daily puzzle schedule. Regenerate it with:
+
+```bash
+npx tsx scripts/generateDays.ts
+```
+
+Set `GEN_DAYS_COUNT` to change how many days are generated (default 730) and `GEN_DAYS_OUT` to write elsewhere instead of overwriting `db/days.json`:
+
+```bash
+GEN_DAYS_COUNT=1000 GEN_DAYS_OUT=/tmp/days.json npx tsx scripts/generateDays.ts
+```
 
