@@ -122,28 +122,62 @@ function replayStep(step: SolutionStep, pool: Map<string, ProofNode>): ProofNode
   }
 }
 
+export type ValidationFailure = { axiomId: string; stepIndex: number; reason: string };
+export type ValidationResult = { steps: number | null; failure?: ValidationFailure };
+
 /**
  * Forward-validates a puzzle by replaying its recorded solve trace through
- * the real Axiom.ts functions. Returns the verified step count, or null if
- * the trace fails to reproduce the claimed solution.
+ * the real Axiom.ts functions. Returns the verified step count (diagnostics
+ * included) if the trace reproduces the claimed solution, else the step and
+ * reason it broke.
  */
-function forwardValidate(payload: EndlessPuzzlePayload): number | null {
+export function forwardValidateVerbose(payload: EndlessPuzzlePayload): ValidationResult {
   const pool = new Map<string, ProofNode>(payload.nodes.map((n) => [n.id, n]));
 
-  for (const step of payload.solutionSteps) {
+  for (let i = 0; i < payload.solutionSteps.length; i += 1) {
+    const step = payload.solutionSteps[i];
     const result = replayStep(step, pool);
-    if (!result || !isValid(result) || !sameNode(result, step.output)) return null;
+    if (!result) {
+      return { steps: null, failure: { axiomId: step.axiomId, stepIndex: i, reason: "missing-input" } };
+    }
+    if (!isValid(result)) {
+      return { steps: null, failure: { axiomId: step.axiomId, stepIndex: i, reason: "ERROR_NODE" } };
+    }
+    if (!sameNode(result, step.output)) {
+      return {
+        steps: null,
+        failure: {
+          axiomId: step.axiomId,
+          stepIndex: i,
+          reason: `mismatch: got "${result.text}" expected "${step.output.text}"`,
+        },
+      };
+    }
     pool.set(step.output.id, result);
   }
 
-  const finalNode = pool.get(payload.solutionSteps.at(-1)?.output.id ?? "");
   if (payload.solutionSteps.length === 0) {
-    // No steps recorded — only valid if a given already equals the solution.
-    return payload.nodes.some((n) => sameNode(n, payload.solution)) ? 0 : null;
+    const ok = payload.nodes.some((n) => sameNode(n, payload.solution));
+    return ok ? { steps: 0 } : { steps: null, failure: { axiomId: "", stepIndex: -1, reason: "no-steps-no-match" } };
   }
-  if (!finalNode || !sameNode(finalNode, payload.solution)) return null;
 
-  return payload.solutionSteps.length;
+  const finalNode = pool.get(payload.solutionSteps.at(-1)!.output.id);
+  if (!finalNode || !sameNode(finalNode, payload.solution)) {
+    return {
+      steps: null,
+      failure: {
+        axiomId: payload.solutionSteps.at(-1)!.axiomId,
+        stepIndex: payload.solutionSteps.length - 1,
+        reason: "final-mismatch",
+      },
+    };
+  }
+
+  return { steps: payload.solutionSteps.length };
+}
+
+function forwardValidate(payload: EndlessPuzzlePayload): number | null {
+  return forwardValidateVerbose(payload).steps;
 }
 
 function formatDate(d: Date): string {
@@ -232,4 +266,6 @@ function main() {
   console.log("    step-count breakdown of the off-range ones:", Object.fromEntries(offRangeCounts));
 }
 
-main();
+if (process.env.GEN_DAYS_SKIP_MAIN !== "1") {
+  main();
+}

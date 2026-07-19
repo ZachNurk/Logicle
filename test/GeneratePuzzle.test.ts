@@ -432,14 +432,11 @@ describe("ReverseAxiom", () => {
       expect(runReverse(revAdd, bothComplex)).toBe(false);
     });
 
-    it("revAdd on P∨(Q∧R) keeps the conjunction", () => {
+    it("revAdd on P∨(Q∧R) rejects — dropping the left atom would leave the conjunction in the wrong slot for forward addition() to reconstruct", () => {
       const qAndR = createAndNode(false, B, C, undefined, true);
       const pOrQAndR = createOrNode(false, A, qAndR, undefined, true);
 
-      const reversed = assertReverse(revAdd, pOrQAndR);
-      expect(reversed.length).toBeGreaterThan(0);
-      expect(reversed).toHaveLength(1);
-      expect(sameNode(reversed[0], qAndR)).toBe(true);
+      expect(runReverse(revAdd, pOrQAndR)).toBe(false);
     });
 
     it("revAdd on (P∧Q)∨R removes R and keeps the conjunction", () => {
