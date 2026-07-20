@@ -219,6 +219,7 @@ const styles: Record<string, CSSProperties> = {
   box: {
     position: "relative",
     background: Colors.background,
+    border: `1px solid ${Colors.black}`,
     borderRadius: "16px",
     padding: "28px 28px 32px",
     maxWidth: "1360px",
@@ -417,8 +418,8 @@ const styles: Record<string, CSSProperties> = {
     border: `1px solid ${Colors.black}`,
     borderRadius: "4px",
     padding: "0.8em 2em",
-    background: Colors.lightPink,
-    color: Colors.black,
+    background: Colors.black,
+    color: Colors.white,
     fontSize: "17px",
     fontWeight: 600,
     cursor: "pointer",
@@ -427,7 +428,9 @@ const styles: Record<string, CSSProperties> = {
     textAlign: "center",
   },
   signInButtonHover: {
+    color: Colors.black,
     transform: "translate(-2px, -2px)",
+    background: Colors.lightPink,
     boxShadow: `0.25rem 0.25rem ${Colors.black}`,
   },
 };
