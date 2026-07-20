@@ -84,12 +84,14 @@ export default function CreateAccountScreen({
 
 const styles: Record<string, CSSProperties> = {
   page: {
-    minHeight: "100vh",
+    height: "100vh",
+    overflowY: "auto",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     background: Colors.background,
     padding: "24px",
+    boxSizing: "border-box",
   },
   card: {
     position: "relative",

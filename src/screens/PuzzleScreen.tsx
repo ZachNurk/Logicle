@@ -258,9 +258,10 @@ export default function PuzzleScreen({
 
 const styles: Record<string, CSSProperties> = {
   page: {
-    minHeight: "100vh",
+    height: "100vh",
     display: "flex",
     flexDirection: "column",
+    overflow: "hidden",
   },
   topBar: {
     height: "56px",
@@ -351,10 +352,12 @@ const styles: Record<string, CSSProperties> = {
   },
   contentWrap: {
     flex: 1,
+    minHeight: 0,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     padding: "24px",
+    overflow: "hidden",
   },
   contentWrapMobile: {
     padding: "12px",
@@ -364,6 +367,7 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     gap: "12px",
     width: "100%",
+    height: "100%",
     maxWidth: "1360px",
     justifyContent: "center",
     alignItems: "stretch",
@@ -377,18 +381,19 @@ const styles: Record<string, CSSProperties> = {
     userSelect: "none",
   },
   panel: {
-    flex: "0 0 600px",
-    height: "760px",
-    minHeight: "760px",
+    flex: "1 1 600px",
+    height: "100%",
+    minHeight: 0,
     maxWidth: "600px",
     display: "flex",
     boxSizing: "border-box",
+    overflow: "auto",
   },
   panelMobile: {
     flex: "1 1 auto",
     width: "100%",
     maxWidth: "100%",
     height: "auto",
-    minHeight: "480px",
+    minHeight: 0,
   },
 };

@@ -115,12 +115,14 @@ export default function ResetPasswordScreen({
 
 const styles: Record<string, CSSProperties> = {
   resetPage: {
-    minHeight: "100vh",
+    height: "100vh",
+    overflowY: "auto",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     background: Colors.background,
     padding: "24px",
+    boxSizing: "border-box",
   },
   resetCard: {
     position: "relative",

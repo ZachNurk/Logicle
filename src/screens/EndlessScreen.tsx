@@ -289,9 +289,10 @@ export default function EndlessScreen({
 
 const styles: Record<string, CSSProperties> = {
   page: {
-    minHeight: "100vh",
+    height: "100vh",
     display: "flex",
     flexDirection: "column",
+    overflow: "hidden",
   },
   topBar: {
     height: "56px",
@@ -367,10 +368,12 @@ const styles: Record<string, CSSProperties> = {
   },
   contentWrap: {
     flex: 1,
+    minHeight: 0,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     padding: "24px",
+    overflow: "hidden",
   },
   mainColumn: {
     display: "flex",
@@ -378,9 +381,11 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     gap: "16px",
     width: "100%",
+    height: "100%",
     maxWidth: "1360px",
   },
   endlessCounterRow: {
+    flex: "0 0 auto",
     display: "flex",
     flexWrap: "wrap",
     alignItems: "baseline",
@@ -390,6 +395,8 @@ const styles: Record<string, CSSProperties> = {
     color: "#333",
   },
   split: {
+    flex: "1 1 auto",
+    minHeight: 0,
     display: "flex",
     gap: "12px",
     width: "100%",
@@ -397,18 +404,19 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "stretch",
   },
   panel: {
-    flex: "0 0 600px",
-    height: "760px",
-    minHeight: "760px",
+    flex: "1 1 600px",
+    height: "100%",
+    minHeight: 0,
     maxWidth: "600px",
     display: "flex",
     boxSizing: "border-box",
+    overflow: "auto",
   },
   stepsPanel: {
     flex: "0 0 220px",
     width: "220px",
-    height: "760px",
-    minHeight: "760px",
+    height: "100%",
+    minHeight: 0,
     boxSizing: "border-box",
     background: "#ffffff",
     border: "1px solid #ddd",
