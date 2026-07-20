@@ -23,11 +23,11 @@
     "express-rate-limit": "^8.5.1",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^8.0.5",
     "pg": "^8.20.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.0",
     "react-native": "^0.84.1",
+    "resend": "^6.17.2",
     "vitest": "^4.0.18"
   },
   "devDependencies": {
@@ -38,7 +38,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.10.13",
-    "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

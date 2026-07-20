@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import {
   clearOtpByUserId,
   createUser,
@@ -72,28 +72,24 @@ function validateEmail(email: string): boolean {
 }
 
 async function sendOtpEmail(email: string, otp: string): Promise<void> {
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const smtpFrom = process.env.SMTP_FROM ?? smtpUser;
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
 
-  if (!smtpUser || !smtpPass || !smtpFrom) {
-    throw new Error("SMTP config missing. Set SMTP_USER, SMTP_PASS, SMTP_FROM.");
+  if (!apiKey || !from) {
+    throw new Error("Resend config missing. Set RESEND_API_KEY, EMAIL_FROM.");
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "Gmail",
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
-
-  await transporter.sendMail({
-    from: smtpFrom,
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from,
     to: email,
     subject: "Password reset OTP",
     text: `Your OTP (expires in 10 minutes): ${otp}`,
   });
+
+  if (error) {
+    throw new Error(`Resend send failed: ${error.message}`);
+  }
 }
 
 
