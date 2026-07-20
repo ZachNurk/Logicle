@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import authRouter from "./routes/auth.ts";
+import cronRouter from "./routes/cron.ts";
 import daysRouter from "./routes/days.ts";
 import userDataRouter from "./routes/userData.ts";
 
@@ -36,6 +37,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
 app.use("/api", authRouter);
+app.use("/api/cron", cronRouter);
 app.use("/api/days", daysRouter);
 app.use("/api/users", userDataRouter);
 
