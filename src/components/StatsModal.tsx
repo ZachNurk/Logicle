@@ -82,43 +82,37 @@ export default function StatsModal({
         </div>
 
         <div style={styles.yearNavRow}>
-          <div style={styles.yearNavSideLeft}>
-            {viewYear > MIN_STATS_YEAR ? (
-              <button
-                type="button"
-                style={{
-                  ...styles.yearNavArrow,
-                  ...(hoveredYearNav === "left" ? styles.yearNavArrowHover : {}),
-                }}
-                onClick={() =>
-                  setViewYear((y) => Math.max(MIN_STATS_YEAR, y - 1))
-                }
-                onMouseEnter={() => setHoveredYearNav("left")}
-                onMouseLeave={() => setHoveredYearNav(null)}
-                aria-label="Previous year"
-              >
-                ←
-              </button>
-            ) : null}
-          </div>
+          <button
+            type="button"
+            style={{
+              ...styles.yearNavArrow,
+              ...(viewYear <= MIN_STATS_YEAR ? styles.yearNavArrowHidden : {}),
+              ...(hoveredYearNav === "left" ? styles.yearNavArrowHover : {}),
+            }}
+            disabled={viewYear <= MIN_STATS_YEAR}
+            onClick={() => setViewYear((y) => Math.max(MIN_STATS_YEAR, y - 1))}
+            onMouseEnter={() => setHoveredYearNav("left")}
+            onMouseLeave={() => setHoveredYearNav(null)}
+            aria-label="Previous year"
+          >
+            ←
+          </button>
           <span style={styles.yearNavYear}>{viewYear}</span>
-          <div style={styles.yearNavSideRight}>
-            {viewYear < currentYear ? (
-              <button
-                type="button"
-                style={{
-                  ...styles.yearNavArrow,
-                  ...(hoveredYearNav === "right" ? styles.yearNavArrowHover : {}),
-                }}
-                onClick={() => setViewYear((y) => Math.min(y + 1, currentYear))}
-                onMouseEnter={() => setHoveredYearNav("right")}
-                onMouseLeave={() => setHoveredYearNav(null)}
-                aria-label="Next year"
-              >
-                →
-              </button>
-            ) : null}
-          </div>
+          <button
+            type="button"
+            style={{
+              ...styles.yearNavArrow,
+              ...(viewYear >= currentYear ? styles.yearNavArrowHidden : {}),
+              ...(hoveredYearNav === "right" ? styles.yearNavArrowHover : {}),
+            }}
+            disabled={viewYear >= currentYear}
+            onClick={() => setViewYear((y) => Math.min(y + 1, currentYear))}
+            onMouseEnter={() => setHoveredYearNav("right")}
+            onMouseLeave={() => setHoveredYearNav(null)}
+            aria-label="Next year"
+          >
+            →
+          </button>
         </div>
 
         <div style={styles.twelveMonthScroll}>
@@ -278,46 +272,32 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
+    gap: "10px",
     marginBottom: "14px",
     minHeight: "40px",
   },
-  yearNavSideLeft: {
-    position: "absolute",
-    left: "-12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  yearNavSideRight: {
-    position: "absolute",
-    right: "-12px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
   yearNavArrow: {
-    width: "40px",
-    height: "40px",
-    border: `1px solid ${Colors.black}`,
-    borderRadius: "4px",
-    background: Colors.black,
+    width: "24px",
+    height: "24px",
+    border: "none",
+    background: "none",
     fontSize: "18px",
     lineHeight: 1,
     cursor: "pointer",
-    color: Colors.white,
+    color: "#333",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: 0,
-    transition:
-      "transform 0.2s, background-color 0.2s, box-shadow 0.2s, color 0.2s",
+    transition: "transform 0.2s, color 0.2s",
   },
   yearNavArrowHover: {
     color: Colors.black,
     transform: "translate(-2px, -2px)",
-    background: Colors.lightPink,
-    boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+  yearNavArrowHidden: {
+    visibility: "hidden",
+    cursor: "default",
   },
   yearNavYear: {
     flex: "0 0 auto",
