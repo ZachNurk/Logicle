@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { useState, useEffect, useRef } from "react";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import AxiomPanel from "../components/AxiomPanel";
 import ProofNodePanel from "../components/ProofNodePanel";
 import StatsModal from "../components/StatsModal";
@@ -74,6 +75,7 @@ export default function PuzzleScreen({
   const previousVictoryRef = useRef(victory);
   /** Seed from the flag so we don't rely on an effect that clears before Strict Mode's remount. */
   const [showHowToPlay, setHowToPlay] = useState(openHowToPlayOnLoad);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     if (openHowToPlayOnLoad) {
@@ -145,7 +147,7 @@ export default function PuzzleScreen({
         />
       )}
 
-      <header style={styles.topBar}>
+      <header style={{ ...styles.topBar, ...(isMobile ? styles.topBarMobile : {}) }}>
         <button
           type="button"
           style={{
@@ -159,8 +161,10 @@ export default function PuzzleScreen({
         >
           ?
         </button>
-        <h1 style={styles.title}>Logicle</h1>
-        <div style={styles.rightActions}>
+        <h1 style={{ ...styles.title, ...(isMobile ? styles.titleMobile : {}) }}>
+          Logicle
+        </h1>
+        <div style={{ ...styles.rightActions, ...(isMobile ? styles.rightActionsMobile : {}) }}>
           <button
             style={{
               ...styles.menuButton,
@@ -213,22 +217,28 @@ export default function PuzzleScreen({
         </div>
       </header>
 
-      <div style={styles.contentWrap}>
+      <div
+        style={{
+          ...styles.contentWrap,
+          ...(isMobile ? styles.contentWrapMobile : {}),
+        }}
+      >
         <div
           style={{
             ...styles.split,
+            ...(isMobile ? styles.splitMobile : {}),
             ...(victory ? styles.splitLocked : {}),
           }}
           aria-hidden={victory}
         >
-          <div style={styles.panel}>
+          <div style={{ ...styles.panel, ...(isMobile ? styles.panelMobile : {}) }}>
             <ProofNodePanel
               givenArray={nodes}
               solutionNode={solutionNode}
               toggleSelected={toggleSelectedProofNode}
             />
           </div>
-          <div style={styles.panel}>
+          <div style={{ ...styles.panel, ...(isMobile ? styles.panelMobile : {}) }}>
             <AxiomPanel
               axioms={axioms}
               toggleSelected={toggleSelectedAxiom}
@@ -261,6 +271,13 @@ const styles: Record<string, CSSProperties> = {
     borderBottom: "1px solid #ddd",
     background: "#ffffff",
   },
+  topBarMobile: {
+    height: "auto",
+    minHeight: "56px",
+    flexWrap: "wrap",
+    gap: "8px",
+    padding: "8px",
+  },
   title: {
     margin: 0,
     fontSize: "20px",
@@ -269,9 +286,21 @@ const styles: Record<string, CSSProperties> = {
     left: "50%",
     transform: "translateX(-50%)",
   },
+  titleMobile: {
+    position: "static",
+    transform: "none",
+    order: 3,
+    width: "100%",
+    textAlign: "center",
+    fontSize: "18px",
+  },
   rightActions: {
     display: "flex",
     gap: "8px",
+  },
+  rightActionsMobile: {
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   menuButton: {
     border: "1px solid #000",
@@ -327,6 +356,10 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     padding: "24px",
   },
+  contentWrapMobile: {
+    padding: "12px",
+    alignItems: "stretch",
+  },
   split: {
     display: "flex",
     gap: "12px",
@@ -334,6 +367,10 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: "1360px",
     justifyContent: "center",
     alignItems: "stretch",
+  },
+  splitMobile: {
+    flexDirection: "column",
+    gap: "16px",
   },
   splitLocked: {
     pointerEvents: "none",
@@ -346,5 +383,12 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: "600px",
     display: "flex",
     boxSizing: "border-box",
+  },
+  panelMobile: {
+    flex: "1 1 auto",
+    width: "100%",
+    maxWidth: "100%",
+    height: "auto",
+    minHeight: "480px",
   },
 };
