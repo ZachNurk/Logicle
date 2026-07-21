@@ -329,7 +329,7 @@ const styles: Record<string, CSSProperties> = {
   menuButtonPinkHover: {
     color: "#000",
     transform: "translate(-2px, -2px)",
-    background: Colors.lightPink,
+    background: Colors.purple,
     boxShadow: "0.25rem 0.25rem #000",
   },
   menuButtonPink: {

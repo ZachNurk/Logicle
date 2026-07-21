@@ -325,6 +325,15 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.lightPink,
     color: "#000",
   },
+  signInButton: {
+    border: `1px solid ${Colors.black}`,
+  },
+  signInButtonHover: {
+    color: "#000",
+    transform: "translate(-2px, -2px)",
+    background: Colors.purple,
+    boxShadow: "0.25rem 0.25rem #000",
+  },
   menuButtonRedHover: {
     color: "#fff",
     transform: "translate(-2px, -2px)",

@@ -71,7 +71,7 @@ const styles: Record<string, CSSProperties> = {
   box: {
     position: "relative",
     background: Colors.background,
-    border: `1px solid ${Colors.black}`,
+    border: `4px solid ${Colors.black}`,
     borderRadius: "20px",
     padding: "56px",
     minWidth: "560px",

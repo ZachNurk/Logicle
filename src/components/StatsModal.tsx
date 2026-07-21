@@ -185,7 +185,7 @@ export default function StatsModal({
           </button>
         )}
 
-        {onLogout && (
+        {currentUser && onLogout && (
           <button
             type="button"
             style={{
@@ -219,7 +219,7 @@ const styles: Record<string, CSSProperties> = {
   box: {
     position: "relative",
     background: Colors.background,
-    border: `1px solid ${Colors.black}`,
+    border: `4px solid ${Colors.black}`,
     borderRadius: "16px",
     padding: "28px 28px 32px",
     maxWidth: "1360px",

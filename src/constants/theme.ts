@@ -6,6 +6,7 @@
  * DP  = dark pink
  * MP  = medium pink
  * LP  = light pink
+ * PU  = purple (pink-button hover state)
  * BG  = page background (cozy warm gray)
  * S1  = surface level 1 — cards, modals
  * S2  = surface level 2 — recessed elements (calendar cells, secondary buttons)
@@ -20,6 +21,7 @@ export const Colors = {
   darkPink: "#ff7aad",
   mediumPink: "#ff9bc5",
   lightPink: "#ffcfe3",
+  purple: "#c9a9ff",
   gray: "#abb3ad",
 };
 
