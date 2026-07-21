@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { addCompletedDay, getUserDays } from "../../db/userProgress";
+import {
+  recordDayProgress,
+  getUserDays,
+  type ProgressStatus,
+} from "../../db/userProgress";
 import { requireAuth, type AuthedRequest } from "../middleware/requireAuth";
 
 const router = Router();
@@ -29,8 +33,14 @@ router.get("/:email/progress", async (req, res) => {
   const email = normalizeEmailParam(req.params.email);
 
   try {
-    const completedDayIds = await getUserDays(email);
-    res.status(200).json({ completedDayIds });
+    const days = await getUserDays(email);
+    const completedDayIds = days
+      .filter((d) => d.status === "completed")
+      .map((d) => d.dayId);
+    const givenUpDayIds = days
+      .filter((d) => d.status === "given_up")
+      .map((d) => d.dayId);
+    res.status(200).json({ completedDayIds, givenUpDayIds });
   } catch (error) {
     console.error("Get progress error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -38,20 +48,22 @@ router.get("/:email/progress", async (req, res) => {
 });
 
 /**
- * Mark a day as completed for a user
+ * Record a day's outcome (win or give-up) for a user
  * POST /api/users/:email/progress
  */
 router.post("/:email/progress", async (req, res) => {
   const email = normalizeEmailParam(req.params.email);
-  const { dayId } = req.body ?? {};
+  const { dayId, status } = req.body ?? {};
 
   if (typeof dayId !== "string" || !dayId.trim()) {
     res.status(400).json({ error: "dayId is required" });
     return;
   }
+  const resolvedStatus: ProgressStatus =
+    status === "given_up" ? "given_up" : "completed";
 
   try {
-    const result = await addCompletedDay(email, dayId.trim());
+    const result = await recordDayProgress(email, dayId.trim(), resolvedStatus);
     if (!result.ok) {
       // Expected when a stale session points at an email no longer in `users`
       // (e.g. after a dev DB reset). Not logged as an error.

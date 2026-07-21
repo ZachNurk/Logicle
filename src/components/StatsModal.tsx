@@ -11,6 +11,8 @@ type StatsModalProps = {
    * a day is marked complete; `currentUser.completedDayIds` can lag until refresh.
    */
   completedDayIds?: string[];
+  /** Prefer passing this from `useUserProgress`, same as `completedDayIds`. */
+  givenUpDayIds?: string[];
   onClose?: () => void;
   title?: string;
   onEndless?: () => void;
@@ -37,8 +39,9 @@ const MONTH_NAMES = [
 export default function StatsModal({
   currentUser,
   completedDayIds: completedDayIdsProp,
+  givenUpDayIds: givenUpDayIdsProp,
   onClose,
-  title = "Your Stats",
+  title,
   onEndless,
   onLogout,
   onSignIn,
@@ -55,9 +58,15 @@ export default function StatsModal({
   );
   const completedDayIds =
     completedDayIdsProp ?? currentUser?.completedDayIds ?? [];
+  const givenUpDayIds =
+    givenUpDayIdsProp ?? currentUser?.givenUpDayIds ?? [];
   const completedSet = useMemo(
     () => new Set(completedDayIds.map(normalizeDayId)),
     [completedDayIds],
+  );
+  const givenUpSet = useMemo(
+    () => new Set(givenUpDayIds.map(normalizeDayId)),
+    [givenUpDayIds],
   );
   const today = formatLocalDateKey(now);
 
@@ -69,7 +78,7 @@ export default function StatsModal({
             ✕
           </button>
         )}
-        <h2 style={styles.title}>{title}</h2>
+        {title && <h2 style={styles.title}>{title}</h2>}
         {currentUser?.email && (
           <div style={styles.userEmail}>{currentUser.email}</div>
         )}
@@ -81,6 +90,7 @@ export default function StatsModal({
           </span>
         </div>
 
+        <div style={styles.yearPanel}>
         <div style={styles.yearNavRow}>
           <button
             type="button"
@@ -134,6 +144,7 @@ export default function StatsModal({
                   {days.map((day) => {
                     const key = formatLocalDateKey(day);
                     const completed = completedSet.has(normalizeDayId(key));
+                    const givenUp = givenUpSet.has(normalizeDayId(key));
                     const isToday = key === today;
                     return (
                       <div
@@ -141,6 +152,7 @@ export default function StatsModal({
                         style={{
                           ...styles.miniDayCell,
                           ...(completed ? styles.miniDayCellCompleted : {}),
+                          ...(givenUp ? styles.miniDayCellGivenUp : {}),
                           ...(isToday ? styles.miniDayCellToday : {}),
                         }}
                       >
@@ -153,6 +165,7 @@ export default function StatsModal({
             );
           })}
           </div>
+        </div>
         </div>
 
         {!currentUser && onSignIn && (
@@ -268,6 +281,12 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "25px",
     fontWeight: 700,
   },
+  yearPanel: {
+    background: Colors.surface2,
+    border: `2px solid ${Colors.black}`,
+    borderRadius: "12px",
+    padding: "16px",
+  },
   yearNavRow: {
     display: "flex",
     flexDirection: "row",
@@ -307,6 +326,10 @@ const styles: Record<string, CSSProperties> = {
     color: "#333",
     minWidth: "64px",
     textAlign: "center",
+    background: Colors.surface1,
+    border: "1px solid #d8d4ce",
+    borderRadius: "6px",
+    padding: "4px 12px",
   },
   twelveMonthScroll: {
     width: "100%",
@@ -338,6 +361,11 @@ const styles: Record<string, CSSProperties> = {
     color: "#333",
     marginBottom: "8px",
     letterSpacing: "0.02em",
+    background: Colors.surface2,
+    border: "1px solid #d8d4ce",
+    borderRadius: "6px",
+    padding: "4px 8px",
+    textAlign: "center",
   },
   miniMonthGrid: {
     display: "grid",
@@ -364,6 +392,11 @@ const styles: Record<string, CSSProperties> = {
     background: "#22c55e",
     color: "#fff",
     borderColor: "#16a34a",
+  },
+  miniDayCellGivenUp: {
+    background: "#ef4444",
+    color: "#fff",
+    borderColor: "#dc2626",
   },
   miniDayCellToday: {
     border: "2px solid #111",

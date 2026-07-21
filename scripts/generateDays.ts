@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 
 import { generateEndlessPuzzle } from "../src/logic/GeneratePuzzle";
 import type { ProofNode } from "../src/logic/ProofNode";
+import type { SolutionStep } from "../src/logic/GeneratePuzzle";
 import { forwardValidate } from "../src/logic/forwardValidatePuzzle";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,7 +29,12 @@ function formatDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-type Day = { id: string; nodes: ProofNode[]; solution: ProofNode };
+type Day = {
+  id: string;
+  nodes: ProofNode[];
+  solution: ProofNode;
+  solutionSteps: SolutionStep[];
+};
 
 /** Global rejection-sampling stats across the whole run (for reporting only). */
 const genStats = {
@@ -46,7 +52,15 @@ function generateMediumDay(id: string): { day: Day; steps: number } {
     const steps = forwardValidate(payload);
     if (steps !== null && steps >= MIN_STEPS && steps <= MAX_STEPS) {
       genStats.accepted += 1;
-      return { day: { id, nodes: payload.nodes, solution: payload.solution }, steps };
+      return {
+        day: {
+          id,
+          nodes: payload.nodes,
+          solution: payload.solution,
+          solutionSteps: payload.solutionSteps,
+        },
+        steps,
+      };
     }
     if (steps === null) {
       genStats.invalidTrace += 1;

@@ -17,7 +17,7 @@ type DayPayload = {
   id?: string;
   nodes?: unknown;
   solution?: unknown;
-  /** Endless only: forward-order "Give Up" assist guide. */
+  /** Forward-order "Give Up" assist guide, from givens to solution. */
   solutionSteps?: SolutionStep[];
 };
 
@@ -36,8 +36,8 @@ export function useProofNodes(
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentDayId, setCurrentDayId] = useState<string | null>(null);
-  /** Endless only: forward-order "Give Up" assist guide for the current puzzle. */
-  const [endlessSolutionSteps, setEndlessSolutionSteps] = useState<SolutionStep[]>([]);
+  /** Forward-order "Give Up" assist guide for the current puzzle. */
+  const [solutionSteps, setSolutionSteps] = useState<SolutionStep[]>([]);
 
   const prevPuzzleSourceRef = useRef(puzzleSource);
   const advanceEndlessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -76,7 +76,7 @@ export function useProofNodes(
       setCurrentDayId(dayId);
       setNodes([...starterNodes, ...savedNodes]);
       setSolutionNode(rawSolution ? nodeFromDb(rawSolution) : ERROR_NODE);
-      setEndlessSolutionSteps(source === "endless" ? (day?.solutionSteps ?? []) : []);
+      setSolutionSteps(day?.solutionSteps ?? []);
     },
     [],
   );
@@ -221,6 +221,6 @@ export function useProofNodes(
     deleteSelectedNode,
     resetNodes,
     advanceEndlessPuzzle,
-    endlessSolutionSteps,
+    solutionSteps,
   };
 }

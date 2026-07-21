@@ -7,8 +7,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import { useAppSession } from "../hooks/useAppSession";
-import PuzzleScreen from "../screens/PuzzleScreen";
-import EndlessScreen from "../screens/EndlessScreen";
+import GameScreen from "../screens/GameScreen";
 import LoginScreen from "../screens/LoginScreen";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
@@ -57,11 +56,18 @@ export default function App() {
     onLogoutClick: () => setShowLogoutConfirm(true),
     currentUser: auth.currentUser,
     completedDayIds: progress.completedDayIds,
+    givenUpDayIds: progress.givenUpDayIds,
     deleteSelectedNode: proof.deleteSelectedNode,
     resetNodes: proof.resetNodes,
     invalidAxiomIds: proof.invalidAxiomIds,
+    solutionSteps: proof.solutionSteps,
   };
-  const puzzleScreenProps = { ...sharedGameProps, victory: proof.victory };
+  const puzzleScreenProps = {
+    ...sharedGameProps,
+    victory: proof.victory,
+    gaveUp: proof.gaveUp,
+    onGiveUp: proof.giveUp,
+  };
 
   const renderScreen = () => {
     switch (getScreen()) {
@@ -71,14 +77,15 @@ export default function App() {
         return <div style={styles.statusScreen}>Failed to load puzzle: {proof.loadError}</div>;
       case "puzzle":
         return gameMode === "endless" ? (
-          <EndlessScreen
+          <GameScreen
+            mode="endless"
             {...sharedGameProps}
-            solutionSteps={proof.endlessSolutionSteps}
             onBackToDaily={() => setGameMode("daily")}
             onSignIn={auth.showLogin}
           />
         ) : (
-          <PuzzleScreen
+          <GameScreen
+            mode="daily"
             {...puzzleScreenProps}
             openHowToPlayOnLoad={auth.openHowToPlayOnLoad}
             onHowToPlayOnLoadConsumed={auth.clearHowToPlayOnLoad}

@@ -12,6 +12,7 @@ export type Day = {
   id: string;
   nodes: unknown;
   solution: unknown;
+  solutionSteps: unknown;
 };
 
 const days: Day[] = daysData as Day[];

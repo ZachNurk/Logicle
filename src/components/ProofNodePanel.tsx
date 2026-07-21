@@ -12,6 +12,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  type ReactNode,
 } from "react";
 import type { ProofNode } from "../logic/ProofNode";
 import type { CSSProperties } from "react";
@@ -231,10 +232,13 @@ export default function ProofNodePanel({
   givenArray,
   solutionNode,
   toggleSelected,
+  giveUpButton,
 }: {
   givenArray: ProofNode[];
   solutionNode: ProofNode;
   toggleSelected: (id: string) => void;
+  /** Rendered to the right of the solution node, e.g. a daily-puzzle "Give Up" button. */
+  giveUpButton?: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -400,6 +404,9 @@ export default function ProofNodePanel({
             {solutionNode.text}
           </button>
         </div>
+        {giveUpButton && (
+          <div style={styles.giveUpCorner}>{giveUpButton}</div>
+        )}
       </div>
 
       {/* Arrowheads on top (z-index 2) so they paint above buttons */}
@@ -475,6 +482,11 @@ const styles: Record<string, CSSProperties> = {
     marginTop: "auto",
     paddingTop: "8px",
     borderTop: `1px dashed ${Colors.gray}`,
+  },
+  giveUpCorner: {
+    position: "absolute",
+    left: "8px",
+    bottom: "8px",
   },
   nodeButton: {
     padding: "12px 18px",

@@ -8,6 +8,7 @@ export type AuthUser = {
   id: string;
   email: string;
   completedDayIds?: string[];
+  givenUpDayIds?: string[];
 };
 
 const AUTH_USER_STORAGE_KEY = "logicle_auth_user";
@@ -50,6 +51,7 @@ export function useAuth() {
     setCurrentUser({
       ...user,
       completedDayIds: data.completedDayIds,
+      givenUpDayIds: data.givenUpDayIds,
     });
     localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
     setAuthStatus("loggedIn");
@@ -320,6 +322,7 @@ const validateEmail =(email: string): boolean => {
         ? {
             ...prev,
             completedDayIds: data.completedDayIds,
+            givenUpDayIds: data.givenUpDayIds,
           }
         : null,
     );

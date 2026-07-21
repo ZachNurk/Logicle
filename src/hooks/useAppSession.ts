@@ -21,34 +21,59 @@ export function useAppSession(puzzleSource: "daily" | "endless" = "daily") {
     auth.currentUser?.email ?? null,
     auth.currentUser?.completedDayIds,
     auth.logout,
+    auth.currentUser?.givenUpDayIds,
   );
 
-  /** Syncs any day completed while signed out to the account once the user signs in. */
+  /** Syncs any day completed/given-up while signed out to the account once the user signs in. */
   const wasLoggedIn = useRef(false);
   useEffect(() => {
     if (auth.authStatus === "loggedIn" && !wasLoggedIn.current) {
-      const serverDayIds = new Set(
+      const serverCompletedIds = new Set(
         (auth.currentUser?.completedDayIds ?? []).map(normalizeDayId),
       );
-      const localOnlyDayIds = progress.completedDayIds.filter(
-        (id) => !serverDayIds.has(normalizeDayId(id)),
+      const serverGivenUpIds = new Set(
+        (auth.currentUser?.givenUpDayIds ?? []).map(normalizeDayId),
       );
-      for (const dayId of localOnlyDayIds) {
+      const localOnlyCompletedIds = progress.completedDayIds.filter(
+        (id) => !serverCompletedIds.has(normalizeDayId(id)),
+      );
+      const localOnlyGivenUpIds = progress.givenUpDayIds.filter(
+        (id) => !serverGivenUpIds.has(normalizeDayId(id)),
+      );
+      for (const dayId of localOnlyCompletedIds) {
         void progress.markDayCompleted(dayId);
+      }
+      for (const dayId of localOnlyGivenUpIds) {
+        void progress.markDayGivenUp(dayId);
       }
     }
     wasLoggedIn.current = auth.authStatus === "loggedIn";
-  }, [auth.authStatus, auth.currentUser, progress.completedDayIds, progress.markDayCompleted]);
+  }, [
+    auth.authStatus,
+    auth.currentUser,
+    progress.completedDayIds,
+    progress.givenUpDayIds,
+    progress.markDayCompleted,
+    progress.markDayGivenUp,
+  ]);
 
   const today = formatLocalDateKey(new Date());
   const hasWonToday = progress.completedDayIds.includes(today);
+  const hasGivenUpToday = progress.givenUpDayIds.includes(today);
 
   const proof = useProofSession(
     auth.currentUser?.id ?? null,
     hasWonToday,
+    hasGivenUpToday,
     puzzleSource === "daily"
       ? async (dayId) => {
           await progress.markDayCompleted(dayId);
+          await auth.refreshUserProgress();
+        }
+      : undefined,
+    puzzleSource === "daily"
+      ? async (dayId) => {
+          await progress.markDayGivenUp(dayId);
           await auth.refreshUserProgress();
         }
       : undefined,

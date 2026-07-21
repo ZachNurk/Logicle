@@ -22,7 +22,9 @@ import { useAxioms } from "./useAxioms";
 export function useProofSession(
   userId: string | null,
   hasWonToday: boolean,
+  hasGivenUpToday: boolean = false,
   onVictory?: (dayId: string) => void,
+  onGiveUp?: (dayId: string) => void,
   puzzleSource: "daily" | "endless" = "daily",
 ) {
   const {
@@ -37,11 +39,12 @@ export function useProofSession(
     deleteSelectedNode,
     resetNodes,
     advanceEndlessPuzzle,
-    endlessSolutionSteps,
+    solutionSteps,
   } = useProofNodes(userId, puzzleSource);
   const { axioms, setAxioms, toggleSelectedAxiom } = useAxioms();
 
   const [victory, setVictory] = useState(false);
+  const [gaveUp, setGaveUp] = useState(false);
   const [selectedSide, setSelectedSide] = useState<"left" | "right" | "">("");
   /** Multiple axioms can be invalid at once; duplicates allowed so each error gets its own 1s timeout. */
   const [invalidAxiomIds, setInvalidAxiomIds] = useState<string[]>([]);
@@ -49,13 +52,21 @@ export function useProofSession(
   useEffect(() => {
     if (puzzleSource === "daily") {
       setVictory(hasWonToday);
+      setGaveUp(hasGivenUpToday);
     } else {
       setVictory(false);
+      setGaveUp(false);
     }
-  }, [userId, hasWonToday, puzzleSource]);
+  }, [userId, hasWonToday, hasGivenUpToday, puzzleSource]);
 
   /** Daily puzzle is finished — no further edits to nodes or axioms. */
-  const dailyPuzzleLocked = puzzleSource === "daily" && victory;
+  const dailyPuzzleLocked = puzzleSource === "daily" && (victory || gaveUp);
+
+  const giveUp = useCallback(() => {
+    if (puzzleSource !== "daily" || victory || gaveUp) return;
+    setGaveUp(true);
+    onGiveUp?.(currentDayId ?? "unknown");
+  }, [puzzleSource, victory, gaveUp, onGiveUp, currentDayId]);
 
   const setSide = useCallback(
     (side: "left" | "right") => {
@@ -101,7 +112,7 @@ export function useProofSession(
     if (puzzleSource !== "endless") return;
     clearAxiomSelection();
     setInvalidAxiomIds([]);
-  }, [endlessSolutionSteps, puzzleSource, clearAxiomSelection]);
+  }, [solutionSteps, puzzleSource, clearAxiomSelection]);
 
   /** Shake / red flash on this axiom for 1s; supports several axioms at once. */
   const registerInvalidAxiom = useCallback((axiomId: string) => {
@@ -272,9 +283,11 @@ export function useProofSession(
     setAxioms,
     applyAxiom,
     victory,
+    gaveUp,
+    giveUp,
     selectedSide,
     setSide,
     invalidAxiomIds,
-    endlessSolutionSteps,
+    solutionSteps,
   };
 }
