@@ -230,7 +230,8 @@ export default function GameScreen({
           currentUser={currentUser}
           completedDayIds={completedDayIds}
           givenUpDayIds={givenUpDayIds}
-          title="You Won!"
+          title="Puzzle Completed"
+          note={gaveUp ? "You gave up before finishing this one." : undefined}
           onClose={() => setWinStatsDismissed(true)}
           onEndless={() => setShowEndlessIntro(true)}
           onLogout={onLogoutClick}

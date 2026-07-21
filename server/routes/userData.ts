@@ -34,12 +34,8 @@ router.get("/:email/progress", async (req, res) => {
 
   try {
     const days = await getUserDays(email);
-    const completedDayIds = days
-      .filter((d) => d.status === "completed")
-      .map((d) => d.dayId);
-    const givenUpDayIds = days
-      .filter((d) => d.status === "given_up")
-      .map((d) => d.dayId);
+    const completedDayIds = days.filter((d) => d.completed).map((d) => d.dayId);
+    const givenUpDayIds = days.filter((d) => d.givenUp).map((d) => d.dayId);
     res.status(200).json({ completedDayIds, givenUpDayIds });
   } catch (error) {
     console.error("Get progress error:", error);

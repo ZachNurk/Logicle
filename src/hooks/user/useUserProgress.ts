@@ -5,19 +5,27 @@ import { normalizeDayId } from "../../utils/dateKeys";
 const ANON_PROGRESS_STORAGE_KEY = "logicle_anon_completed_days";
 
 type DayStatus = "completed" | "given_up";
-type DayRecord = { dayId: string; status: DayStatus };
+/**
+ * A day can be both given up on AND later completed — finishing the proof
+ * using the revealed steps shouldn't erase the give-up record. So each flag
+ * is independent and sticky (once true, stays true).
+ */
+type DayRecord = { dayId: string; completed: boolean; givenUp: boolean };
 
-function mergeDayRecords(local: DayRecord[], server: DayRecord[]): DayRecord[] {
-  const merged = new Map<string, DayStatus>();
-  for (const { dayId, status } of [...local, ...server]) {
-    const id = normalizeDayId(dayId);
-    const existing = merged.get(id);
-    // A win is sticky — a give-up record never downgrades it.
-    if (existing !== "completed") merged.set(id, status);
+function mergeDayRecords(...lists: DayRecord[][]): DayRecord[] {
+  const merged = new Map<string, DayRecord>();
+  for (const list of lists) {
+    for (const { dayId, completed, givenUp } of list) {
+      const id = normalizeDayId(dayId);
+      const existing = merged.get(id);
+      merged.set(id, {
+        dayId: id,
+        completed: (existing?.completed ?? false) || completed,
+        givenUp: (existing?.givenUp ?? false) || givenUp,
+      });
+    }
   }
-  return Array.from(merged, ([dayId, status]) => ({ dayId, status })).sort(
-    (a, b) => a.dayId.localeCompare(b.dayId),
-  );
+  return Array.from(merged.values()).sort((a, b) => a.dayId.localeCompare(b.dayId));
 }
 
 function readAnonProgress(): DayRecord[] {
@@ -25,12 +33,25 @@ function readAnonProgress(): DayRecord[] {
     const raw = localStorage.getItem(ANON_PROGRESS_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) return [];
-    // Back-compat: older builds stored a plain string[] of completed day IDs.
-    return parsed.map((entry) =>
-      typeof entry === "string"
-        ? { dayId: entry, status: "completed" as const }
-        : { dayId: entry.dayId, status: entry.status as DayStatus },
-    );
+    // Back-compat: older builds stored a plain string[] of completed day IDs,
+    // or a single-status {dayId, status} shape.
+    return parsed.map((entry) => {
+      if (typeof entry === "string") {
+        return { dayId: entry, completed: true, givenUp: false };
+      }
+      if ("status" in entry) {
+        return {
+          dayId: entry.dayId,
+          completed: entry.status === "completed",
+          givenUp: entry.status === "given_up",
+        };
+      }
+      return {
+        dayId: entry.dayId,
+        completed: Boolean(entry.completed),
+        givenUp: Boolean(entry.givenUp),
+      };
+    });
   } catch {
     return [];
   }
@@ -55,11 +76,13 @@ export function useUserProgress(
     (): DayRecord[] => [
       ...(initialCompletedDayIds ?? []).map((dayId) => ({
         dayId,
-        status: "completed" as const,
+        completed: true,
+        givenUp: false,
       })),
       ...(initialGivenUpDayIds ?? []).map((dayId) => ({
         dayId,
-        status: "given_up" as const,
+        completed: false,
+        givenUp: true,
       })),
     ],
     [initialCompletedDayIds, initialGivenUpDayIds],
@@ -67,7 +90,7 @@ export function useUserProgress(
 
   const [records, setRecords] = useState<DayRecord[]>(() =>
     userEmail
-      ? mergeDayRecords([], initialServerRecords())
+      ? mergeDayRecords(initialServerRecords())
       : mergeDayRecords(readAnonProgress(), initialServerRecords()),
   );
 
@@ -85,33 +108,33 @@ export function useUserProgress(
     if (!userEmail) writeAnonProgress(records);
   }, [userEmail, records]);
 
-  const completedDayIds = records
-    .filter((r) => r.status === "completed")
-    .map((r) => r.dayId);
-  const givenUpDayIds = records
-    .filter((r) => r.status === "given_up")
-    .map((r) => r.dayId);
+  const completedDayIds = records.filter((r) => r.completed).map((r) => r.dayId);
+  const givenUpDayIds = records.filter((r) => r.givenUp).map((r) => r.dayId);
 
   const isDayCompleted = useCallback(
     (dayId: string) =>
-      records.some(
-        (r) => normalizeDayId(r.dayId) === normalizeDayId(dayId) && r.status === "completed",
-      ),
+      records.some((r) => r.dayId === normalizeDayId(dayId) && r.completed),
     [records],
   );
 
   const isDayGivenUp = useCallback(
     (dayId: string) =>
-      records.some(
-        (r) => normalizeDayId(r.dayId) === normalizeDayId(dayId) && r.status === "given_up",
-      ),
+      records.some((r) => r.dayId === normalizeDayId(dayId) && r.givenUp),
     [records],
   );
 
   const recordDay = useCallback(
     async (dayId: string, status: DayStatus) => {
       const normalized = normalizeDayId(dayId);
-      setRecords((prev) => mergeDayRecords(prev, [{ dayId: normalized, status }]));
+      setRecords((prev) =>
+        mergeDayRecords(prev, [
+          {
+            dayId: normalized,
+            completed: status === "completed",
+            givenUp: status === "given_up",
+          },
+        ]),
+      );
 
       if (!userEmail) return;
 
@@ -130,9 +153,7 @@ export function useUserProgress(
             // Stale session pointing at an email no longer in `users` — the
             // day genuinely can't be saved for this session, so undo the
             // optimistic local record and let the caller handle re-auth.
-            setRecords((prev) =>
-              prev.filter((r) => normalizeDayId(r.dayId) !== normalized),
-            );
+            setRecords((prev) => prev.filter((r) => r.dayId !== normalized));
             onProgressSaveFailed?.();
           } else {
             // Transient failure (network blip, 500, etc). Keep the local

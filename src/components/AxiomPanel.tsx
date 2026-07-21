@@ -413,10 +413,10 @@ const styles: Record<string, CSSProperties> = {
     cursor: "default",
   },
   infoTooltip: {
-    position: "absolute",
-    left: "50%",
-    bottom: "calc(100% + 8px)",
-    transform: "translateX(-50%)",
+    // Rendered via portal to document.body so it can escape the scrollable
+    // panel and appear over anything, including the top bar.
+    position: "fixed",
+    transform: "translate(-50%, -100%)",
     padding: "12px 16px",
     background: Colors.darkPink,
     color: Colors.black,

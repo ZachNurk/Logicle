@@ -15,6 +15,8 @@ type StatsModalProps = {
   givenUpDayIds?: string[];
   onClose?: () => void;
   title?: string;
+  /** Short line shown under the title, e.g. flagging a give-up before the win. */
+  note?: string;
   onEndless?: () => void;
   onLogout?: () => void;
   onSignIn?: () => void;
@@ -42,6 +44,7 @@ export default function StatsModal({
   givenUpDayIds: givenUpDayIdsProp,
   onClose,
   title,
+  note,
   onEndless,
   onLogout,
   onSignIn,
@@ -79,6 +82,7 @@ export default function StatsModal({
           </button>
         )}
         {title && <h2 style={styles.title}>{title}</h2>}
+        {note && <p style={styles.note}>{note}</p>}
         {currentUser?.email && (
           <div style={styles.userEmail}>{currentUser.email}</div>
         )}
@@ -149,8 +153,16 @@ export default function StatsModal({
                     return (
                       <div
                         key={key}
+                        title={
+                          givenUp
+                            ? completed
+                              ? "Completed after giving up"
+                              : "Gave up on this puzzle"
+                            : undefined
+                        }
                         style={{
                           ...styles.miniDayCell,
+                          // A give-up stays red even if later completed.
                           ...(completed ? styles.miniDayCellCompleted : {}),
                           ...(givenUp ? styles.miniDayCellGivenUp : {}),
                           ...(isToday ? styles.miniDayCellToday : {}),
@@ -257,6 +269,11 @@ const styles: Record<string, CSSProperties> = {
     margin: "0 0 6px 0",
     fontSize: "20px",
     fontWeight: 700,
+  },
+  note: {
+    margin: "0 0 12px 0",
+    fontSize: "16px",
+    color: "#666",
   },
   userEmail: {
     marginBottom: "16px",
