@@ -59,8 +59,12 @@ export function useProofSession(
     }
   }, [userId, hasWonToday, hasGivenUpToday, puzzleSource]);
 
-  /** Daily puzzle is finished — no further edits to nodes or axioms. */
-  const dailyPuzzleLocked = puzzleSource === "daily" && (victory || gaveUp);
+  /**
+   * Daily puzzle is finished — no further edits to nodes or axioms.
+   * Giving up does NOT lock: the revealed steps are what let the user keep
+   * solving, and completing after a give-up still persists the solution.
+   */
+  const dailyPuzzleLocked = puzzleSource === "daily" && victory;
 
   const giveUp = useCallback(() => {
     if (puzzleSource !== "daily" || victory || gaveUp) return;
@@ -114,19 +118,25 @@ export function useProofSession(
     setInvalidAxiomIds([]);
   }, [solutionSteps, puzzleSource, clearAxiomSelection]);
 
-  /** Shake / red flash on this axiom for 1s; supports several axioms at once. */
+  /**
+   * Shake / red flash on this axiom for 1s; supports several axioms at once.
+   * Delayed briefly so the button's press-down animation is visible first,
+   * instead of the shake cutting it off immediately on click.
+   */
   const registerInvalidAxiom = useCallback((axiomId: string) => {
-    setInvalidAxiomIds((prev) => [...prev, axiomId]);
-    setAxioms((prev) =>
-      prev.map((a) => (a.id === axiomId ? { ...a, selected: false } : a)),
-    );
     setTimeout(() => {
-      setInvalidAxiomIds((prev) => {
-        const i = prev.indexOf(axiomId);
-        if (i === -1) return prev;
-        return [...prev.slice(0, i), ...prev.slice(i + 1)];
-      });
-    }, 1000);
+      setInvalidAxiomIds((prev) => [...prev, axiomId]);
+      setAxioms((prev) =>
+        prev.map((a) => (a.id === axiomId ? { ...a, selected: false } : a)),
+      );
+      setTimeout(() => {
+        setInvalidAxiomIds((prev) => {
+          const i = prev.indexOf(axiomId);
+          if (i === -1) return prev;
+          return [...prev.slice(0, i), ...prev.slice(i + 1)];
+        });
+      }, 1000);
+    }, 200);
   }, [setAxioms]);
 
   /** Apply a specific axiom. For type "2", pass side so we don't rely on state. */

@@ -110,15 +110,19 @@ export default function GameScreen({
   const pressMenuButton = (key: MenuButtonKey, action?: () => void) => {
     if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
     setPressedMenuButton(key);
+    // Clicking opens a modal/confirm dialog or swaps screens, so don't auto-rehover
+    // once the press wears off — only a genuine mouse leave+enter restores hover.
+    setHoveredMenuButton(null);
     pressTimeoutRef.current = setTimeout(() => {
       setPressedMenuButton(null);
       pressTimeoutRef.current = null;
-    }, 500);
+    }, 750);
     action?.();
   };
 
   const isMenuHovered = (key: MenuButtonKey) =>
     hoveredMenuButton === key && pressedMenuButton !== key;
+  const isMenuPressed = (key: MenuButtonKey) => pressedMenuButton === key;
   /** After winning the daily, auto stats can be closed; manual Stats still works. */
   const [winStatsDismissed, setWinStatsDismissed] = useState(false);
   const [showVictoryStats, setShowVictoryStats] = useState(false);
@@ -323,7 +327,11 @@ export default function GameScreen({
           type="button"
           style={{
             ...styles.howToPlayButton,
-            ...(isMenuHovered("info") ? styles.menuButtonPinkHover : {}),
+            ...(isMenuPressed("info")
+              ? styles.menuButtonPinkPressed
+              : isMenuHovered("info")
+                ? styles.menuButtonPinkHover
+                : {}),
           }}
           onClick={() => pressMenuButton("info", () => setHowToPlay(true))}
           onMouseEnter={() => setHoveredMenuButton("info")}
@@ -339,7 +347,11 @@ export default function GameScreen({
           <button
             style={{
               ...styles.menuButton,
-              ...(isMenuHovered("stats") ? styles.menuButtonPinkHover : {}),
+              ...(isMenuPressed("stats")
+                ? styles.menuButtonPinkPressed
+                : isMenuHovered("stats")
+                  ? styles.menuButtonPinkHover
+                  : {}),
             }}
             onClick={() => pressMenuButton("stats", () => setShowStats(true))}
             onMouseEnter={() => setHoveredMenuButton("stats")}
@@ -352,7 +364,11 @@ export default function GameScreen({
               type="button"
               style={{
                 ...styles.menuButton,
-                ...(isMenuHovered("endless") ? styles.menuButtonPinkHover : {}),
+                ...(isMenuPressed("endless")
+                  ? styles.menuButtonPinkPressed
+                  : isMenuHovered("endless")
+                    ? styles.menuButtonPinkHover
+                    : {}),
               }}
               onClick={() => pressMenuButton("endless", () => setShowEndlessIntro(true))}
               onMouseEnter={() => setHoveredMenuButton("endless")}
@@ -365,7 +381,11 @@ export default function GameScreen({
               type="button"
               style={{
                 ...styles.menuButton,
-                ...(isMenuHovered("daily") ? styles.menuButtonPinkHover : {}),
+                ...(isMenuPressed("daily")
+                  ? styles.menuButtonPinkPressed
+                  : isMenuHovered("daily")
+                    ? styles.menuButtonPinkHover
+                    : {}),
               }}
               onClick={() => pressMenuButton("daily", onBackToDaily)}
               onMouseEnter={() => setHoveredMenuButton("daily")}
@@ -378,7 +398,11 @@ export default function GameScreen({
             <button
               style={{
                 ...styles.menuButton,
-                ...(isMenuHovered("logout") ? styles.menuButtonRedHover : {}),
+                ...(isMenuPressed("logout")
+                  ? styles.menuButtonRedPressed
+                  : isMenuHovered("logout")
+                    ? styles.menuButtonRedHover
+                    : {}),
               }}
               onClick={() => pressMenuButton("logout", onLogoutClick)}
               onMouseEnter={() => setHoveredMenuButton("logout")}
@@ -392,7 +416,11 @@ export default function GameScreen({
                 ...styles.menuButton,
                 ...styles.menuButtonPink,
                 ...styles.signInButton,
-                ...(isMenuHovered("logout") ? styles.signInButtonHover : {}),
+                ...(isMenuPressed("logout")
+                  ? styles.signInButtonPressed
+                  : isMenuHovered("logout")
+                    ? styles.signInButtonHover
+                    : {}),
               }}
               onClick={() => pressMenuButton("logout", onSignIn)}
               onMouseEnter={() => setHoveredMenuButton("logout")}
@@ -430,7 +458,11 @@ export default function GameScreen({
                     style={{
                       ...styles.menuButton,
                       ...styles.giveUpButton,
-                      ...(isMenuHovered("giveup") ? styles.menuButtonPinkHover : {}),
+                      ...(isMenuPressed("giveup")
+                        ? styles.menuButtonPinkPressed
+                        : isMenuHovered("giveup")
+                          ? styles.menuButtonPinkHover
+                          : {}),
                       ...(isDaily
                         ? victory
                           ? styles.menuButtonDisabled
@@ -556,6 +588,12 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.lightPink,
     boxShadow: "0.25rem 0.25rem #000",
   },
+  menuButtonPinkPressed: {
+    color: "#000",
+    transform: "translate(0, 0)",
+    background: Colors.lightPink,
+    boxShadow: "none",
+  },
   menuButtonPink: {
     border: `1px solid ${Colors.lightPink}`,
     background: Colors.lightPink,
@@ -570,11 +608,23 @@ const styles: Record<string, CSSProperties> = {
     background: Colors.purple,
     boxShadow: "0.25rem 0.25rem #000",
   },
+  signInButtonPressed: {
+    color: "#000",
+    transform: "translate(0, 0)",
+    background: Colors.purple,
+    boxShadow: "none",
+  },
   menuButtonRedHover: {
     color: "#fff",
     transform: "translate(-2px, -2px)",
     background: "#ef4444",
     boxShadow: "0.25rem 0.25rem #000",
+  },
+  menuButtonRedPressed: {
+    color: "#fff",
+    transform: "translate(0, 0)",
+    background: "#ef4444",
+    boxShadow: "none",
   },
   menuButtonDisabled: {
     opacity: 0.5,

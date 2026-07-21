@@ -6,6 +6,7 @@
 import type { Axiom } from "../logic/Axiom";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Colors } from "../constants/theme";
 
 type AxiomPanelProps = {
@@ -34,6 +35,10 @@ export default function AxiomPanel({
   invalidAxiomIds,
 }: AxiomPanelProps) {
   const [hoveredAxiomId, setHoveredAxiomId] = useState<string | null>(null);
+  /** Anchor point (dot center, dot top) for the portal-rendered tooltip below. */
+  const [tooltipAnchor, setTooltipAnchor] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [hoveredButton, setHoveredButton] = useState<string | null>(null);
   const [deleteHovered, setDeleteHovered] = useState(false);
   const [resetHovered, setResetHovered] = useState(false);
@@ -42,6 +47,31 @@ export default function AxiomPanel({
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   const selectedAxiom = axioms.find((a) => a.selected);
   const additionSelectRef = useRef<HTMLSelectElement>(null);
+
+  /** Briefly cleared on click so the hover style drops out, reading as a press. */
+  const [pressedButton, setPressedButton] = useState<string | null>(null);
+  const pressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+    };
+  }, []);
+
+  const pressButton = (key: string, action?: () => void) => {
+    if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+    setPressedButton(key);
+    // Clicking applies the axiom or opens a side/addition overlay, so don't
+    // auto-rehover once the press wears off — only a real re-entry restores it.
+    setHoveredButton(null);
+    setDeleteHovered(false);
+    setResetHovered(false);
+    pressTimeoutRef.current = setTimeout(() => {
+      setPressedButton(null);
+      pressTimeoutRef.current = null;
+    }, 750);
+    action?.();
+  };
 
   useEffect(() => {
     if (!selectedAxiom || selectedAxiom.id !== "Add" || !isChoosingAddition) return;
@@ -70,28 +100,36 @@ export default function AxiomPanel({
                 type="button"
                 style={{
                   ...styles.axiomButton,
-                  ...(!isInvalid &&
-                  (hoveredButton === axiom.id || hoveredAxiomId === axiom.id)
+                  ...(!isInvalid && pressedButton === axiom.id
                     ? {
-                        ...styles.axiomButtonHover,
+                        ...styles.axiomButtonPressed,
                         ...styles.axiomButtonRaised,
                       }
-                    : {}),
+                    : !isInvalid &&
+                        (hoveredButton === axiom.id || hoveredAxiomId === axiom.id)
+                      ? {
+                          ...styles.axiomButtonHover,
+                          ...styles.axiomButtonRaised,
+                        }
+                      : {}),
                   ...(axiom.selected ? styles.axiomButtonActive : {}),
                   ...(isInvalid ? styles.axiomButtonInvalid : {}),
                 }}
-                onClick={
-                  axiom.applyType === "2"
-                    ? () => toggleSelected(axiom.id)
-                    : axiom.id === "Add"
-                      ? () => {
-                          setIsChoosingAddition(true);
-                          toggleSelected(axiom.id);
-                        }
-                      : () => {
-                          toggleSelected(axiom.id);
-                          applyAxiom(axiom);
-                        }
+                onClick={() =>
+                  pressButton(
+                    axiom.id,
+                    axiom.applyType === "2"
+                      ? () => toggleSelected(axiom.id)
+                      : axiom.id === "Add"
+                        ? () => {
+                            setIsChoosingAddition(true);
+                            toggleSelected(axiom.id);
+                          }
+                        : () => {
+                            toggleSelected(axiom.id);
+                            applyAxiom(axiom);
+                          },
+                  )
                 }
                 onMouseEnter={() => {
                   if (!isInvalid) setHoveredButton(axiom.id);
@@ -103,16 +141,28 @@ export default function AxiomPanel({
                   style={styles.infoDotWrapper}
                   role="presentation"
                   aria-hidden
-                  onMouseEnter={() => {
-                    if (!isInvalid) setHoveredAxiomId(axiom.id);
+                  onMouseEnter={(e) => {
+                    if (isInvalid) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltipAnchor({ x: rect.left + rect.width / 2, y: rect.top });
+                    setHoveredAxiomId(axiom.id);
                   }}
-                  onMouseLeave={() => setHoveredAxiomId(null)}
+                  onMouseLeave={() => {
+                    setHoveredAxiomId(null);
+                    setTooltipAnchor(null);
+                  }}
                 >
                   <span style={styles.infoDot}>i</span>
+                </span>
+              </button>
+              {hoveredAxiomId === axiom.id &&
+                tooltipAnchor &&
+                createPortal(
                   <span
                     style={{
                       ...styles.infoTooltip,
-                      display: hoveredAxiomId === axiom.id ? "block" : "none",
+                      left: tooltipAnchor.x,
+                      top: tooltipAnchor.y - 8,
                     }}
                   >
                     {axiom.description}
@@ -134,9 +184,9 @@ export default function AxiomPanel({
                         {axiom.description4}
                       </>
                     ) : null}
-                  </span>
-                </span>
-              </button>
+                  </span>,
+                  document.body,
+                )}
               {showSidePicker && (
                 <div
                   style={styles.sidePickerOverlay}
@@ -239,9 +289,13 @@ export default function AxiomPanel({
       <button
         style={{
           ...styles.deleteButton,
-          ...(deleteHovered ? styles.axiomButtonHover : {}),
+          ...(pressedButton === "delete"
+            ? styles.axiomButtonPressed
+            : deleteHovered
+              ? styles.axiomButtonHover
+              : {}),
         }}
-        onClick={deleteSelectedNode}
+        onClick={() => pressButton("delete", deleteSelectedNode)}
         onMouseEnter={() => setDeleteHovered(true)}
         onMouseLeave={() => setDeleteHovered(false)}
       >
@@ -250,9 +304,13 @@ export default function AxiomPanel({
       <button
         style={{
           ...styles.deleteButton,
-          ...(resetHovered ? styles.axiomButtonHover : {}),
+          ...(pressedButton === "reset"
+            ? styles.axiomButtonPressed
+            : resetHovered
+              ? styles.axiomButtonHover
+              : {}),
         }}
-        onClick={resetNodes}
+        onClick={() => pressButton("reset", resetNodes)}
         onMouseEnter={() => setResetHovered(true)}
         onMouseLeave={() => setResetHovered(false)}
       >
@@ -439,5 +497,11 @@ const styles: Record<string, CSSProperties> = {
     transform: "translate(-2px, -2px)",
     background: Colors.lightPink,
     boxShadow: `0.25rem 0.25rem ${Colors.black}`,
+  },
+  axiomButtonPressed: {
+    color: Colors.black,
+    transform: "translate(0, 0)",
+    background: Colors.lightPink,
+    boxShadow: "none",
   },
 };
