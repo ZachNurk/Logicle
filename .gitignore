@@ -53,3 +53,5 @@ coverage/
 # repo tree before running the Build Command, so a build-time-generated
 # file under /api is never picked up. Regenerate it with `npm run build:api`
 # whenever server/app.ts or its dependencies change, and commit the result.
+.vercel
+.env*

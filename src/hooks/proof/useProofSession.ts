@@ -242,6 +242,21 @@ export function useProofSession(
         return;
       }
 
+      // Single-premise axioms record the premise node itself as the parent.
+      // With two nodes selected that premise is the synthetic ∧ wrapper built
+      // above, which is never rendered — so the panel finds no parent button
+      // and draws no arrow. Swap it back for the real selected nodes.
+      if (selectedNodes.length === 2 && result.parents?.some((p) => p.id === prem.id)) {
+        const parents: ProofNode[] = [];
+        for (const p of result.parents) {
+          const replacements = p.id === prem.id ? selectedNodes : [p];
+          for (const r of replacements) {
+            if (!parents.some((existing) => existing.id === r.id)) parents.push(r);
+          }
+        }
+        result = { ...result, parents };
+      }
+
       if (sameNode(result, solutionNode)) {
         if (puzzleSource === "endless") {
           addGivenNode(result);
